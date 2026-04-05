@@ -124,19 +124,17 @@ export function solveResaw(input) {
 
   // Step 3: Strips per panel + finish crosscut per SKU (mixed blank lengths)
   const stripResults = stripSettings.map(strip => {
-    // Finish crosscut: use NOMINAL blank lengths (without snipe buffer)
-    // The buffer is consumed during finish crosscut trim — pieces come from nominal length
+    // Finish crosscut: use the FULL blank length (buffer already baked in)
+    // Square one end, cut pieces from head — snipe buffer consumed as tail waste
     const finishCrosscut = crosscutPlan.cuts.map(bc => {
-      // Find matching nominal length (buffered → nominal by subtracting snipeBuffer)
-      const nominalLength = Math.max(0, bc.length - snipeBuffer);
       const piecesPerBlank = Math.floor(
-        (nominalLength + crosscutSettings.miterKerf) / (strip.length + crosscutSettings.miterKerf)
+        (bc.length + crosscutSettings.miterKerf) / (strip.length + crosscutSettings.miterKerf)
       );
       const kerfLoss = Math.max(0, piecesPerBlank - 1) * crosscutSettings.miterKerf;
-      const waste = nominalLength - piecesPerBlank * strip.length - kerfLoss;
+      // Waste at tail includes snipe buffer + any remainder
+      const waste = bc.length - piecesPerBlank * strip.length - kerfLoss;
       return {
-        blankLength: bc.length,        // actual cut length (with buffer)
-        nominalLength,                  // usable after buffer trim
+        blankLength: bc.length,
         qty: bc.qty,
         piecesPerBlank,
         waste: Math.max(0, waste),
