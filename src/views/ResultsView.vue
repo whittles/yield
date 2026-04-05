@@ -35,7 +35,7 @@
         class="bg-surface border border-border rounded-lg overflow-hidden"
       >
         <!-- Board header -->
-        <div class="px-5 py-3 border-b border-border bg-surface-alt flex items-center justify-between gap-4">
+        <div class="px-5 py-3 border-b border-border bg-surface-alt flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
           <div>
             <span class="font-semibold text-text-primary">{{ result.stockPiece.label }}</span>
             <span class="ml-2 text-sm text-text-muted">

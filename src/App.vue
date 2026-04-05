@@ -21,28 +21,30 @@
         <div class="flex items-center gap-2">
           <button
             @click="handleExport"
-            class="text-sm px-3 py-1.5 border border-white/20 rounded hover:bg-white/10 transition-colors"
+            class="text-xs sm:text-sm px-2 sm:px-3 py-1.5 border border-white/20 rounded hover:bg-white/10 transition-colors"
             title="Export project as JSON"
           >
-            Export
+            <span class="hidden sm:inline">Export</span>
+            <span class="sm:hidden">⬆</span>
           </button>
           <button
             @click="handleImport"
-            class="text-sm px-3 py-1.5 border border-white/20 rounded hover:bg-white/10 transition-colors"
+            class="text-xs sm:text-sm px-2 sm:px-3 py-1.5 border border-white/20 rounded hover:bg-white/10 transition-colors"
             title="Import project from JSON"
           >
-            Import
+            <span class="hidden sm:inline">Import</span>
+            <span class="sm:hidden">⬇</span>
           </button>
         </div>
       </div>
 
       <!-- ── Tab bar ──────────────────────────────────────────── -->
       <div class="border-t border-white/10">
-        <div class="max-w-5xl mx-auto px-4 flex gap-0">
+        <div class="max-w-5xl mx-auto px-2 flex overflow-x-auto">
           <button
             @click="goToInput"
             :class="[
-              'px-5 py-2.5 text-sm font-medium border-b-2 transition-colors',
+              'px-3 sm:px-5 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
               activeTab === 'input'
                 ? 'border-white text-white'
                 : 'border-transparent text-gray-400 hover:text-white hover:border-white/40'
@@ -54,7 +56,7 @@
             @click="goToResults"
             :disabled="!hasResults"
             :class="[
-              'px-5 py-2.5 text-sm font-medium border-b-2 transition-colors',
+              'px-3 sm:px-5 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
               !hasResults ? 'border-transparent text-gray-600 cursor-not-allowed' :
               activeTab === 'results'
                 ? 'border-white text-white'
@@ -64,7 +66,7 @@
             Results
             <span
               v-if="hasResults"
-              class="ml-1.5 text-xs bg-white/20 text-white px-1.5 py-0.5 rounded-full"
+              class="ml-1.5 text-xs bg-white/20 text-white px-1.5 py-0.5 rounded-full hidden sm:inline-flex"
             >
               {{ store.results?.summary?.placedParts }}/{{ store.results?.summary?.totalParts }}
             </span>
@@ -72,7 +74,7 @@
           <button
             @click="goToResaw"
             :class="[
-              'px-5 py-2.5 text-sm font-medium border-b-2 transition-colors',
+              'px-3 sm:px-5 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
               activeTab === 'resaw'
                 ? 'border-white text-white'
                 : 'border-transparent text-gray-400 hover:text-white hover:border-white/40'

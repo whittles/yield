@@ -67,7 +67,7 @@
                   <input
                     v-model.number="store.settings.conditionAllowances[key].thickness"
                     type="number" step="0.0625" min="0"
-                    class="w-24 border border-border rounded px-2 py-1 text-sm text-center
+                    class="w-28 border border-border rounded px-2 py-1 text-sm text-center
                            focus:border-accent focus:outline-none bg-surface"
                   />
                 </td>
@@ -75,7 +75,7 @@
                   <input
                     v-model.number="store.settings.conditionAllowances[key].width"
                     type="number" step="0.0625" min="0"
-                    class="w-24 border border-border rounded px-2 py-1 text-sm text-center
+                    class="w-28 border border-border rounded px-2 py-1 text-sm text-center
                            focus:border-accent focus:outline-none bg-surface"
                   />
                 </td>

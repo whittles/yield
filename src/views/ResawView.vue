@@ -65,7 +65,7 @@
     <!-- ── Section 2: Resaw Settings ──────────────────────────────── -->
     <div class="bg-surface border border-border rounded-lg p-5 no-print">
       <h2 class="text-base font-semibold text-text-primary mb-4">Resaw Settings</h2>
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <label class="block text-xs text-text-muted mb-1">Resaw tool / kerf</label>
           <select
@@ -115,7 +115,51 @@
           + Add SKU
         </button>
       </div>
-      <div class="overflow-x-auto">
+      <div class="sm:hidden space-y-3">
+        <div v-for="sku in store.resawSkus" :key="sku.id"
+             class="border border-border rounded-lg p-3 bg-surface space-y-2">
+          <div class="flex items-center justify-between">
+            <input v-model="sku.name" type="text"
+                   class="flex-1 border border-border rounded px-2 py-1.5 text-sm bg-transparent text-text-primary font-medium"
+                   placeholder="SKU name" />
+            <button @click="store.removeResawSku(sku.id)"
+                    class="ml-2 text-text-muted hover:text-danger px-1">×</button>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-sm">
+            <div>
+              <label class="block text-xs text-text-muted mb-1">Rough rip width"</label>
+              <input v-model="sku.roughWidthStr" type="text"
+                     class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
+            </div>
+            <div>
+              <label class="block text-xs text-text-muted mb-1">Final width"</label>
+              <input v-model="sku.finalWidthStr" type="text"
+                     class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
+            </div>
+            <div>
+              <label class="block text-xs text-text-muted mb-1">Plane allowance"</label>
+              <input v-model.number="sku.planeAllowance" type="number" step="0.001"
+                     class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
+            </div>
+            <div>
+              <label class="block text-xs text-text-muted mb-1">Sander allowance"</label>
+              <input v-model.number="sku.sanderAllowance" type="number" step="0.001"
+                     class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
+            </div>
+            <div>
+              <label class="block text-xs text-text-muted mb-1">Length (in)</label>
+              <input v-model.number="sku.length" type="number"
+                     class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
+            </div>
+          </div>
+        </div>
+        <button @click="store.addResawSku()"
+                class="w-full border border-dashed border-border rounded-lg py-2 text-sm text-text-muted hover:text-text-primary hover:border-accent/50 transition-colors">
+          + Add SKU
+        </button>
+      </div>
+
+      <div class="hidden sm:block overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
             <tr class="text-left text-xs text-text-muted border-b border-border">
