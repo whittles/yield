@@ -98,8 +98,19 @@ export const useProjectStore = defineStore('project', () => {
     if (data.stock)    stock.value    = data.stock
     if (data.parts)    parts.value    = data.parts
     if (data.settings) settings.value = data.settings
-    results.value   = null
-    activeTab.value  = 'input'
+    if (data.resawStock)    resawStock.value    = data.resawStock
+    if (data.resawSettings) resawSettings.value = data.resawSettings
+    if (data.resawSkus)     resawSkus.value     = data.resawSkus
+    if (data.crosscutSettings) {
+      crosscutSettings.value = {
+        blankLengths:   data.crosscutSettings.blankLengths   ?? ['36'],
+        miterKerfStr:   data.crosscutSettings.miterKerfStr   ?? '1/8',
+        snipeBufferStr: data.crosscutSettings.snipeBufferStr ?? '0',
+      }
+    }
+    results.value      = null
+    resawResults.value = null
+    activeTab.value    = 'input'
   }
 
   // ─── Resaw Planner ─────────────────────────────────────────────────────────
@@ -153,6 +164,16 @@ export const useProjectStore = defineStore('project', () => {
 
   function calculateResaw() {
     resawError.value = null
+    // Validate SKU geometry
+    for (const s of resawSkus.value) {
+      const rough = parseFraction(s.roughWidthStr)
+      const final = parseFraction(s.finalWidthStr)
+      if (final >= rough) {
+        resawError.value = `SKU "${s.name}": Final face (${final}") must be less than rough rip face (${rough}"). Check plane and sander allowances.`
+        resawResults.value = null
+        return
+      }
+    }
     try {
     resawResults.value = solveResaw({
       stock: {

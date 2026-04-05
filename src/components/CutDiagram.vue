@@ -12,13 +12,13 @@
 
       <!-- Waste hatch pattern -->
       <defs>
-        <pattern id="hatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+        <pattern :id="hatchId" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
           <line x1="0" y1="0" x2="0" y2="8" stroke="#d1cfc8" stroke-width="1.5" />
         </pattern>
       </defs>
 
       <!-- Waste area (whole board) -->
-      <rect x="0" y="0" :width="SVG_W" :height="svgH" fill="url(#hatch)" />
+      <rect x="0" y="0" :width="SVG_W" :height="svgH" :fill="`url(#${hatchId})`" />
 
       <!-- Part rectangles -->
       <g v-for="(sc, i) in scaledCuts" :key="i">
@@ -55,6 +55,9 @@ import { computed } from 'vue'
 const props = defineProps({
   result: { type: Object, required: true },
 })
+
+// Unique hatch pattern ID per instance to avoid SVG id collisions
+const hatchId = computed(() => `hatch-${props.result?.stockPiece?.id || Math.random().toString(36).slice(2)}`)
 
 const SVG_W = 600
 const MAX_H = 140

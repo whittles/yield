@@ -2,11 +2,15 @@
  * Export the current project state to a JSON file download.
  */
 export function exportProject(state) {
-  const data = JSON.stringify(
-    { stock: state.stock, parts: state.parts, settings: state.settings },
-    null,
-    2
-  );
+  const data = JSON.stringify({
+    stock: state.stock,
+    parts: state.parts,
+    settings: state.settings,
+    resawStock: state.resawStock,
+    resawSettings: state.resawSettings,
+    crosscutSettings: state.crosscutSettings,
+    resawSkus: state.resawSkus,
+  }, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

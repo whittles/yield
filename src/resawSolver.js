@@ -38,8 +38,10 @@ export function optimizeCrosscut(boardLength, blankLengths, kerf) {
       const totalWaste = sub.waste + (afterCut > minLen ? 0 : afterCut - Math.max(0, remainder));
 
       const combined = mergeCuts([{ length: len, qty: 1 }, ...sub.cuts]);
-      if (sub.waste < bestResult.waste) {
-        bestResult = { cuts: combined, waste: sub.waste };
+      // True waste for this branch = remaining waste after all cuts in this subtree
+      const candidateWaste = sub.waste;
+      if (candidateWaste < bestResult.waste) {
+        bestResult = { cuts: combined, waste: candidateWaste };
       }
     }
 

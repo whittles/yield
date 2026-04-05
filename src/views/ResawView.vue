@@ -134,7 +134,7 @@
           <p class="text-xs text-text-muted mt-1">Blade thickness lost at each cut</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Panel target thickness</label>
+          <label class="block text-xs text-text-muted mb-1">Panel target depth (strip depth in frame)</label>
           <input
             type="text"
             v-model="store.resawSettings.panelTargetStr"
@@ -154,7 +154,7 @@
           <p class="text-xs text-text-muted mt-1">Typically 0.010" — just enough to clean up resaw marks without long passes</p>
         </div>
         <div class="flex flex-col justify-end">
-          <div class="text-xs text-text-muted mb-1">Slab green thickness (fence setting)</div>
+          <div class="text-xs text-text-muted mb-1">Set fence to:</div>
           <div class="text-sm font-semibold text-text-primary px-2 py-1.5 bg-bg border border-border rounded">
             {{ slabGreenThickness }}"
           </div>
@@ -187,12 +187,12 @@
           </div>
           <div class="grid grid-cols-2 gap-2 text-sm">
             <div>
-              <label class="block text-xs text-text-muted mb-1">Rough rip width"</label>
+              <label class="block text-xs text-text-muted mb-1">Rough rip face"</label>
               <input v-model="sku.roughWidthStr" type="text"
                      class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
             </div>
             <div>
-              <label class="block text-xs text-text-muted mb-1">Final width"</label>
+              <label class="block text-xs text-text-muted mb-1">Final face"</label>
               <input v-model="sku.finalWidthStr" type="text"
                      class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
             </div>
@@ -224,10 +224,10 @@
           <thead>
             <tr class="text-left text-xs text-text-muted border-b border-border">
               <th class="pb-2 pr-3" title="Product name for this strip size">SKU Name</th>
-              <th class="pb-2 pr-3" title="Width to rip on the table saw — includes material for hand planing and drum sanding">Rough Rip Width"</th>
-              <th class="pb-2 pr-3" title="Width removed by the hand plane (Step 5)">Hand Plane Loss"</th>
-              <th class="pb-2 pr-3" title="Width removed by the drum sander on the thin side (Step 6)">Drum Sand Loss"</th>
-              <th class="pb-2 pr-3" title="Finished strip width — what you sell">Final Width"</th>
+              <th class="pb-2 pr-3" title="Face dimension to rip on the table saw — includes material for hand planing and drum sanding">Rough Rip Face"</th>
+              <th class="pb-2 pr-3" title="Face dimension removed by hand plane (Step 7)">Hand Plane Loss"</th>
+              <th class="pb-2 pr-3" title="Face dimension removed by drum sander — thin side (Step 8)">Drum Sand Loss"</th>
+              <th class="pb-2 pr-3" title="Finished strip face dimension — what you sell">Final Face"</th>
               <th class="pb-2 pr-3" title="Strip length in inches">Length"</th>
               <th class="pb-2 pr-3" title="Table saw blade thickness">Rip Kerf</th>
               <th class="pb-2"></th>
@@ -333,7 +333,13 @@
     <div class="no-print flex justify-center">
       <button
         @click="store.calculateResaw()"
-        class="px-8 py-3 bg-header text-white font-semibold rounded-lg hover:opacity-90 transition-opacity text-base"
+        :disabled="!store.resawSkus.length"
+        :class="[
+          'px-8 py-3 font-semibold rounded-lg transition-opacity text-base',
+          store.resawSkus.length
+            ? 'bg-header text-white hover:opacity-90 cursor-pointer'
+            : 'bg-header/40 text-white/40 cursor-not-allowed'
+        ]"
       >
         Calculate Yield
       </button>
@@ -366,12 +372,17 @@
           <div class="text-xs text-text-muted mt-1">Total slabs</div>
         </div>
         <div
-          v-for="sr in r.stripResults.slice(0,2)"
+          v-for="sr in r.stripResults.slice(0, 2)"
           :key="sr.id"
           class="bg-surface border border-border rounded-lg p-4 text-center"
         >
           <div class="text-2xl font-bold text-text-primary">{{ sr.totalStrips }}</div>
           <div class="text-xs text-text-muted mt-1">{{ sr.name }}</div>
+        </div>
+        <div v-if="r.stripResults.length > 2"
+             class="bg-surface border border-border rounded-lg p-4 text-center">
+          <div class="text-lg font-bold text-text-muted">+{{ r.stripResults.length - 2 }}</div>
+          <div class="text-xs text-text-muted mt-1">more SKUs</div>
         </div>
       </div>
 
@@ -512,10 +523,10 @@
       <div class="bg-surface border border-border rounded-lg p-5">
         <h3 class="text-sm font-semibold text-text-primary mb-1">Panel Strip Layout (face view — one slab)</h3>
         <div class="flex flex-wrap gap-4 text-xs text-text-muted mb-3">
-          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-yellow-600 opacity-80"></span> Strip (rough rip width)</span>
+          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-yellow-600 opacity-80"></span> Strip (rough rip face)</span>
           <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-gray-400 opacity-80"></span> Kerf / waste</span>
         </div>
-        <p class="text-xs text-text-muted mb-3">Showing Standard SKU rip layout. Width = {{ fmtIn(r.stock.usableWidth) }}", Length = {{ fmtIn(r.input.stock.length) }}"</p>
+        <p class="text-xs text-text-muted mb-3">Showing {{ r.stripResults[0]?.name ?? 'first SKU' }} rip layout. Width = {{ fmtIn(r.stock.usableWidth) }}", Length = {{ r.stripResults[0]?.length }}"</p>
 
         <svg
           viewBox="0 0 460 120"
@@ -634,7 +645,7 @@
           <div>
             <div class="font-semibold text-text-primary">Step 3 — Resaw on bandsaw</div>
             <div class="text-text-muted mt-1 ml-4">
-              Fence setting: {{ r.slabs.slabThickness.toFixed(4) }}" — reference face against fence<br/>
+              Fence setting: {{ r.slabs.slabThickness.toFixed(4) }}" — jointed face against fence<br/>
               <span v-if="r.slabs.extraPerSlab > 0.001" class="text-success">
                 ✓ Offcut redistributed: +{{ r.slabs.extraPerSlab.toFixed(4) }}" per slab (nominal was {{ r.slabs.nominalSlabThickness.toFixed(4) }}", extra absorbed by drum sander)
               </span><br/>
@@ -666,8 +677,8 @@
           <div>
             <div class="font-semibold text-text-primary">Step 5 — Finish crosscut to length (miter saw)</div>
             <div class="text-text-muted mt-1 ml-4">
-              <span v-if="r.roughCrosscut.snipeBuffer > 0">Snipe buffer ({{ fmtIn(r.roughCrosscut.snipeBuffer) }}") trimmed off here. Square one end, then cut to length.</span>
-              <span v-else>Square one end, then cut to length.</span><br/>
+              <span v-if="r.roughCrosscut.snipeBuffer > 0">Snipe buffer ({{ fmtIn(r.roughCrosscut.snipeBuffer) }}") trimmed off here. Square the snipe end first (trailing end from the bandsaw), then measure and cut to length from the clean end.</span>
+              <span v-else>Square one end, then measure and cut to length from the clean end.</span><br/>
               <div v-for="sr in r.stripResults" :key="'fc-' + sr.id" class="mt-1">
                 <span class="text-text-primary">{{ sr.name }}:</span>
                 <div v-for="fc in sr.finishCrosscut" :key="fc.blankLength" class="ml-2 mt-0.5">
@@ -773,25 +784,28 @@ const r = computed(() => store.resawResults)
 
 // Live: optimal crosscut plan preview
 const crosscutPreview = computed(() => {
-  const boardLen = parseFraction(store.resawStock.lengthStr)
-  const kerf = parseFraction(store.crosscutSettings.miterKerfStr)
-  const buffer = parseFraction(store.crosscutSettings.snipeBufferStr) || 0
-  const lengths = store.crosscutSettings.blankLengths.map(s => parseFraction(s) + buffer).filter(l => l > 0)
-  if (!boardLen || !lengths.length) return '—'
-  const plan = optimizeCrosscut(boardLen, lengths, kerf)
-  if (!plan.cuts.length) return 'No cuts fit'
-  // Show nominal + buffer in label
-  return plan.cuts.map(c => `${c.qty}×${fmtIn(c.length)}"${buffer > 0 ? ` (${fmtIn(c.length - buffer)}+${fmtIn(buffer)})` : ''}`).join(' + ')
+  try {
+    const boardLen = parseFraction(store.resawStock.lengthStr)
+    const kerf = parseFraction(store.crosscutSettings.miterKerfStr)
+    const buffer = parseFraction(store.crosscutSettings.snipeBufferStr) || 0
+    const lengths = store.crosscutSettings.blankLengths.map(s => parseFraction(s) + buffer).filter(l => l > 0)
+    if (!boardLen || !lengths.length) return '—'
+    const plan = optimizeCrosscut(boardLen, lengths, kerf)
+    if (!plan.cuts.length) return 'No cuts fit'
+    return plan.cuts.map(c => `${c.qty}×${fmtIn(c.length)}"${buffer > 0 ? ` (${fmtIn(c.length - buffer)}+${fmtIn(buffer)})` : ''}`).join(' + ')
+  } catch { return '—' }
 })
 
 const wastePreview = computed(() => {
-  const boardLen = parseFraction(store.resawStock.lengthStr)
-  const kerf = parseFraction(store.crosscutSettings.miterKerfStr)
-  const buffer = parseFraction(store.crosscutSettings.snipeBufferStr) || 0
-  const lengths = store.crosscutSettings.blankLengths.map(s => parseFraction(s) + buffer).filter(l => l > 0)
-  if (!boardLen || !lengths.length) return '—'
-  const plan = optimizeCrosscut(boardLen, lengths, kerf)
-  return fmtIn(plan.waste)
+  try {
+    const boardLen = parseFraction(store.resawStock.lengthStr)
+    const kerf = parseFraction(store.crosscutSettings.miterKerfStr)
+    const buffer = parseFraction(store.crosscutSettings.snipeBufferStr) || 0
+    const lengths = store.crosscutSettings.blankLengths.map(s => parseFraction(s) + buffer).filter(l => l > 0)
+    if (!boardLen || !lengths.length) return '—'
+    const plan = optimizeCrosscut(boardLen, lengths, kerf)
+    return fmtIn(plan.waste)
+  } catch { return '—' }
 })
 
 // Live: slab green thickness
