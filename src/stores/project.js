@@ -107,7 +107,7 @@ export const useProjectStore = defineStore('project', () => {
     qty: 5,
     thicknessStr: '2',
     widthStr: '7',
-    lengthStr: '12',
+    lengthStr: '120',
     condition: 'skip-planed',
   })
 
@@ -118,7 +118,7 @@ export const useProjectStore = defineStore('project', () => {
   })
 
   const crosscutSettings = ref({
-    roughBlankLengthStr: '36',
+    blankLengths: ['36', '24'],  // multiple acceptable blank lengths for optimizer
     miterKerfStr: '1/8',
   })
 
@@ -167,8 +167,8 @@ export const useProjectStore = defineStore('project', () => {
         slabAllowance: parseFraction(resawSettings.value.slabAllowanceStr),
       },
       crosscutSettings: {
-        roughBlankLength: parseFraction(crosscutSettings.value.roughBlankLengthStr),
-        miterKerf:        parseFraction(crosscutSettings.value.miterKerfStr),
+        blankLengths: crosscutSettings.value.blankLengths.map(s => parseFraction(s)).filter(l => l > 0),
+        miterKerf:    parseFraction(crosscutSettings.value.miterKerfStr),
       },
       stripSettings: resawSkus.value.map(s => ({
         ...s,
@@ -185,12 +185,16 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
+  function addBlankLength() { crosscutSettings.value.blankLengths.push('12') }
+  function removeBlankLength(i) { if (crosscutSettings.value.blankLengths.length > 1) crosscutSettings.value.blankLengths.splice(i, 1) }
+
   return {
     settings, stock, parts, results, activeTab,
     addStock, removeStock, addPart, removePart,
     calculate, loadProject,
     // Resaw Planner
     resawStock, resawSettings, crosscutSettings, resawSkus, resawResults, resawError,
+    addBlankLength, removeBlankLength,
     addResawSku, removeResawSku, calculateResaw,
   }
 })

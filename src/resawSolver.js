@@ -3,28 +3,95 @@
  * Calculates production yield from rough lumber → finished kumiko strips
  */
 
+/**
+ * 1D cutting stock optimizer — finds the combination of blank lengths
+ * that minimizes waste from a single board.
+ * Uses dynamic programming (memoized recursion).
+ *
+ * @param {number} boardLength - total board length in inches
+ * @param {number[]} blankLengths - acceptable blank lengths, descending
+ * @param {number} kerf - saw kerf per cut
+ * @returns {{ cuts: [{length, qty}], totalBlanks, lengthUsed, waste, wastePct }}
+ */
+export function optimizeCrosscut(boardLength, blankLengths, kerf) {
+  const lengths = [...blankLengths].filter(l => l > 0).sort((a, b) => b - a);
+  if (!lengths.length) return { cuts: [], totalBlanks: 0, lengthUsed: 0, waste: boardLength, wastePct: 100 };
+
+  const minLen = Math.min(...lengths);
+  const cache = new Map();
+
+  function best(remaining) {
+    // Base case: nothing useful left
+    if (remaining < minLen) return { cuts: [], waste: remaining };
+    const key = remaining.toFixed(3);
+    if (cache.has(key)) return cache.get(key);
+
+    let bestResult = { cuts: [], waste: remaining };
+
+    for (const len of lengths) {
+      if (len > remaining + 0.001) continue;
+      // Take one blank of this length, then recurse on remainder
+      const afterCut = remaining - len;
+      // Only subtract kerf if there's still material left for another cut
+      const remainder = afterCut > minLen ? afterCut - kerf : afterCut;
+      const sub = best(Math.max(0, remainder));
+      const totalWaste = sub.waste + (afterCut > minLen ? 0 : afterCut - Math.max(0, remainder));
+
+      const combined = mergeCuts([{ length: len, qty: 1 }, ...sub.cuts]);
+      if (sub.waste < bestResult.waste) {
+        bestResult = { cuts: combined, waste: sub.waste };
+      }
+    }
+
+    cache.set(key, bestResult);
+    return bestResult;
+  }
+
+  function mergeCuts(cuts) {
+    const map = {};
+    for (const c of cuts) map[c.length] = (map[c.length] || 0) + c.qty;
+    return Object.entries(map)
+      .map(([len, qty]) => ({ length: parseFloat(len), qty }))
+      .sort((a, b) => b.length - a.length);
+  }
+
+  const result = best(boardLength);
+  const totalBlanks = result.cuts.reduce((sum, c) => sum + c.qty, 0);
+  const kerfCount = Math.max(0, totalBlanks - 1);
+  const lengthUsed = result.cuts.reduce((sum, c) => sum + c.qty * c.length, 0) + kerfCount * kerf;
+  const waste = boardLength - lengthUsed;
+
+  return {
+    cuts: result.cuts,
+    totalBlanks,
+    lengthUsed,
+    waste: Math.max(0, waste),
+    wastePct: Math.round((Math.max(0, waste) / boardLength) * 100),
+  };
+}
+
 export function solveResaw(input) {
   const {
     stock,            // { thickness, width, length, qty, condition }
     resawSettings,    // { kerf, slabAllowance, panelTarget }
-    stripSettings,    // [{ name, sku, roughWidth, planeAllowance, finalWidth, depth, tableKerf, length }]
-    crosscutSettings, // { roughBlankLength, miterKerf }
+    stripSettings,    // [{ name, roughWidth, planeAllowance, finalWidth, tableKerf, length }]
+    crosscutSettings, // { blankLengths: number[], miterKerf }
   } = input;
 
-  // Step 0: Rough crosscut (boards → blanks)
-  // n blanks per board, (n-1) kerfs
-  // n × blankLen + (n-1) × kerf ≤ boardLength
-  // n ≤ (boardLength + kerf) / (blankLen + kerf)
-  const blanksPerBoard = Math.floor(
-    (stock.length + crosscutSettings.miterKerf) /
-    (crosscutSettings.roughBlankLength + crosscutSettings.miterKerf)
-  );
+  // Step 0: Rough crosscut — mixed length optimizer
+  const blankLengths = (crosscutSettings.blankLengths || [crosscutSettings.roughBlankLength])
+    .filter(l => l > 0)
+    .sort((a, b) => b - a);
+
+  const crosscutPlan = optimizeCrosscut(stock.length, blankLengths, crosscutSettings.miterKerf);
+
   const roughCrosscut = {
-    blanksPerBoard,
-    blanksTotal: blanksPerBoard * stock.qty,
-    roughBlankLength: crosscutSettings.roughBlankLength,
-    lengthUsed: blanksPerBoard * crosscutSettings.roughBlankLength + (blanksPerBoard - 1) * crosscutSettings.miterKerf,
-    lengthWaste: stock.length - (blanksPerBoard * crosscutSettings.roughBlankLength + (blanksPerBoard - 1) * crosscutSettings.miterKerf),
+    ...crosscutPlan,
+    blanksPerBoard: crosscutPlan.totalBlanks,
+    blanksTotal: crosscutPlan.totalBlanks * stock.qty,
+    blankLengths,
+    // Primary blank length = longest one (used for slab calc)
+    primaryBlankLength: blankLengths[0] || 36,
   };
 
   // Step 1: Usable thickness after conditioning
@@ -35,81 +102,73 @@ export function solveResaw(input) {
     's4s':         0,
   };
   const usableThickness = stock.thickness - (conditionLoss[stock.condition] || 0);
-  const usableWidth = stock.width; // width not affected by skip planing in this workflow
+  const usableWidth = stock.width;
 
-  // Step 2: Calculate slabs per blank (same thickness calc as before)
-  // Each slab needs: panelTarget + slabAllowance (for drum sanding)
-  // Plus kerf between each slab
-  // Formula: n slabs, (n-1) kerfs
-  // n × slabThickness + (n-1) × kerf ≤ usableThickness
-  // n ≤ (usableThickness + kerf) / (slabThickness + kerf)
-
+  // Step 2: Slabs per blank
   const slabThickness = resawSettings.panelTarget + resawSettings.slabAllowance;
   const slabsPerBlank = Math.floor(
     (usableThickness + resawSettings.kerf) / (slabThickness + resawSettings.kerf)
   );
-  // Keep slabsPerBoard as alias for backward compat (same value — thickness doesn't change between blanks)
-  const slabsPerBoard = slabsPerBlank;
+  const slabsPerBoard = slabsPerBlank; // alias
 
-  // Actual thickness used
-  const thicknessUsed = slabsPerBlank * slabThickness + (slabsPerBlank - 1) * resawSettings.kerf;
+  const thicknessUsed = slabsPerBlank * slabThickness + Math.max(0, slabsPerBlank - 1) * resawSettings.kerf;
   const thicknessWaste = usableThickness - thicknessUsed;
   const thicknessWastePct = Math.round((thicknessWaste / usableThickness) * 100);
 
-  // Step 3: Strips per panel per SKU + Step 3.5: Finish crosscut per SKU
+  // Step 3: Strips per panel + finish crosscut per SKU (mixed blank lengths)
   const stripResults = stripSettings.map(strip => {
-    // Step 3.5 — Finish crosscut: how many finished-length panels from one blank?
-    const finishedPiecesPerBlank = Math.floor(
-      (crosscutSettings.roughBlankLength + crosscutSettings.miterKerf) /
-      (strip.length + crosscutSettings.miterKerf)
-    );
-    const finishCrosscutWaste = crosscutSettings.roughBlankLength -
-      (finishedPiecesPerBlank * strip.length + (finishedPiecesPerBlank - 1) * crosscutSettings.miterKerf);
+    // Finish crosscut: per blank-length in the cut plan
+    const finishCrosscut = crosscutPlan.cuts.map(bc => {
+      const piecesPerBlank = Math.floor(
+        (bc.length + crosscutSettings.miterKerf) / (strip.length + crosscutSettings.miterKerf)
+      );
+      const kerfLoss = Math.max(0, piecesPerBlank - 1) * crosscutSettings.miterKerf;
+      const waste = bc.length - piecesPerBlank * strip.length - kerfLoss;
+      return { blankLength: bc.length, qty: bc.qty, piecesPerBlank, waste: Math.max(0, waste) };
+    });
 
-    // How many rough-width strips fit in the panel width?
-    // n strips, (n-1) kerfs
-    // n × roughWidth + (n-1) × tableKerf ≤ usableWidth
+    // Total finished pieces per board (across all blank types)
+    const totalFinishedPiecesPerBoard = finishCrosscut.reduce(
+      (sum, fc) => sum + fc.piecesPerBlank * fc.qty, 0
+    );
+
+    // Strips per panel (width direction)
     const stripsPerPanel = Math.floor(
       (usableWidth + strip.tableKerf) / (strip.roughWidth + strip.tableKerf)
     );
-    const widthUsed = stripsPerPanel * strip.roughWidth + (stripsPerPanel - 1) * strip.tableKerf;
+    const widthUsed = stripsPerPanel * strip.roughWidth + Math.max(0, stripsPerPanel - 1) * strip.tableKerf;
     const widthWaste = usableWidth - widthUsed;
 
-    // Total strips = blanksPerBoard × slabsPerBlank × finishedPiecesPerBlank × stripsPerPanel × boardQty
     return {
       ...strip,
       stripsPerPanel,
       widthUsed,
       widthWaste,
       widthWastePct: Math.round((widthWaste / usableWidth) * 100),
-      finishedPiecesPerBlank,
-      finishCrosscutWaste,
-      finishCrosscutWastePct: Math.round((finishCrosscutWaste / crosscutSettings.roughBlankLength) * 100),
-      stripsPerBoard: stripsPerPanel * finishedPiecesPerBlank * slabsPerBlank * blanksPerBoard,
-      totalStrips: stripsPerPanel * finishedPiecesPerBlank * slabsPerBlank * blanksPerBoard * stock.qty,
+      finishCrosscut,
+      totalFinishedPiecesPerBoard,
+      // Legacy single-value for display
+      finishedPiecesPerBlank: finishCrosscut[0]?.piecesPerBlank ?? 0,
+      finishCrosscutWaste: finishCrosscut[0]?.waste ?? 0,
+      stripsPerBoard: stripsPerPanel * totalFinishedPiecesPerBoard * slabsPerBlank,
+      totalStrips: stripsPerPanel * totalFinishedPiecesPerBoard * slabsPerBlank * stock.qty,
     };
   });
 
-  // Step 4: Resaw sequence (for display — per blank)
+  // Resaw sequence for display
   const resawSequence = [];
   for (let i = 0; i < slabsPerBlank; i++) {
-    const cutPosition = (i + 1) * slabThickness + i * resawSettings.kerf;
     resawSequence.push({
       cutNumber: i + 1,
-      cutPosition: cutPosition,
       slabNumber: i + 1,
-      slabThickness: slabThickness,
+      slabThickness,
       panelTarget: resawSettings.panelTarget,
     });
   }
 
   return {
     input: { stock, resawSettings, stripSettings, crosscutSettings },
-    stock: {
-      usableThickness,
-      usableWidth,
-      qty: stock.qty,
-    },
+    stock: { usableThickness, usableWidth, qty: stock.qty },
     roughCrosscut,
     slabs: {
       slabThickness,
@@ -122,7 +181,7 @@ export function solveResaw(input) {
     stripResults,
     resawSequence,
     summary: {
-      slabsTotal: slabsPerBlank * blanksPerBoard * stock.qty,
+      slabsTotal: slabsPerBlank * crosscutPlan.totalBlanks * stock.qty,
       thicknessYield: 100 - thicknessWastePct,
     },
   };

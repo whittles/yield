@@ -74,11 +74,20 @@
       <p class="text-xs text-text-muted mb-4">Cut long boards to manageable lengths at the miter station before resawing</p>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label class="block text-xs text-text-muted mb-1">Target blank length (in)</label>
-          <input type="text" v-model="store.crosscutSettings.roughBlankLengthStr"
-                 placeholder='e.g. "36"'
-                 class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary" />
-          <p class="text-xs text-text-muted mt-1">How long you cut each blank at the miter station (typically 36–48")</p>
+          <label class="block text-xs text-text-muted mb-1">Acceptable blank lengths (in)</label>
+          <div class="space-y-1">
+            <div v-for="(len, i) in store.crosscutSettings.blankLengths" :key="i" class="flex items-center gap-2">
+              <input type="text" v-model="store.crosscutSettings.blankLengths[i]"
+                     class="w-20 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                     placeholder='36' />
+              <span class="text-xs text-text-muted">"</span>
+              <button v-if="store.crosscutSettings.blankLengths.length > 1"
+                      @click="store.removeBlankLength(i)"
+                      class="text-text-muted hover:text-danger text-sm leading-none">×</button>
+            </div>
+            <button @click="store.addBlankLength()" class="text-xs text-accent hover:opacity-80 mt-1">+ Add length</button>
+          </div>
+          <p class="text-xs text-text-muted mt-1">Solver finds the mix that minimizes waste (e.g. 36" + 24")</p>
         </div>
         <div>
           <label class="block text-xs text-text-muted mb-1">Miter saw kerf</label>
@@ -91,11 +100,11 @@
           <p class="text-xs text-text-muted mt-1">Used for both rough crosscut and finish crosscut to length</p>
         </div>
         <div class="flex flex-col justify-end">
-          <div class="text-xs text-text-muted mb-1">Blanks per board (calculated)</div>
+          <div class="text-xs text-text-muted mb-1">Optimal cut plan (live)</div>
           <div class="text-sm font-semibold text-text-primary px-2 py-1.5 bg-bg border border-border rounded">
-            {{ blanksPerBoardPreview }}
+            {{ crosscutPreview }}
           </div>
-          <p class="text-xs text-text-muted mt-1">From {{ store.resawStock.lengthStr }}" board</p>
+          <p class="text-xs text-text-muted mt-1">{{ wastePreview }}" waste from {{ store.resawStock.lengthStr }}" board</p>
         </div>
       </div>
     </div>
@@ -357,6 +366,27 @@
           <div class="text-2xl font-bold text-text-primary">{{ sr.totalStrips }}</div>
           <div class="text-xs text-text-muted mt-1">{{ sr.name }}</div>
         </div>
+      </div>
+
+      <!-- Step 1: Rough Crosscut SVG -->
+      <div class="bg-surface border border-border rounded-lg p-5">
+        <h3 class="text-sm font-semibold text-text-primary mb-1">Step 1 — Rough Crosscut Layout</h3>
+        <p class="text-xs text-text-muted mb-2">{{ r.roughCrosscut.cuts.map(c => c.qty + '\u00d7' + fmtIn(c.length) + '"').join(' + ') }} from {{ fmtIn(r.input.stock.length) }}" board · {{ fmtIn(r.roughCrosscut.waste) }}" waste</p>
+        <div class="flex flex-wrap gap-3 text-xs text-text-muted mb-3">
+          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-yellow-600 opacity-80"></span> Blank</span>
+          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-gray-400 opacity-80"></span> Kerf / waste</span>
+        </div>
+        <svg viewBox="0 0 560 80" class="w-full max-w-2xl mx-auto" style="font-family: monospace;">
+          <rect x="20" y="15" width="520" height="50" fill="#e8d5b0" stroke="#8B6914" stroke-width="1.5"/>
+          <g v-for="(zone, i) in roughCutZones" :key="'rz-' + i">
+            <rect :x="zone.x" y="15" :width="zone.w" height="50"
+                  :fill="i % 2 === 0 ? '#d4a84b' : '#e8c470'" opacity="0.85" stroke="#8B6914" stroke-width="0.5"/>
+            <text v-if="zone.w > 25" :x="zone.x + zone.w/2" y="44" text-anchor="middle" font-size="9" fill="#3d2000">{{ fmtIn(zone.length) }}"</text>
+            <rect v-if="i < roughCutZones.length - 1" :x="zone.x + zone.w" y="15" :width="roughCutKerfW" height="50" fill="#555" opacity="0.5"/>
+          </g>
+          <rect v-if="roughCutWasteW > 0" :x="roughCutWasteX" y="15" :width="roughCutWasteW" height="50" fill="#aaa" opacity="0.4"/>
+          <text v-if="roughCutWasteW > 15" :x="roughCutWasteX + roughCutWasteW/2" y="44" text-anchor="middle" font-size="8" fill="#666">waste</text>
+        </svg>
       </div>
 
       <!-- Cross-section SVG (board end view) -->
@@ -665,7 +695,7 @@
             <thead>
               <tr class="text-left text-xs text-text-muted border-b border-border">
                 <th class="pb-2 pr-4">SKU</th>
-                <th class="pb-2 pr-4">Final Dims (W × D × L)</th>
+                <th class="pb-2 pr-4">Final Dims (Face × Depth × Length)</th>
                 <th class="pb-2 pr-4">Strips/Panel</th>
                 <th class="pb-2 pr-4">Pieces/Blank</th>
                 <th class="pb-2 pr-4">Panels (slabs)</th>
@@ -699,7 +729,7 @@
               </tr>
             </tfoot>
           </table>
-          <p class="text-xs text-text-muted mt-3">W = face width (visible dimension) · D = depth (how deep strip sits in kumiko frame) · L = length</p>
+          <p class="text-xs text-text-muted mt-3">Face = visible front dimension (set by table saw rip → plane → drum sand) · Depth = how deep strip sits in kumiko frame (set by panel thickness) · Length</p>
         </div>
       </div>
 
@@ -711,17 +741,29 @@
 import { computed } from 'vue'
 import { useProjectStore } from '@/stores/project'
 import { parseFraction, formatFraction } from '@/utils/fractions'
+import { optimizeCrosscut } from '@/resawSolver'
 
 const store = useProjectStore()
 const r = computed(() => store.resawResults)
 
-// Live: blanks per board preview
-const blanksPerBoardPreview = computed(() => {
+// Live: optimal crosscut plan preview
+const crosscutPreview = computed(() => {
   const boardLen = parseFraction(store.resawStock.lengthStr)
-  const blankLen = parseFraction(store.crosscutSettings.roughBlankLengthStr)
   const kerf = parseFraction(store.crosscutSettings.miterKerfStr)
-  if (!boardLen || !blankLen) return '—'
-  return Math.floor((boardLen + kerf) / (blankLen + kerf))
+  const lengths = store.crosscutSettings.blankLengths.map(s => parseFraction(s)).filter(l => l > 0)
+  if (!boardLen || !lengths.length) return '—'
+  const plan = optimizeCrosscut(boardLen, lengths, kerf)
+  if (!plan.cuts.length) return 'No cuts fit'
+  return plan.cuts.map(c => `${c.qty}×${fmtIn(c.length)}"`).join(' + ')
+})
+
+const wastePreview = computed(() => {
+  const boardLen = parseFraction(store.resawStock.lengthStr)
+  const kerf = parseFraction(store.crosscutSettings.miterKerfStr)
+  const lengths = store.crosscutSettings.blankLengths.map(s => parseFraction(s)).filter(l => l > 0)
+  if (!boardLen || !lengths.length) return '—'
+  const plan = optimizeCrosscut(boardLen, lengths, kerf)
+  return fmtIn(plan.waste)
 })
 
 // Live: slab green thickness
@@ -800,6 +842,37 @@ const offcutY = computed(() => {
 const offcutH = computed(() => {
   if (!r.value) return 0
   return (SVG_BOARD_Y + SVG_BOARD_H) - offcutY.value
+})
+
+// Rough crosscut SVG computeds
+const SVG_ROUGH_W = 520
+const roughCutZones = computed(() => {
+  if (!r.value || !r.value.roughCrosscut.cuts.length) return []
+  const boardLen = r.value.input.stock.length
+  const kerf = r.value.input.crosscutSettings.miterKerf
+  const zones = []
+  let cursor = 20
+  for (const cut of r.value.roughCrosscut.cuts) {
+    for (let i = 0; i < cut.qty; i++) {
+      const w = (cut.length / boardLen) * SVG_ROUGH_W
+      zones.push({ x: cursor, w, length: cut.length })
+      cursor += w + (cursor + w < 538 ? (kerf / boardLen) * SVG_ROUGH_W : 0)
+    }
+  }
+  return zones
+})
+const roughCutKerfW = computed(() => {
+  if (!r.value) return 0
+  return (r.value.input.crosscutSettings.miterKerf / r.value.input.stock.length) * SVG_ROUGH_W
+})
+const roughCutWasteX = computed(() => {
+  if (!roughCutZones.value.length) return 540
+  const last = roughCutZones.value[roughCutZones.value.length - 1]
+  return last.x + last.w
+})
+const roughCutWasteW = computed(() => {
+  if (!r.value) return 0
+  return Math.max(0, 540 - roughCutWasteX.value)
 })
 
 // Per-slab strip layout SVG
