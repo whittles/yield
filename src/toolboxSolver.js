@@ -293,21 +293,63 @@ export function packMultipleSheets(pieces, sheetSizes, kerf) {
  * Returns { w, h, sheet } where sheet has .placed[] for SVG rendering.
  */
 /**
- * Derive minimum sheet from an existing packed layout.
- * Just takes the bounding box of the placed pieces.
+ * Find the minimum sheet size by trying many widths with row-packing
+ * and picking the layout with smallest total area.
  */
-export function minimumSheet(packedSheet, kerf) {
-  if (!packedSheet || !packedSheet.placed || !packedSheet.placed.length) return null;
-  const maxX = Math.max(...packedSheet.placed.map(p => p.x + p.placedW + kerf));
-  const maxY = Math.max(...packedSheet.placed.map(p => p.y + p.placedH + kerf));
-  const w = maxX;
-  const h = maxY;
-  const usedArea = packedSheet.placed.reduce((s, p) => s + p.placedW * p.placedH, 0);
+export function minimumSheet(pieces, kerf) {
+  const items = [];
+  for (const p of pieces) {
+    for (let i = 0; i < p.qty; i++) {
+      items.push({ ...p, instanceId: `${p.id}-${i}` });
+    }
+  }
+  items.sort((a, b) => Math.max(b.length, b.width) - Math.max(a.length, a.width));
+
+  const maxDim = Math.max(...items.map(it => Math.max(it.length, it.width)));
+  // Width range: from widest piece up to 2× widest (covers most practical cases)
+  // Use finer steps for narrower widths where the optimum typically lives
+  const minW = maxDim + kerf;
+  const maxW = maxDim * 2 + kerf;
+
+  let best = null;
+  for (let i = 0; i <= 60; i++) {
+    const trialW = minW + (maxW - minW) * (i / 60);
+    const result = _rowPack(items, trialW, kerf);
+    if (result.placed.length === items.length) {
+      if (!best || result.w * result.h < best.w * best.h) best = result;
+    }
+  }
+  return best ?? _rowPack(items, maxW, kerf);
+}
+
+function _rowPack(items, sheetW, kerf) {
+  const placed = [];
+  let curRowX = 0, curRowY = 0, curRowH = 0;
+
+  for (const item of items) {
+    let iw = item.length + kerf, ih = item.width + kerf;
+    // Try rotating if doesn't fit in row
+    if (curRowX + iw > sheetW + 0.001 && curRowX + ih + kerf <= sheetW + 0.001) {
+      [iw, ih] = [ih, iw];
+    }
+    // Try rotating from scratch if wider than sheet
+    if (iw > sheetW + 0.001) { [iw, ih] = [item.width + kerf, item.length + kerf]; }
+    if (iw > sheetW + 0.001) continue;
+
+    if (curRowX + iw > sheetW + 0.001) {
+      curRowY += curRowH; curRowX = 0; curRowH = 0;
+    }
+    placed.push({ ...item, x: curRowX, y: curRowY, placedW: iw - kerf, placedH: ih - kerf });
+    curRowX += iw;
+    curRowH = Math.max(curRowH, ih);
+  }
+
+  const h = curRowY + curRowH;
+  const usedArea = placed.reduce((s, p) => s + p.placedW * p.placedH, 0);
   return {
-    w, h, sheetW: w, sheetH: h,
-    placed: packedSheet.placed,
-    wastePct: Math.round((1 - usedArea / (w * h)) * 100),
-    totalItems: packedSheet.placed.length,
+    w: sheetW, h, sheetW, sheetH: h,
+    placed, totalItems: items.length,
+    wastePct: Math.round((1 - usedArea / (sheetW * h)) * 100),
   };
 }
 
