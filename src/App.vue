@@ -87,9 +87,7 @@
     </header>
 
     <!-- ── Print header (only visible on print) ───────────────── -->
-    <div class="print-only p-6 border-b border-border">
-      <h1 class="text-2xl font-bold">Althoff Woodshop — Cut Plan</h1>
-      <p class="text-text-muted text-sm mt-1">Generated {{ new Date().toLocaleDateString() }}</p>
+    <div class="hidden"><!-- Print header handled per-view -->
     </div>
 
     <!-- ── Main content ───────────────────────────────────────── -->
