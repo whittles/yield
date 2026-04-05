@@ -286,6 +286,73 @@ export function packMultipleSheets(pieces, sheetSizes, kerf) {
   return sheets;
 }
 
+/**
+ * Calculate the minimum bounding sheet needed to fit all pieces.
+ * Uses a row-packing heuristic: sort by height desc, pack into rows
+ * trying both orientations to minimise width.
+ * Returns { w, h, sheet } where sheet has .placed[] for SVG rendering.
+ */
+export function minimumSheet(pieces, kerf) {
+  // Expand by qty
+  const items = [];
+  for (const p of pieces) {
+    for (let i = 0; i < p.qty; i++) {
+      items.push({ ...p, instanceId: `${p.id}-${i}` });
+    }
+  }
+  // Sort by height (longest dimension) descending
+  items.sort((a, b) => Math.max(b.length, b.width) - Math.max(a.length, a.width));
+
+  // Try a wide range of sheet widths and pick the one with smallest area
+  // Use the widest piece as minimum width, 4× widest as max
+  const maxDim = Math.max(...items.map(it => Math.max(it.length, it.width)));
+  const totalArea = items.reduce((s, it) => s + it.length * it.width, 0);
+  const minW = maxDim + kerf;
+  const maxW = Math.max(minW * 4, Math.sqrt(totalArea) * 2.5);
+
+  let bestResult = null;
+
+  // Sample candidate widths
+  const steps = 40;
+  for (let i = 0; i <= steps; i++) {
+    const trialW = minW + (maxW - minW) * (i / steps);
+    const result = _packIntoWidth(items, trialW, kerf);
+    if (!bestResult || result.w * result.h < bestResult.w * bestResult.h) {
+      bestResult = result;
+    }
+  }
+
+  return bestResult;
+}
+
+function _packIntoWidth(items, sheetW, kerf) {
+  // Guillotine pack into a sheet of given width, unlimited height
+  // Use a large height sentinel
+  const bigH = 10000;
+  const sheet = {
+    sheetW,
+    sheetH: bigH,
+    placed: [],
+    freeRects: [{ x: 0, y: 0, w: sheetW, h: bigH }],
+  };
+  for (const item of items) {
+    _tryPlace(sheet, item, kerf);
+  }
+  // Compute actual used height
+  const usedH = sheet.placed.reduce((max, p) => Math.max(max, p.y + p.placedH + kerf), 0);
+  const actualH = Math.max(usedH, 1);
+  // Utilization
+  const usedArea = sheet.placed.reduce((s, p) => s + p.placedW * p.placedH, 0);
+  return {
+    w: sheetW,
+    h: actualH,
+    wastePct: Math.round((1 - usedArea / (sheetW * actualH)) * 100),
+    placed: sheet.placed,
+    sheetW,
+    sheetH: actualH,
+  };
+}
+
 function _tryPlace(sheet, item, kerf) {
   for (const [iw, ih, rotated] of [
     [item.w, item.h, false],

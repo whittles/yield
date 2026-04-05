@@ -244,9 +244,58 @@
       </div>
 
 
+      <!-- Minimum sheet size -->
+      <div v-if="minSheet" class="bg-surface border border-accent/30 rounded-lg p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h2 class="text-base font-semibold text-text-primary">Minimum Sheet Required</h2>
+            <p class="text-xs text-text-muted mt-0.5">Smallest piece of stock that fits all parts — look for an offcut this size or larger</p>
+          </div>
+          <div class="text-right">
+            <div class="text-xl font-bold text-accent font-mono">{{ fmtIn(minSheet.w) }}" × {{ fmtIn(minSheet.h) }}"</div>
+            <div class="text-xs text-text-muted">{{ minSheet.wastePct }}% waste</div>
+          </div>
+        </div>
+        <!-- Min sheet SVG -->
+        <svg
+          :viewBox="`0 0 ${Math.round(minSheet.w * (SVG_DISPLAY_W / minSheet.w))} ${Math.round(minSheet.h * (SVG_DISPLAY_W / minSheet.w))}`"
+          class="w-full"
+          style="max-width: 100%; font-family: monospace;"
+        >
+          <defs>
+            <pattern id="hatch-min" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="8" stroke="#888" stroke-width="0.8" opacity="0.25"/>
+            </pattern>
+          </defs>
+          <rect x="0" y="0"
+            :width="Math.round(minSheet.w * (SVG_DISPLAY_W / minSheet.w))"
+            :height="Math.round(minSheet.h * (SVG_DISPLAY_W / minSheet.w))"
+            fill="url(#hatch-min)" stroke="#555" stroke-width="1"/>
+          <g v-for="p in minSheet.placed" :key="p.instanceId">
+            <rect
+              :x="Math.round(p.x * (SVG_DISPLAY_W / minSheet.w) * 10) / 10"
+              :y="Math.round(p.y * (SVG_DISPLAY_W / minSheet.w) * 10) / 10"
+              :width="Math.max(1, Math.round(p.placedW * (SVG_DISPLAY_W / minSheet.w) * 10) / 10)"
+              :height="Math.max(1, Math.round(p.placedH * (SVG_DISPLAY_W / minSheet.w) * 10) / 10)"
+              :fill="PIECE_COLORS[p.id] || '#888'"
+              fill-opacity="0.75"
+              :stroke="darken(PIECE_COLORS[p.id] || '#888')"
+              stroke-width="0.8"
+            />
+            <text
+              :x="Math.round(p.x * (SVG_DISPLAY_W / minSheet.w) * 10) / 10 + Math.max(1, Math.round(p.placedW * (SVG_DISPLAY_W / minSheet.w) * 10) / 10) / 2"
+              :y="Math.round(p.y * (SVG_DISPLAY_W / minSheet.w) * 10) / 10 + Math.max(1, Math.round(p.placedH * (SVG_DISPLAY_W / minSheet.w) * 10) / 10) / 2"
+              text-anchor="middle" dominant-baseline="middle"
+              font-size="9" fill="#fff" font-weight="600"
+            >{{ p.label }}</text>
+          </g>
+        </svg>
+      </div>
+
       <!-- Sheet layout SVGs -->
       <div class="space-y-4">
         <h2 class="text-base font-semibold text-text-primary">Sheet Layout</h2>
+        <p class="text-xs text-text-muted -mt-2">How pieces nest on your available stock (defined in settings above)</p>
         <div v-for="(sheet, si) in sheets" :key="'sheet-' + si" class="bg-surface border border-border rounded-lg p-5">
           <!-- Sheet label -->
           <p class="text-xs text-text-muted mb-2 no-print">
@@ -355,7 +404,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { parseFraction } from '@/utils/fractions'
-import { calculatePieces, packSheets, packMultipleSheets, formatIn } from '@/toolboxSolver'
+import { calculatePieces, packSheets, packMultipleSheets, minimumSheet, formatIn } from '@/toolboxSolver'
 
 const version = __APP_VERSION__
 
@@ -375,6 +424,7 @@ const kerfStr = ref('1/8')
 // ── State ────────────────────────────────────────────────────────────
 const result = ref(null)
 const sheets = ref([])
+const minSheet = ref(null)
 const inputError = ref('')
 
 // ── Parsed values ────────────────────────────────────────────────────
@@ -476,6 +526,7 @@ function calculate() {
 
     // Use multi-sheet packing: try each sheet in sequence
     sheets.value = packMultipleSheets(r.pieces, allSheetsSizes, kerf)
+    minSheet.value = minimumSheet(r.pieces, kerf)
   } catch (e) {
     inputError.value = `Calculation error: ${e.message}`
   }
