@@ -114,25 +114,30 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useProjectStore } from '@/stores/project'
 import { exportProject, importProject } from '@/utils/export'
 
 const store  = useProjectStore()
 const router = useRouter()
+const route  = useRoute()
 const version = __APP_VERSION__
 
+// Derive active tab from URL — survives page refresh
+const activeTab = computed(() => {
+  if (route.path === '/resaw') return 'resaw'
+  if (route.path === '/results') return 'results'
+  return 'input'
+})
+
 const hasResults = computed(() => !!store.results)
-const activeTab  = computed(() => store.activeTab)
 
 function goToInput() {
-  store.activeTab = 'input'
   router.push('/')
 }
 
 function goToResults() {
   if (!hasResults.value) return
-  store.activeTab = 'results'
   router.push('/results')
 }
 
@@ -145,7 +150,6 @@ function handleImport() {
 }
 
 function goToResaw() {
-  store.activeTab = 'resaw'
   router.push('/resaw')
 }
 </script>
