@@ -12,6 +12,7 @@ const router = createRouter({
     { path: '/',        component: InputView  },
     { path: '/results', component: ResultsView },
     { path: '/resaw',   component: () => import('@/views/ResawView.vue') },
+    { path: '/toolbox', component: () => import('@/views/ToolboxView.vue') },
   ],
 })
 
