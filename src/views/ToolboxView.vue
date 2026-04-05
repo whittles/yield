@@ -246,7 +246,7 @@
         <h2 class="text-base font-semibold text-text-primary mb-1">3D Preview</h2>
         <p class="text-xs text-text-muted mb-3">Isometric view — lid partially open to show interior</p>
 
-        <svg viewBox="0 0 500 350" class="w-full max-w-lg mx-auto" style="font-family: monospace;">
+        <svg viewBox="0 0 500 420" class="w-full max-w-lg mx-auto" style="font-family: monospace;">
           <!-- Ground shadow -->
           <ellipse
             :cx="isoBoxData.groundCenter[0]"
@@ -281,7 +281,7 @@
           <polygon :points="isoBoxData.lidATop"     fill="#d4a84b" stroke="#8B6914" stroke-width="0.8"/>
 
           <!-- Dimension label -->
-          <text x="20" y="340" font-size="9" fill="#64748b">
+          <text x="20" y="410" font-size="9" fill="#64748b">
             {{ fmtIn(result.dimensions.oL) }}" L × {{ fmtIn(result.dimensions.oW) }}" W × {{ fmtIn(result.dimensions.oH) }}" H (outer)
           </text>
         </svg>
@@ -498,10 +498,15 @@ const isoBoxData = computed(() => {
   const matThickness = result.value.input.matThickness
   const handleHeight = result.value.input.handleHeight
 
-  // Scale to fit in ~400×280 area
-  const scale = Math.min(180 / oL, 130 / oH, 130 / oW) * 1.4
-  const ox = 250 // SVG origin x
-  const oy = 260 // SVG origin y
+  // Scale to fit in viewBox 500×400
+  // The isometric projection of oL along x spans oL*cos(30)*scale horizontally
+  // and oH spans oH*scale vertically, oW adds (oW*sin(30)*scale) diagonally
+  // Target: total width ~380px, total height ~300px
+  const isoW = (oL + oW) * Math.cos(Math.PI / 6) // projected width in units
+  const isoH = oH + (oL + oW) * Math.sin(Math.PI / 6) // projected height in units
+  const scale = Math.min(380 / isoW, 260 / isoH)
+  const ox = 60 + oW * Math.cos(Math.PI / 6) * scale // left margin + depth offset
+  const oy = 340 - (oL + oW) * Math.sin(Math.PI / 6) * scale / 2 // bottom margin
 
   function iso(x, y, z) {
     const sx = ox + (x - z) * Math.cos(Math.PI / 6) * scale
