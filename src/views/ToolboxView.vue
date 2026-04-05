@@ -526,7 +526,8 @@ function calculate() {
 
     // Use multi-sheet packing: try each sheet in sequence
     sheets.value = packMultipleSheets(r.pieces, allSheetsSizes, kerf)
-    minSheet.value = minimumSheet(r.pieces, kerf)
+    // Minimum sheet = bounding box of the first packed layout
+    minSheet.value = sheets.value.length ? minimumSheet(sheets.value[0], kerf) : null
   } catch (e) {
     inputError.value = `Calculation error: ${e.message}`
   }

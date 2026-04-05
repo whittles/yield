@@ -293,86 +293,21 @@ export function packMultipleSheets(pieces, sheetSizes, kerf) {
  * Returns { w, h, sheet } where sheet has .placed[] for SVG rendering.
  */
 /**
- * Row-packing approach for minimum sheet calculation.
- * Sorts pieces by height desc, packs into rows left-to-right.
- * Tries multiple sheet widths and picks minimum area.
+ * Derive minimum sheet from an existing packed layout.
+ * Just takes the bounding box of the placed pieces.
  */
-export function minimumSheet(pieces, kerf) {
-  const items = [];
-  for (const p of pieces) {
-    for (let i = 0; i < p.qty; i++) {
-      // Orient each piece so its longer dimension is the height (sorts rows better)
-      const pw = Math.min(p.length, p.width);
-      const ph = Math.max(p.length, p.width);
-      items.push({ ...p, instanceId: `${p.id}-${i}`, pw, ph });
-    }
-  }
-  items.sort((a, b) => b.ph - a.ph);
-
-  const maxW = Math.max(...items.map(it => it.pw));
-  const totalArea = items.reduce((s, it) => s + it.pw * it.ph, 0);
-
-  // Try candidate sheet widths — start at 2× widest piece (practical minimum)
-  // up to totalArea / 8" height (reasonably square-ish sheets)
-  const candidates = [];
-  const minW = maxW * 2;  // at least 2 pieces wide
-  const maxTrialW = Math.max(minW * 4, totalArea / 8);  // assume ~8" min height
-  for (let i = 0; i <= 50; i++) {
-    candidates.push(minW + (maxTrialW - minW) * (i / 50));
-  }
-
-  let best = null;
-  for (const sheetW of candidates) {
-    const result = _rowPack(items, sheetW, kerf);
-    if (!best || result.w * result.h < best.w * best.h) {
-      best = result;
-    }
-  }
-  return best;
-}
-
-function _rowPack(items, sheetW, kerf) {
-  const placed = [];
-  let curRowX = 0, curRowY = 0, curRowH = 0;
-
-  for (const item of items) {
-    // Try normal orientation first, then rotated
-    let iw = item.pw + kerf, ih = item.ph + kerf;
-    if (iw > sheetW + 0.001) {
-      // Try rotated
-      iw = item.ph + kerf;
-      ih = item.pw + kerf;
-    }
-    if (iw > sheetW + 0.001) continue; // can't fit either way
-
-    if (curRowX + iw > sheetW + 0.001) {
-      // Start new row
-      curRowY += curRowH;
-      curRowX = 0;
-      curRowH = 0;
-    }
-
-    placed.push({
-      ...item,
-      x: curRowX,
-      y: curRowY,
-      placedW: iw - kerf,
-      placedH: ih - kerf,
-    });
-    curRowX += iw;
-    curRowH = Math.max(curRowH, ih);
-  }
-
-  const totalH = curRowY + curRowH;
-  const usedArea = placed.reduce((s, p) => s + p.placedW * p.placedH, 0);
+export function minimumSheet(packedSheet, kerf) {
+  if (!packedSheet || !packedSheet.placed || !packedSheet.placed.length) return null;
+  const maxX = Math.max(...packedSheet.placed.map(p => p.x + p.placedW + kerf));
+  const maxY = Math.max(...packedSheet.placed.map(p => p.y + p.placedH + kerf));
+  const w = maxX;
+  const h = maxY;
+  const usedArea = packedSheet.placed.reduce((s, p) => s + p.placedW * p.placedH, 0);
   return {
-    w: sheetW,
-    h: totalH,
-    placed,
-    sheetW,
-    sheetH: totalH,
-    wastePct: Math.round((1 - usedArea / (sheetW * totalH)) * 100),
-    totalItems: items.length,
+    w, h, sheetW: w, sheetH: h,
+    placed: packedSheet.placed,
+    wastePct: Math.round((1 - usedArea / (w * h)) * 100),
+    totalItems: packedSheet.placed.length,
   };
 }
 
