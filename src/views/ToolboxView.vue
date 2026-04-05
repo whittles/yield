@@ -417,7 +417,7 @@ const heightStr = ref('8')
 const matThicknessStr = ref('15/32')
 const dadoDepthStr = ref('1/4')
 const runnerClearanceStr = ref('1/16')
-const handleHeightStr = ref('3/4')
+const handleHeightStr = ref('1 1/2')
 const overlapFractionStr = ref('1/3')
 const availableSheets = ref([{ w: '48', h: '96' }])
 const kerfStr = ref('1/8')
@@ -486,31 +486,42 @@ function sheetUtilization(sheet, sheetIndex) {
 const isoBoxData = computed(() => {
   if (!result.value) return null
   const d = result.value.dimensions
-  // Swap: put box LENGTH along z-axis so the long front face faces the viewer
-  const oZ = d.oL   // length goes INTO the screen (z = depth in isometric)
-  const oL = d.oW   // width becomes the horizontal span (x axis)
-  const oY = d.oH   // height stays up (y axis)
+  const oL = d.oL   // length along x (left-to-right)
+  const oZ = d.oW   // depth along z (front-to-back)
+  const oY = d.oH   // height along y (up)
   const matT = result.value.input.matThickness
   const handleH = result.value.input.handleHeight
   const battensH = d.battensWidth ?? (handleH + 0.5)
   const lidThick = d.lidThickness ?? 0.25
   const lidLen = d.lidLength ?? (d.iL - 0.125)
 
-  const cos30 = Math.cos(Math.PI / 6)
-  const sin30 = Math.sin(Math.PI / 6)
-  const projW = (oL + oZ) * cos30
-  const projH = oY + (oL + oZ) * sin30
+  // Use asymmetric angles: x-axis (length) at 20°, z-axis (depth) at 40°
+  // This makes the long front face dominant and depth recede more steeply
+  const cosX = Math.cos(20 * Math.PI / 180)  // x-axis horizontal component
+  const sinX = Math.sin(20 * Math.PI / 180)  // x-axis vertical component (down-right)
+  const cosZ = Math.cos(40 * Math.PI / 180)  // z-axis horizontal component
+  const sinZ = Math.sin(40 * Math.PI / 180)  // z-axis vertical component (down-left)
+
+  // Projected extents
+  const projW = oL * cosX + oZ * cosZ
+  const projH = oY + oL * sinX + oZ * sinZ
   const scale = Math.min(440 / projW, 360 / projH)
-  const cos30s = cos30 * scale
-  const sin30s = sin30 * scale
-  const originX = 30 + oZ * cos30s
-  const originY = 390 - (oL + oZ) * sin30s
+
+  // Scaled axis vectors
+  const cosXs = cosX * scale
+  const sinXs = sinX * scale
+  const cosZs = cosZ * scale
+  const sinZs = sinZ * scale
+
+  // Origin: left-back corner at x=30, bottom-far corner at y=390
+  const originX = 30 + oZ * cosZs
+  const originY = 390 - oL * sinXs - oZ * sinZs
 
   function iso(x, y, z) {
-    return [
-      Math.round((originX + (x - z) * cos30s) * 10) / 10,
-      Math.round((originY - y * scale + (x + z) * sin30s) * 10) / 10,
-    ]
+    // x goes right+down (20°), z goes left+down (40°), y goes straight up
+    const sx = originX + x * cosXs - z * cosZs
+    const sy = originY - y * scale + x * sinXs + z * sinZs
+    return [Math.round(sx * 10) / 10, Math.round(sy * 10) / 10]
   }
   function pts(...coords) {
     return coords.map(([x, y]) => `${x},${y}`).join(' ')
@@ -551,7 +562,7 @@ const isoBoxData = computed(() => {
     rightBattenFace,
     lidTop, lidFront, lidRight,
     interiorTop,
-    ground: { cx: gcx, cy: gcy + 12, rx: (oL+oZ)*cos30s*0.35, ry: (oL+oZ)*cos30s*0.08 },
+    ground: { cx: gcx, cy: gcy + 12, rx: (oL*cosXs + oZ*cosZs)*0.4, ry: (oL*cosXs + oZ*cosZs)*0.08 },
   }
 })
 
