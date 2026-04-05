@@ -248,32 +248,21 @@
         <h2 class="text-base font-semibold text-text-primary mb-1">3D Preview</h2>
         <p class="text-xs text-text-muted mb-3">Isometric view — lid partially open to show interior</p>
 
-        <svg viewBox="0 0 500 420" class="w-full max-w-lg mx-auto" style="display:block; font-family:monospace;">
+        <svg viewBox="0 0 500 400" class="w-full max-w-lg mx-auto" style="display:block;">
           <ellipse :cx="isoBoxData.ground.cx" :cy="isoBoxData.ground.cy"
                    :rx="isoBoxData.ground.rx" :ry="isoBoxData.ground.ry"
-                   fill="#000" opacity="0.10"/>
-
-          <!-- Box body -->
+                   fill="#000" opacity="0.12"/>
           <polygon :points="isoBoxData.topFace"   fill="#d4b87a" stroke="#8B6914" stroke-width="0.8"/>
           <polygon :points="isoBoxData.rightFace" fill="#a07840" stroke="#8B6914" stroke-width="0.8"/>
           <polygon :points="isoBoxData.frontFace" fill="#c8a96e" stroke="#8B6914" stroke-width="0.8"/>
-
-          <!-- Handle on right end (accent color) -->
-          <polygon :points="isoBoxData.handleRight" fill="#8B5E2A" stroke="#5a3a10" stroke-width="0.8"/>
-
-          <!-- Fixed batten on right end -->
-          <polygon :points="isoBoxData.rightBattenFace" fill="#6B4F2A" stroke="#4a3010" stroke-width="0.8"/>
-
-          <!-- Interior (exposed gap) -->
-          <polygon v-if="isoBoxData.interiorTop" :points="isoBoxData.interiorTop" fill="#1a1008" stroke="#0a0500" stroke-width="0.5"/>
-
-          <!-- Lid panel -->
-          <polygon :points="isoBoxData.lidFront" fill="#a07840" stroke="#8B6914" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.lidRight"  fill="#8B6914" stroke="#5a4000" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.lidTop"   fill="#d4b87a" stroke="#8B6914" stroke-width="0.8"/>
-
-          <text x="20" y="415" font-size="9" fill="#64748b">
-            {{ fmtIn(result.dimensions.oL) }}" L × {{ fmtIn(result.dimensions.oW) }}" W × {{ fmtIn(result.dimensions.oH) }}" H outer · Lid: {{ fmtIn(result.dimensions.lidLength) }}" × {{ fmtIn(result.dimensions.lidWidth) }}" × ¼"
+          <polygon :points="isoBoxData.handleFace" fill="#7a4f20" stroke="#5a3a10" stroke-width="0.8"/>
+          <polygon :points="isoBoxData.battenFace" fill="#5a3a10" stroke="#3a2000" stroke-width="0.8"/>
+          <polygon v-if="isoBoxData.interior" :points="isoBoxData.interior" fill="#1a0f05" stroke="#0a0500" stroke-width="0.5"/>
+          <polygon :points="isoBoxData.lidFront" fill="#b8954a" stroke="#8B6914" stroke-width="0.8"/>
+          <polygon :points="isoBoxData.lidRight"  fill="#9a7a30" stroke="#7a5a10" stroke-width="0.8"/>
+          <polygon :points="isoBoxData.lidTop"   fill="#e8c870" stroke="#8B6914" stroke-width="0.8"/>
+          <text x="15" y="395" font-size="9" fill="#64748b">
+            {{ fmtIn(result.dimensions.oL) }}" L × {{ fmtIn(result.dimensions.oW) }}" W × {{ fmtIn(result.dimensions.oH) }}" H (outer)
           </text>
         </svg>
 
@@ -485,89 +474,64 @@ function sheetUtilization(sheet, sheetIndex) {
 // ── Isometric 3D preview ────────────────────────────────────────────────
 const isoBoxData = computed(() => {
   if (!result.value) return null
-  const d = result.value.dimensions
-  // Long axis (oL) goes left-to-right (x), short axis (oW) goes into screen (z)
-  // Viewer is front-right-above: sees front face (z=0, full oL×oY), right face (x=oL, oW×oY), top (oL×oW)
-  const oL = d.oL   // length = x axis (left to right) — this is the big front face
-  const oZ = d.oW   // depth = z axis (into screen)
-  const oY = d.oH   // height = y axis (up)
-  const matT = result.value.input.matThickness
+  const dim = result.value.dimensions
+  const L = dim.oL
+  const D = dim.oW
+  const H = dim.oH
+  const matT  = result.value.input.matThickness
   const handleH = result.value.input.handleHeight
-  const battensH = d.battensWidth ?? (handleH + 0.5)
-  const lidThick = d.lidThickness ?? 0.25
-  const lidLen = d.lidLength ?? (d.iL - 0.125)
-  // Lid slides along z (long axis). Show it slid 30% open toward viewer (z=0 side)
+  const battensH = dim.battensWidth ?? (handleH + 0.5)
+  const lidLen   = dim.lidLength   ?? (L * 0.89)
+  const lidThick = dim.lidThickness ?? 0.25
 
-  // Use asymmetric angles: x-axis (length) at 20°, z-axis (depth) at 40°
-  // This makes the long front face dominant and depth recede more steeply
-  const cosX = Math.cos(20 * Math.PI / 180)  // x-axis horizontal component
-  const sinX = Math.sin(20 * Math.PI / 180)  // x-axis vertical component (down-right)
-  const cosZ = Math.cos(40 * Math.PI / 180)  // z-axis horizontal component
-  const sinZ = Math.sin(40 * Math.PI / 180)  // z-axis vertical component (down-left)
-
-  // Projected extents
-  const projW = oL * cosX + oZ * cosZ
-  const projH = oY + oL * sinX + oZ * sinZ
-  const scale = Math.min(440 / projW, 360 / projH)
-
-  // Scaled axis vectors
-  const cosXs = cosX * scale
-  const sinXs = sinX * scale
-  const cosZs = cosZ * scale
-  const sinZs = sinZ * scale
-
-  // Origin: left-back corner at x=30, bottom-far corner at y=390
-  const originX = 30 + oZ * cosZs
-  const originY = 390 - oL * sinXs - oZ * sinZs
+  const cos30 = Math.cos(Math.PI / 6)
+  const sin30 = 0.5
+  const projW = (L + D) * cos30
+  const projH = H + (L + D) * sin30
+  const scale = Math.min(420 / projW, 320 / projH)
+  const cos30s = cos30 * scale
+  const sin30s = sin30 * scale
+  const originX = 40 + D * cos30s
+  const originY = 360 - (L + D) * sin30s
 
   function iso(x, y, z) {
-    // x goes right+down (20°), z goes left+down (40°), y goes straight up
-    const sx = originX + x * cosXs - z * cosZs
-    const sy = originY - y * scale + x * sinXs + z * sinZs
-    return [Math.round(sx * 10) / 10, Math.round(sy * 10) / 10]
+    return [
+      Math.round((originX + (x - z) * cos30s) * 10) / 10,
+      Math.round((originY - y * scale + (x + z) * sin30s) * 10) / 10,
+    ]
   }
-  function pts(...coords) {
-    return coords.map(([x, y]) => `${x},${y}`).join(' ')
+  function pts(...pairs) {
+    return pairs.map(([px, py]) => `${px},${py}`).join(' ')
   }
 
-  // Box body
-  const topFace   = pts(iso(0,oY,0), iso(oL,oY,0), iso(oL,oY,oZ), iso(0,oY,oZ))
-  const rightFace = pts(iso(oL,0,0), iso(oL,0,oZ), iso(oL,oY,oZ), iso(oL,oY,0))
-  const frontFace = pts(iso(0,0,0),  iso(oL,0,0),  iso(oL,oY,0),  iso(0,oY,0))
+  const topFace   = pts(iso(0,H,0), iso(L,H,0), iso(L,H,D), iso(0,H,D))
+  const rightFace = pts(iso(L,0,0), iso(L,0,D), iso(L,H,D), iso(L,H,0))
+  const frontFace = pts(iso(0,0,0), iso(L,0,0), iso(L,H,0), iso(0,H,0))
 
-  // Handle on right end (x=oL face, at top of end panel)
-  const handleRight = pts(iso(oL,oY-handleH,0), iso(oL,oY-handleH,oZ), iso(oL,oY,oZ), iso(oL,oY,0))
+  const handleFace = pts(iso(L,H-handleH,0), iso(L,H-handleH,D), iso(L,H,D), iso(L,H,0))
+  const battenFace = pts(iso(L,H,0), iso(L,H,D), iso(L,H+battensH,D), iso(L,H+battensH,0))
 
-  // Fixed batten on right end
-  const rightBattenFace = pts(iso(oL,oY,0), iso(oL,oY,oZ), iso(oL,oY+battensH,oZ), iso(oL,oY+battensH,0))
+  const lidSlide = L * 0.30
+  const lx0 = -lidSlide
+  const lx1 = lx0 + lidLen
+  const lidTop   = pts(iso(lx0,H+lidThick,0), iso(lx1,H+lidThick,0), iso(lx1,H+lidThick,D), iso(lx0,H+lidThick,D))
+  const lidFront = pts(iso(lx0,H,0), iso(lx1,H,0), iso(lx1,H+lidThick,0), iso(lx0,H+lidThick,0))
+  const lidRight = pts(iso(lx1,H,0), iso(lx1,H,D), iso(lx1,H+lidThick,D), iso(lx1,H+lidThick,0))
 
-  // Lid panel (slid 30% open toward x=0)
-  // Lid slides along x (long axis). Slid 30% open toward x=0 (left)
-  const lidSlide = oL * 0.30
-  const lidX0 = -lidSlide
-  const lidX1 = lidX0 + lidLen
-  // Lid spans full z (oZ = short depth), sits at y=oY
-  const lidTop   = pts(iso(lidX0,oY+lidThick,0), iso(lidX1,oY+lidThick,0), iso(lidX1,oY+lidThick,oZ), iso(lidX0,oY+lidThick,oZ))
-  const lidFront = pts(iso(lidX0,oY,0), iso(lidX1,oY,0), iso(lidX1,oY+lidThick,0), iso(lidX0,oY+lidThick,0))
-  const lidRight = pts(iso(lidX1,oY,0), iso(lidX1,oY,oZ), iso(lidX1,oY+lidThick,oZ), iso(lidX1,oY+lidThick,0))
-
-  // Interior gap (exposed where lid has slid to the left)
-  const gapX0 = lidX1
-  const gapX1 = oL - matT
-  const interiorTop = gapX1 > gapX0
-    ? pts(iso(gapX0,oY,0), iso(gapX1,oY,0), iso(gapX1,oY,oZ), iso(gapX0,oY,oZ))
+  const gx0 = lx1
+  const gx1 = L - matT
+  const interior = gx1 > gx0
+    ? pts(iso(gx0,H,0), iso(gx1,H,0), iso(gx1,H,D), iso(gx0,H,D))
     : null
 
-  // Ground shadow
-  const [gcx, gcy] = iso(oL/2, 0, oZ/2)
+  const [gcx, gcy] = iso(L/2, 0, D/2)
 
   return {
     topFace, rightFace, frontFace,
-    handleRight,
-    rightBattenFace,
+    handleFace, battenFace,
     lidTop, lidFront, lidRight,
-    interiorTop,
-    ground: { cx: gcx, cy: gcy + 12, rx: (oL*cosXs + oZ*cosZs)*0.4, ry: (oL*cosXs + oZ*cosZs)*0.08 },
+    interior,
+    ground: { cx: gcx, cy: gcy + 10, rx: (L+D)*cos30s*0.35, ry: (L+D)*cos30s*0.09 },
   }
 })
 
