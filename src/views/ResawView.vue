@@ -807,6 +807,10 @@ const conditionLabel = computed(() => {
 // Format decimal inches to fraction string
 function fmtIn(val) {
   if (val === undefined || val === null) return '?'
+  // Small dimensions (< 0.5") should show as decimals, not fractions
+  // e.g. 0.150" not "1/8", 0.375" not "3/8" — actually 0.375 is fine as a fraction
+  // Rule: if it looks like it came from a strip/slab dimension, use decimal
+  if (val < 0.5 && val > 0) return val.toFixed(3)
   return formatFraction(val)
 }
 

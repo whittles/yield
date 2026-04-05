@@ -105,7 +105,7 @@ export const useProjectStore = defineStore('project', () => {
   // ─── Resaw Planner ─────────────────────────────────────────────────────────
   const resawStock = ref({
     qty: 5,
-    thicknessStr: '2',
+    thicknessStr: '1 15/16',
     widthStr: '7',
     lengthStr: '120',
     condition: 'skip-planed',
