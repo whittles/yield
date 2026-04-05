@@ -486,9 +486,10 @@ function sheetUtilization(sheet, sheetIndex) {
 const isoBoxData = computed(() => {
   if (!result.value) return null
   const d = result.value.dimensions
-  const oL = d.oL
-  const oZ = d.oW   // depth
-  const oY = d.oH   // height of box BODY only
+  // Swap: put box LENGTH along z-axis so the long front face faces the viewer
+  const oZ = d.oL   // length goes INTO the screen (z = depth in isometric)
+  const oL = d.oW   // width becomes the horizontal span (x axis)
+  const oY = d.oH   // height stays up (y axis)
   const matT = result.value.input.matThickness
   const handleH = result.value.input.handleHeight
   const battensH = d.battensWidth ?? (handleH + 0.5)
