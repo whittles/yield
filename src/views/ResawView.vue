@@ -371,7 +371,7 @@
               font-size="9"
               fill="#3d2000"
             >
-              Slab {{ i + 1 }}: {{ fmtIn(r.slabs.slabThickness) }} → {{ fmtIn(r.slabs.slabThickness - r.resawSettings.slabAllowance) }} panel
+              Slab {{ i + 1 }}: {{ fmtIn(r.slabs.slabThickness) }} → {{ fmtIn(r.slabs.slabThickness - r.input.resawSettings.slabAllowance) }} panel
             </text>
             <!-- Kerf after slab (not after last) -->
             <rect
