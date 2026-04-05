@@ -180,16 +180,18 @@
             <div class="text-xs text-text-muted mt-0.5">L × W × H (footprint)</div>
           </div>
           <div class="bg-bg border border-border rounded p-3">
-            <div class="text-xs text-text-muted mb-1">Lid runner groove depth</div>
-            <div class="font-mono font-semibold text-text-primary">{{ result.dimensions.runnerDepth.toFixed(4) }}"</div>
-            <div class="text-xs text-text-muted mt-0.5">Routed into top inside edge of front &amp; back</div>
-          </div>
-          <div class="bg-bg border border-border rounded p-3">
             <div class="text-xs text-text-muted mb-1">Lid panel</div>
             <div class="font-mono font-semibold text-text-primary">
-              {{ fmtIn(result.dimensions.lidPanelLength) }}" × {{ fmtIn(result.dimensions.lidPanelWidth) }}"
+              {{ fmtIn(result.dimensions.lidLength) }}" × {{ fmtIn(result.dimensions.lidWidth) }}" × ¼"
             </div>
-            <div class="text-xs text-text-muted mt-0.5">Each panel (2 total) fits in runner grooves</div>
+            <div class="text-xs text-text-muted mt-0.5">Single sliding panel (¼" thick plywood)</div>
+          </div>
+          <div class="bg-bg border border-border rounded p-3">
+            <div class="text-xs text-text-muted mb-1">Fixed battens</div>
+            <div class="font-mono font-semibold text-text-primary">
+              {{ fmtIn(result.dimensions.battensWidth) }}" wide × {{ fmtIn(result.dimensions.oW) }}" long
+            </div>
+            <div class="text-xs text-text-muted mt-0.5">Nailed to end panels, overlap lid by ½"</div>
           </div>
           <div class="bg-bg border border-border rounded p-3">
             <div class="text-xs text-text-muted mb-1">Dado depth</div>
@@ -238,7 +240,7 @@
             </tbody>
           </table>
         </div>
-        <p class="text-xs text-text-muted mt-3">Highlighted rows (End ×2, Lid Panel ×2) use accented border. All dimensions in inches.</p>
+        <p class="text-xs text-text-muted mt-3">Highlighted rows (End ×2) use accented border. All dimensions in inches.</p>
       </div>
 
       <!-- 3D Isometric Preview -->
@@ -246,34 +248,32 @@
         <h2 class="text-base font-semibold text-text-primary mb-1">3D Preview</h2>
         <p class="text-xs text-text-muted mb-3">Isometric view — lid partially open to show interior</p>
 
-        <svg viewBox="0 0 500 420" class="w-full max-w-lg mx-auto" style="font-family: monospace; display: block;">
-          <!-- Ground shadow -->
-          <ellipse
-            :cx="isoBoxData.ground.cx" :cy="isoBoxData.ground.cy"
-            :rx="isoBoxData.ground.rx" :ry="isoBoxData.ground.ry"
-            fill="#000" opacity="0.10"
-          />
+        <svg viewBox="0 0 500 420" class="w-full max-w-lg mx-auto" style="display:block; font-family:monospace;">
+          <ellipse :cx="isoBoxData.ground.cx" :cy="isoBoxData.ground.cy"
+                   :rx="isoBoxData.ground.rx" :ry="isoBoxData.ground.ry"
+                   fill="#000" opacity="0.10"/>
 
-          <!-- Box body — draw order: top, right, front -->
+          <!-- Box body -->
           <polygon :points="isoBoxData.topFace"   fill="#d4b87a" stroke="#8B6914" stroke-width="0.8"/>
           <polygon :points="isoBoxData.rightFace" fill="#a07840" stroke="#8B6914" stroke-width="0.8"/>
           <polygon :points="isoBoxData.frontFace" fill="#c8a96e" stroke="#8B6914" stroke-width="0.8"/>
 
-          <!-- Interior gap (visible where lid A is open) -->
-          <polygon v-if="isoBoxData.interiorTop" :points="isoBoxData.interiorTop" fill="#2a1f0e" stroke="#1a0f00" stroke-width="0.5"/>
+          <!-- Handle on right end (accent color) -->
+          <polygon :points="isoBoxData.handleRight" fill="#8B5E2A" stroke="#5a3a10" stroke-width="0.8"/>
 
-          <!-- Lid panel B (closed, right) -->
-          <polygon :points="isoBoxData.lidBFrontEdge" fill="#a07840" stroke="#8B6914" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.lidBTop"       fill="#d4a84b" stroke="#8B6914" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.lidBRight"     fill="#8B6914" stroke="#5a4000" stroke-width="0.8"/>
+          <!-- Fixed batten on right end -->
+          <polygon :points="isoBoxData.rightBattenFace" fill="#6B4F2A" stroke="#4a3010" stroke-width="0.8"/>
 
-          <!-- Lid panel A (open, slid left) -->
-          <polygon :points="isoBoxData.lidAFrontEdge" fill="#a07840" stroke="#8B6914" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.lidATop"       fill="#d4a84b" stroke="#8B6914" stroke-width="0.8"/>
+          <!-- Interior (exposed gap) -->
+          <polygon v-if="isoBoxData.interiorTop" :points="isoBoxData.interiorTop" fill="#1a1008" stroke="#0a0500" stroke-width="0.5"/>
 
-          <!-- Dimension label -->
+          <!-- Lid panel -->
+          <polygon :points="isoBoxData.lidFront" fill="#a07840" stroke="#8B6914" stroke-width="0.8"/>
+          <polygon :points="isoBoxData.lidRight"  fill="#8B6914" stroke="#5a4000" stroke-width="0.8"/>
+          <polygon :points="isoBoxData.lidTop"   fill="#d4b87a" stroke="#8B6914" stroke-width="0.8"/>
+
           <text x="20" y="415" font-size="9" fill="#64748b">
-            {{ fmtIn(result.dimensions.oL) }}" L × {{ fmtIn(result.dimensions.oW) }}" W × {{ fmtIn(result.dimensions.oH) }}" H (outer)
+            {{ fmtIn(result.dimensions.oL) }}" L × {{ fmtIn(result.dimensions.oW) }}" W × {{ fmtIn(result.dimensions.oH) }}" H outer · Lid: {{ fmtIn(result.dimensions.lidLength) }}" × {{ fmtIn(result.dimensions.lidWidth) }}" × ¼"
           </text>
         </svg>
 
@@ -369,19 +369,19 @@
         <div class="bg-bg border border-accent/30 rounded p-3 mb-4 text-sm font-mono space-y-1">
           <div><span class="text-text-muted">Bottom dado:</span> <span class="text-text-primary font-semibold">{{ fmtIn(dadoDepth) }}" deep × {{ fmtIn(matThickness) }}" wide</span> — in front, back, and ends</div>
           <div><span class="text-text-muted">End dados:</span> <span class="text-text-primary font-semibold">{{ fmtIn(dadoDepth) }}" deep × {{ fmtIn(matThickness) }}" wide</span> — in front and back</div>
-          <div><span class="text-text-muted">Lid runner groove:</span> <span class="text-text-primary font-semibold">{{ result.dimensions.runnerDepth.toFixed(4) }}" deep × {{ fmtIn(matThickness) }}" wide</span> — top inside edge of front &amp; back</div>
+          <div><span class="text-text-muted">Fixed battens:</span> <span class="text-text-primary font-semibold">{{ fmtIn(result.dimensions.battensWidth) }}" wide × {{ fmtIn(result.dimensions.oW) }}" long</span> — overlap lid by {{ fmtIn(result.dimensions.battensOverlap) }}" each end</div>
         </div>
 
         <ol class="space-y-2 text-sm text-text-muted list-decimal ml-5">
-          <li>Cut all dados <strong class="text-text-primary">BEFORE</strong> assembly (bottom dado in front/back/ends, end dados in front/back, lid runner groove in front/back)</li>
+          <li>Cut all dados <strong class="text-text-primary">BEFORE</strong> assembly — bottom dado in front/back/ends, end dados in front/back</li>
           <li>Dry fit all pieces before gluing/nailing</li>
-          <li>Assemble: nail ends into front/back dadoes</li>
+          <li>Assemble carcass: nail ends into front/back dado grooves</li>
           <li>Drop bottom into dado grooves — <strong class="text-text-primary">no glue needed</strong> (allows wood movement)</li>
           <li>Check square, nail through front/back into ends</li>
-          <li>Cut lid panels to size, test fit in runner grooves</li>
-          <li>Cut handle cutouts (1" × 3" slot, ½" from each end)</li>
-          <li>Nail handle/stop strips inside ends after confirming lid slides freely</li>
-          <li>15° bevel on inside bottom edge of handle strips</li>
+          <li>Fit handle/grip strips to <strong class="text-text-primary">BOTH</strong> end panels — glue first, then nail from inside. 15° bevel on inside bottom edge.</li>
+          <li>Cut lid panel to size — test fit, should slide freely with hair's-breadth gap</li>
+          <li>Make fixed battens — nail to top of end panels (on top of handles). Overlap lid by ½" each end to capture it.</li>
+          <li>Cut locking wedge — taper 1:6 along length. Drive in at one end to lock lid, knock out to open.</li>
         </ol>
       </div>
 
@@ -433,12 +433,14 @@ const dadoDepth = computed(() => parseFraction(dadoDepthStr.value) || 0.25)
 
 // ── Piece colors ─────────────────────────────────────────────────────
 const PIECE_COLORS = {
-  front:  '#6366f1',
-  back:   '#6366f1',
-  end:    '#22c55e',
-  bottom: '#f59e0b',
-  lid:    '#0ea5e9',
-  handle: '#a78bfa',
+  front:          '#6366f1',
+  back:           '#6366f1',
+  end:            '#22c55e',
+  bottom:         '#f59e0b',
+  lid:            '#0ea5e9',
+  'fixed-batten': '#8B5E2A',
+  handle:         '#a78bfa',
+  wedge:          '#64748b',
 }
 
 function darken(hex) {
@@ -484,51 +486,57 @@ function sheetUtilization(sheet, sheetIndex) {
 const isoBoxData = computed(() => {
   if (!result.value) return null
   const d = result.value.dimensions
-  const { oL, oW: oZ, oH: oY, lidPanelLength } = d
+  const oL = d.oL
+  const oZ = d.oW   // depth
+  const oY = d.oH   // height of box BODY only
   const matT = result.value.input.matThickness
+  const handleH = result.value.input.handleHeight
+  const battensH = d.battensWidth ?? (handleH + 0.5)
+  const lidThick = d.lidThickness ?? 0.25
+  const lidLen = d.lidLength ?? (d.iL - 0.125)
 
   const cos30 = Math.cos(Math.PI / 6)
   const sin30 = Math.sin(Math.PI / 6)
-
   const projW = (oL + oZ) * cos30
   const projH = oY + (oL + oZ) * sin30
   const scale = Math.min(440 / projW, 360 / projH)
-
   const cos30s = cos30 * scale
   const sin30s = sin30 * scale
   const originX = 30 + oZ * cos30s
   const originY = 390 - (oL + oZ) * sin30s
 
   function iso(x, y, z) {
-    const sx = originX + (x - z) * cos30s
-    const sy = originY - y * scale + (x + z) * sin30s
-    return [Math.round(sx * 10) / 10, Math.round(sy * 10) / 10]
+    return [
+      Math.round((originX + (x - z) * cos30s) * 10) / 10,
+      Math.round((originY - y * scale + (x + z) * sin30s) * 10) / 10,
+    ]
   }
   function pts(...coords) {
     return coords.map(([x, y]) => `${x},${y}`).join(' ')
   }
 
-  // Box faces (draw order: top, right, front)
+  // Box body
   const topFace   = pts(iso(0,oY,0), iso(oL,oY,0), iso(oL,oY,oZ), iso(0,oY,oZ))
   const rightFace = pts(iso(oL,0,0), iso(oL,0,oZ), iso(oL,oY,oZ), iso(oL,oY,0))
-  const frontFace = pts(iso(0,0,0), iso(oL,0,0), iso(oL,oY,0), iso(0,oY,0))
+  const frontFace = pts(iso(0,0,0),  iso(oL,0,0),  iso(oL,oY,0),  iso(0,oY,0))
 
-  // Lid panel B (closed, right side)
-  const lidBx0 = oL - lidPanelLength
-  const lidBx1 = oL
-  const lidBFrontEdge = pts(iso(lidBx0,oY,0), iso(lidBx1,oY,0), iso(lidBx1,oY+matT,0), iso(lidBx0,oY+matT,0))
-  const lidBTop       = pts(iso(lidBx0,oY+matT,0), iso(lidBx1,oY+matT,0), iso(lidBx1,oY+matT,oZ), iso(lidBx0,oY+matT,oZ))
-  const lidBRight     = pts(iso(oL,oY,0), iso(oL,oY,oZ), iso(oL,oY+matT,oZ), iso(oL,oY+matT,0))
+  // Handle on right end (x=oL face, at top of end panel)
+  const handleRight = pts(iso(oL,oY-handleH,0), iso(oL,oY-handleH,oZ), iso(oL,oY,oZ), iso(oL,oY,0))
 
-  // Lid panel A (open, slid left 25%)
-  const lidAx0 = -oL * 0.25
-  const lidAx1 = lidAx0 + lidPanelLength
-  const lidAFrontEdge = pts(iso(lidAx0,oY,0), iso(lidAx1,oY,0), iso(lidAx1,oY+matT,0), iso(lidAx0,oY+matT,0))
-  const lidATop       = pts(iso(lidAx0,oY+matT,0), iso(lidAx1,oY+matT,0), iso(lidAx1,oY+matT,oZ), iso(lidAx0,oY+matT,oZ))
+  // Fixed batten on right end
+  const rightBattenFace = pts(iso(oL,oY,0), iso(oL,oY,oZ), iso(oL,oY+battensH,oZ), iso(oL,oY+battensH,0))
 
-  // Interior gap (exposed opening)
-  const gapX0 = lidAx1
-  const gapX1 = lidBx0
+  // Lid panel (slid 30% open toward x=0)
+  const lidSlide = oL * 0.30
+  const lidX0 = -lidSlide
+  const lidX1 = lidX0 + lidLen
+  const lidTop   = pts(iso(lidX0,oY+lidThick,0), iso(lidX1,oY+lidThick,0), iso(lidX1,oY+lidThick,oZ), iso(lidX0,oY+lidThick,oZ))
+  const lidFront = pts(iso(lidX0,oY,0), iso(lidX1,oY,0), iso(lidX1,oY+lidThick,0), iso(lidX0,oY+lidThick,0))
+  const lidRight = pts(iso(lidX1,oY,0), iso(lidX1,oY,oZ), iso(lidX1,oY+lidThick,oZ), iso(lidX1,oY+lidThick,0))
+
+  // Interior gap
+  const gapX0 = lidX1
+  const gapX1 = oL - matT
   const interiorTop = gapX1 > gapX0
     ? pts(iso(gapX0,oY,0), iso(gapX1,oY,0), iso(gapX1,oY,oZ), iso(gapX0,oY,oZ))
     : null
@@ -538,14 +546,11 @@ const isoBoxData = computed(() => {
 
   return {
     topFace, rightFace, frontFace,
-    lidBFrontEdge, lidBTop, lidBRight,
-    lidAFrontEdge, lidATop,
+    handleRight,
+    rightBattenFace,
+    lidTop, lidFront, lidRight,
     interiorTop,
-    ground: {
-      cx: gcx, cy: gcy + 10,
-      rx: (oL + oZ) * cos30s * 0.4,
-      ry: (oL + oZ) * cos30s * 0.1,
-    },
+    ground: { cx: gcx, cy: gcy + 12, rx: (oL+oZ)*cos30s*0.35, ry: (oL+oZ)*cos30s*0.08 },
   }
 })
 
@@ -580,9 +585,7 @@ function calculate() {
       height,
       matThickness: mat,
       dadoDepth: dado,
-      runnerClearance: runner,
       handleHeight: handle,
-      overlapFraction: overlap,
     })
 
     result.value = r

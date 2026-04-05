@@ -22,6 +22,8 @@ export { formatIn }
 /**
  * Calculate all piece dimensions for a Japanese sliding-lid tool box.
  * Supports both inner and outer dimension input.
+ * Construction: single sliding lid panel, held by fixed battens nailed to end panels,
+ * locked with a tapered wedge.
  */
 export function calculatePieces(input) {
   const {
@@ -31,9 +33,7 @@ export function calculatePieces(input) {
     height,           // height of box body
     matThickness,     // plywood thickness (default 0.5)
     dadoDepth,        // dado groove depth (default 0.25)
-    runnerClearance,  // lid runner extra clearance (default 0.0625)
     handleHeight,     // handle strip height (default 0.75)
-    overlapFraction,  // lid overlap as fraction of box length (default 1/3)
   } = input
 
   // Derive inner dimensions
@@ -52,44 +52,32 @@ export function calculatePieces(input) {
   // Derived outer dimensions
   const oL = iL + 2 * matThickness
   const oW = iW + 2 * matThickness
-  const oH = iH + matThickness // height of carcass (no lid)
+  const oH = iH + matThickness // height of carcass body (not including lid/battens)
 
-  // Lid runner groove depth (routed into inside top edge of front/back)
-  const runnerDepth = matThickness + runnerClearance
+  // Lid dimensions
+  const lidClearance = 0.0625        // 1/16" clearance each side
+  const lidThickness = 0.25          // 1/4" (6mm) — notably thinner than walls
 
-  // Lid panel dimensions
-  const lidPanelLength = iL * (0.5 + overlapFraction / 2)
-  const lidPanelWidth = iW + 2 * runnerDepth
-
-  // Carcass pieces
-  const frontBackLength = oL
-  const frontBackHeight = oH
-
-  const endLength = oW
-  const endHeight = oH
-
-  const bottomLength = iL
-  const bottomWidth = iW
-
-  const handleLength = oW
-  const handleHeightActual = handleHeight
+  // Batten dimensions
+  const battensOverlap = 0.5         // how much batten overlaps lid end (captures it)
+  const battensWidth = handleHeight + battensOverlap  // batten sits on handle + overlaps lid
 
   const pieces = [
     {
       id: 'front',
       label: 'Front',
       qty: 1,
-      length: frontBackLength,
-      width: frontBackHeight,
+      length: oL,
+      width: oH,
       grainDir: 'length',
-      notes: `Dado ${dadoDepth}" deep × ${matThickness}" wide on inside bottom edge (for bottom panel). Dado ${dadoDepth}" deep on inside faces at each end (for end panels). Lid runner groove ${runnerDepth.toFixed(4)}" deep on inside top edge.`,
+      notes: `Dado ${dadoDepth}" deep on inside bottom edge (for bottom panel). Dado ${dadoDepth}" deep on inside faces at each end (for end panels). No lid runner groove needed.`,
     },
     {
       id: 'back',
       label: 'Back',
       qty: 1,
-      length: frontBackLength,
-      width: frontBackHeight,
+      length: oL,
+      width: oH,
       grainDir: 'length',
       notes: 'Same as front.',
     },
@@ -97,43 +85,69 @@ export function calculatePieces(input) {
       id: 'end',
       label: 'End',
       qty: 2,
-      length: endLength,
-      width: endHeight,
+      length: oW,
+      width: oH,
       grainDir: 'length',
-      notes: `Fits in dado grooves in front and back. Dado ${dadoDepth}" deep on inside bottom edge (for bottom panel).`,
+      notes: `Dado ${dadoDepth}" deep on inside bottom edge (for bottom). Fits in dado grooves in front and back.`,
     },
     {
       id: 'bottom',
       label: 'Bottom',
       qty: 1,
-      length: bottomLength,
-      width: bottomWidth,
+      length: iL,
+      width: iW,
       grainDir: 'length',
-      notes: 'Sits in dado grooves. Grain runs length-wise.',
+      notes: 'Sits in dado grooves in all four walls. No glue needed — allows wood movement.',
     },
     {
       id: 'lid',
       label: 'Lid Panel',
-      qty: 2,
-      length: lidPanelLength,
-      width: lidPanelWidth,
+      qty: 1,
+      length: iL - lidClearance * 2,
+      width: iW - lidClearance * 2,
       grainDir: 'length',
-      notes: `Handle cutout: rectangular slot ~1" × 3" centered on each end, starting ~0.5" from end. Panels overlap ${formatIn(iL * overlapFraction)} when both closed.`,
+      notes: `Single sliding panel. Rests on top edges of front and back. Slides lengthwise under fixed battens. Lid clearance: ${lidClearance}" each side. Thickness: ${formatIn(lidThickness)}" (thinner than walls).`,
+    },
+    {
+      id: 'fixed-batten',
+      label: 'Fixed Batten',
+      qty: 2,
+      length: oW,
+      width: battensWidth,
+      grainDir: 'length',
+      notes: `Nailed to top of end panels, sits on top of handle strips. Overlaps lid panel by ~${formatIn(battensOverlap)}" each end to capture it. Handle strips must be fitted BEFORE these battens.`,
     },
     {
       id: 'handle',
-      label: 'Handle/Stop Strip',
+      label: 'Handle/Grip Strip',
       qty: 2,
-      length: handleLength,
-      width: handleHeightActual,
+      length: oW,
+      width: handleHeight,
       grainDir: 'length',
-      notes: '15° bevel on bottom inside edge for grip. Nailed to inside of end panels after carcass assembly. Acts as lid stop.',
+      notes: `Fitted to end panels BEFORE fixed battens. Glue first, then nail from inside. 15° bevel on inside bottom edge for grip. The fixed battens sit on top of these.`,
+    },
+    {
+      id: 'wedge',
+      label: 'Locking Wedge',
+      qty: 1,
+      length: oW,
+      width: battensWidth,
+      grainDir: 'length',
+      notes: `Tapered 1:6 along the length. Drive in to lock lid, knock out to open. Cut from offcuts — no additional sheet material needed. Shown here for completeness.`,
     },
   ]
 
   return {
     pieces,
-    dimensions: { iL, iW, iH, oL, oW, oH, lidPanelLength, lidPanelWidth, runnerDepth },
+    dimensions: {
+      iL, iW, iH,
+      oL, oW, oH,
+      lidLength: iL - lidClearance * 2,
+      lidWidth: iW - lidClearance * 2,
+      lidThickness,
+      battensWidth,
+      battensOverlap,
+    },
     input,
   }
 }
