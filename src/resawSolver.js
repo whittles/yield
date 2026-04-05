@@ -118,8 +118,15 @@ export function solveResaw(input) {
   );
   const slabsPerBoard = slabsPerBlank; // alias
 
-  const thicknessUsed = slabsPerBlank * slabThickness + Math.max(0, slabsPerBlank - 1) * resawSettings.kerf;
-  const thicknessWaste = usableThickness - thicknessUsed;
+  // Redistribute offcut back into slab thickness (thicker fence = more buffer for blade drift)
+  // Extra per slab = offcut / slabCount, drum sander absorbs the extra
+  const rawThicknessUsed = slabsPerBlank * slabThickness + Math.max(0, slabsPerBlank - 1) * resawSettings.kerf;
+  const rawOffcut = usableThickness - rawThicknessUsed;
+  const extraPerSlab = slabsPerBlank > 0 ? rawOffcut / slabsPerBlank : 0;
+  const optimizedSlabThickness = slabThickness + extraPerSlab;
+
+  const thicknessUsed = slabsPerBlank * optimizedSlabThickness + Math.max(0, slabsPerBlank - 1) * resawSettings.kerf;
+  const thicknessWaste = Math.max(0, usableThickness - thicknessUsed);
   const thicknessWastePct = Math.round((thicknessWaste / usableThickness) * 100);
 
   // Step 3: Strips per panel + finish crosscut per SKU (mixed blank lengths)
@@ -176,7 +183,7 @@ export function solveResaw(input) {
     resawSequence.push({
       cutNumber: i + 1,
       slabNumber: i + 1,
-      slabThickness,
+      slabThickness: optimizedSlabThickness,
       panelTarget: resawSettings.panelTarget,
     });
   }
@@ -186,7 +193,9 @@ export function solveResaw(input) {
     stock: { usableThickness, usableWidth, qty: stock.qty },
     roughCrosscut,
     slabs: {
-      slabThickness,
+      slabThickness: optimizedSlabThickness,   // actual fence setting (redistributed)
+      nominalSlabThickness: slabThickness,      // original target (panelTarget + allowance)
+      extraPerSlab,                             // offcut distributed per slab
       slabsPerBoard,
       slabsPerBlank,
       thicknessUsed,

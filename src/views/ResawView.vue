@@ -450,7 +450,7 @@
               font-size="9"
               fill="#3d2000"
             >
-              Slab {{ i + 1 }}: {{ fmtIn(r.slabs.slabThickness) }} → {{ fmtIn(r.slabs.slabThickness - r.input.resawSettings.slabAllowance) }} panel
+              Slab {{ i + 1 }}: {{ fmtIn(r.slabs.slabThickness) }}" fence → {{ fmtIn(r.input.resawSettings.panelTarget) }}" panel
             </text>
             <!-- Kerf after slab (not after last) -->
             <rect
@@ -634,7 +634,10 @@
           <div>
             <div class="font-semibold text-text-primary">Step 3 — Resaw on bandsaw</div>
             <div class="text-text-muted mt-1 ml-4">
-              Fence setting: {{ fmtIn(r.slabs.slabThickness) }}" ({{ r.slabs.slabThickness.toFixed(4) }}") — reference face against fence<br/>
+              Fence setting: {{ r.slabs.slabThickness.toFixed(4) }}" — reference face against fence<br/>
+              <span v-if="r.slabs.extraPerSlab > 0.001" class="text-success">
+                ✓ Offcut redistributed: +{{ r.slabs.extraPerSlab.toFixed(4) }}" per slab (nominal was {{ r.slabs.nominalSlabThickness.toFixed(4) }}", extra absorbed by drum sander)
+              </span><br/>
               Kerf: {{ fmtIn(r.input.resawSettings.kerf) }}" per cut<br/>
               <div v-for="seq in r.resawSequence" :key="seq.cutNumber" class="mt-0.5">
                 Cut {{ seq.cutNumber }}: {{ fmtIn(r.slabs.slabThickness) }}" fence → Slab {{ seq.slabNumber }}
