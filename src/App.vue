@@ -69,6 +69,17 @@
               {{ store.results?.summary?.placedParts }}/{{ store.results?.summary?.totalParts }}
             </span>
           </button>
+          <button
+            @click="goToResaw"
+            :class="[
+              'px-5 py-2.5 text-sm font-medium border-b-2 transition-colors',
+              activeTab === 'resaw'
+                ? 'border-white text-white'
+                : 'border-transparent text-gray-400 hover:text-white hover:border-white/40'
+            ]"
+          >
+            Resaw Planner
+          </button>
         </div>
       </div>
     </header>
@@ -126,5 +137,10 @@ function handleExport() {
 
 function handleImport() {
   importProject((data) => store.loadProject(data))
+}
+
+function goToResaw() {
+  store.activeTab = 'resaw'
+  router.push('/resaw')
 }
 </script>

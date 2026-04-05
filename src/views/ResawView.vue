@@ -1,0 +1,680 @@
+<template>
+  <div class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+
+    <!-- ── Page Header ──────────────────────────────────────────────── -->
+    <div class="no-print">
+      <h1 class="text-2xl font-bold text-text-primary">Resaw Planner</h1>
+      <p class="text-text-muted text-sm mt-1">Production yield calculator for kumiko strip milling</p>
+    </div>
+
+    <!-- ── Section 1: Stock Input ──────────────────────────────────── -->
+    <div class="bg-surface border border-border rounded-lg p-5 no-print">
+      <h2 class="text-base font-semibold text-text-primary mb-4">Stock</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div>
+          <label class="block text-xs text-text-muted mb-1">Qty (boards)</label>
+          <input
+            type="number"
+            v-model.number="store.resawStock.qty"
+            min="1"
+            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-text-muted mb-1">Nominal thickness</label>
+          <input
+            type="text"
+            v-model="store.resawStock.thicknessStr"
+            placeholder='e.g. "2" or "1 3/4"'
+            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-text-muted mb-1">Width (in)</label>
+          <input
+            type="text"
+            v-model="store.resawStock.widthStr"
+            placeholder='e.g. "7"'
+            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-text-muted mb-1">Length (in)</label>
+          <input
+            type="text"
+            v-model="store.resawStock.lengthStr"
+            placeholder='e.g. "12"'
+            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-text-muted mb-1">Condition</label>
+          <select
+            v-model="store.resawStock.condition"
+            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          >
+            <option value="rough">Rough</option>
+            <option value="skip-planed">Skip Planed</option>
+            <option value="s3s">S3S</option>
+            <option value="s4s">S4S</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Section 2: Resaw Settings ──────────────────────────────── -->
+    <div class="bg-surface border border-border rounded-lg p-5 no-print">
+      <h2 class="text-base font-semibold text-text-primary mb-4">Resaw Settings</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-xs text-text-muted mb-1">Resaw tool / kerf</label>
+          <select
+            v-model="store.resawSettings.kerfStr"
+            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          >
+            <option value="1/16">Bandsaw — 1/16" kerf</option>
+            <option value="3/32">Bandsaw — 3/32" kerf</option>
+            <option value="1/8">Table Saw — 1/8" kerf</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-text-muted mb-1">Panel target thickness</label>
+          <input
+            type="text"
+            v-model="store.resawSettings.panelTargetStr"
+            placeholder='e.g. "3/8"'
+            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          />
+        </div>
+        <div>
+          <label class="block text-xs text-text-muted mb-1">Drum sanding allowance</label>
+          <input
+            type="text"
+            v-model="store.resawSettings.slabAllowanceStr"
+            placeholder='e.g. "1/16"'
+            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          />
+        </div>
+        <div class="flex flex-col justify-end">
+          <div class="text-xs text-text-muted mb-1">Slab green thickness</div>
+          <div class="text-sm font-semibold text-text-primary px-2 py-1.5 bg-bg border border-border rounded">
+            {{ slabGreenThickness }}"
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Section 3: Strip SKUs ───────────────────────────────────── -->
+    <div class="bg-surface border border-border rounded-lg p-5 no-print">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-text-primary">Strip SKUs</h2>
+        <button
+          @click="store.addResawSku()"
+          class="text-sm px-3 py-1 border border-border rounded hover:bg-bg transition-colors text-text-primary"
+        >
+          + Add SKU
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs text-text-muted border-b border-border">
+              <th class="pb-2 pr-3">SKU Name</th>
+              <th class="pb-2 pr-3">Rough Width"</th>
+              <th class="pb-2 pr-3">Plane Loss"</th>
+              <th class="pb-2 pr-3">Sander Loss"</th>
+              <th class="pb-2 pr-3">Final Width"</th>
+              <th class="pb-2 pr-3">Length"</th>
+              <th class="pb-2 pr-3">Rip Kerf</th>
+              <th class="pb-2"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="sku in store.resawSkus"
+              :key="sku.id"
+              class="border-b border-border/50"
+            >
+              <td class="py-1.5 pr-3">
+                <input
+                  type="text"
+                  v-model="sku.name"
+                  class="w-full border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                />
+              </td>
+              <td class="py-1.5 pr-3">
+                <input
+                  type="text"
+                  v-model="sku.roughWidthStr"
+                  class="w-24 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                />
+              </td>
+              <td class="py-1.5 pr-3">
+                <input
+                  type="number"
+                  v-model.number="sku.planeAllowance"
+                  step="0.001"
+                  class="w-20 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                />
+              </td>
+              <td class="py-1.5 pr-3">
+                <input
+                  type="number"
+                  v-model.number="sku.sanderAllowance"
+                  step="0.001"
+                  class="w-20 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                />
+              </td>
+              <td class="py-1.5 pr-3">
+                <input
+                  type="text"
+                  v-model="sku.finalWidthStr"
+                  class="w-24 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                />
+              </td>
+              <td class="py-1.5 pr-3">
+                <input
+                  type="number"
+                  v-model.number="sku.length"
+                  class="w-16 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                />
+              </td>
+              <td class="py-1.5 pr-3">
+                <select
+                  v-model="sku.tableKerfStr"
+                  class="border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                >
+                  <option value="1/16">1/16"</option>
+                  <option value="3/32">3/32"</option>
+                  <option value="1/8">1/8"</option>
+                </select>
+              </td>
+              <td class="py-1.5">
+                <button
+                  @click="store.removeResawSku(sku.id)"
+                  class="text-red-500 hover:text-red-700 text-xs px-2 py-1"
+                  title="Remove SKU"
+                >
+                  ✕
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Calculate Button ────────────────────────────────────────── -->
+    <div class="no-print flex justify-center">
+      <button
+        @click="store.calculateResaw()"
+        class="px-8 py-3 bg-header text-white font-semibold rounded-lg hover:opacity-90 transition-opacity text-base"
+      >
+        Calculate Yield
+      </button>
+    </div>
+
+    <!-- ── Results ─────────────────────────────────────────────────── -->
+    <template v-if="r">
+
+      <!-- Summary bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-surface border border-border rounded-lg p-4 text-center">
+          <div class="text-2xl font-bold text-text-primary">{{ r.slabs.slabsPerBoard }}</div>
+          <div class="text-xs text-text-muted mt-1">Slabs per board</div>
+        </div>
+        <div class="bg-surface border border-border rounded-lg p-4 text-center">
+          <div class="text-2xl font-bold text-text-primary">{{ r.summary.slabsTotal }}</div>
+          <div class="text-xs text-text-muted mt-1">Total slabs</div>
+        </div>
+        <div
+          v-for="sr in r.stripResults.slice(0,2)"
+          :key="sr.id"
+          class="bg-surface border border-border rounded-lg p-4 text-center"
+        >
+          <div class="text-2xl font-bold text-text-primary">{{ sr.totalStrips }}</div>
+          <div class="text-xs text-text-muted mt-1">{{ sr.name }}</div>
+        </div>
+      </div>
+
+      <!-- Cross-section SVG (board end view) -->
+      <div class="bg-surface border border-border rounded-lg p-5">
+        <h3 class="text-sm font-semibold text-text-primary mb-3">Board Cross-Section (end grain view)</h3>
+        <svg
+          viewBox="0 0 460 220"
+          class="w-full max-w-2xl mx-auto"
+          style="font-family: monospace;"
+        >
+          <!-- Board rectangle: map usableThickness to 160px height, usableWidth to 350px wide -->
+          <!-- Board sits at x=70, y=20, width=350, height=160 -->
+          <defs>
+            <pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="6" stroke="#888" stroke-width="1" opacity="0.3"/>
+            </pattern>
+          </defs>
+
+          <!-- Board outline (waste = full nominal thickness) -->
+          <rect x="70" y="20" width="350" height="170" fill="#e8d5b0" stroke="#8B6914" stroke-width="1.5"/>
+
+          <!-- Condition waste zone at top (the part removed by skip planing etc.) -->
+          <rect
+            x="70" y="20"
+            width="350"
+            :height="condWasteH"
+            fill="#ccc" opacity="0.5"
+          />
+          <text v-if="condWasteH > 8" x="245" :y="20 + condWasteH/2 + 4" text-anchor="middle" font-size="9" fill="#666">
+            {{ conditionLabel }} loss
+          </text>
+
+          <!-- Slab zones -->
+          <g v-for="(slab, i) in slabZones" :key="'slab-' + i">
+            <rect
+              :x="70"
+              :y="slab.y"
+              width="350"
+              :height="slab.h"
+              :fill="i % 2 === 0 ? '#d4a84b' : '#e8c470'"
+              opacity="0.85"
+              stroke="#8B6914"
+              stroke-width="0.5"
+            />
+            <text
+              x="245"
+              :y="slab.y + slab.h/2 + 4"
+              text-anchor="middle"
+              font-size="9"
+              fill="#3d2000"
+            >
+              Slab {{ i + 1 }}: {{ fmtIn(r.slabs.slabThickness) }} → {{ fmtIn(r.slabs.slabThickness - r.resawSettings.slabAllowance) }} panel
+            </text>
+            <!-- Kerf after slab (not after last) -->
+            <rect
+              v-if="i < slabZones.length - 1"
+              :x="70"
+              :y="slab.y + slab.h"
+              width="350"
+              :height="kerfH"
+              fill="#555"
+              opacity="0.6"
+            />
+          </g>
+
+          <!-- Offcut zone -->
+          <rect
+            v-if="offcutH > 0"
+            :x="70"
+            :y="offcutY"
+            width="350"
+            :height="offcutH"
+            fill="#aaa"
+            opacity="0.4"
+            stroke="#888"
+            stroke-width="0.5"
+          />
+          <text v-if="offcutH > 6" x="245" :y="offcutY + offcutH/2 + 4" text-anchor="middle" font-size="9" fill="#555">
+            Offcut {{ fmtIn(r.slabs.thicknessWaste) }}
+          </text>
+
+          <!-- Dimension line: left side (usable thickness) -->
+          <line x1="58" :y1="condWasteH + 20" x2="58" y2="190" stroke="#333" stroke-width="1"/>
+          <line x1="54" :y1="condWasteH + 20" x2="62" :y2="condWasteH + 20" stroke="#333" stroke-width="1"/>
+          <line x1="54" y1="190" x2="62" y2="190" stroke="#333" stroke-width="1"/>
+          <text x="50" :y="(condWasteH + 20 + 190)/2 + 4" text-anchor="middle" font-size="9" fill="#333" transform="rotate(-90 50 110)">
+            {{ fmtIn(r.stock.usableThickness) }} usable
+          </text>
+
+          <!-- Dimension line: full board height -->
+          <line x1="432" y1="20" x2="432" y2="190" stroke="#666" stroke-width="1"/>
+          <line x1="428" y1="20" x2="436" y2="20" stroke="#666" stroke-width="1"/>
+          <line x1="428" y1="190" x2="436" y2="190" stroke="#666" stroke-width="1"/>
+          <text x="448" y="110" text-anchor="middle" font-size="9" fill="#555" transform="rotate(90 448 110)">
+            {{ fmtIn(r.input.stock.thickness) }} nominal
+          </text>
+
+          <!-- Width label -->
+          <text x="245" y="212" text-anchor="middle" font-size="9" fill="#333">
+            Width: {{ fmtIn(r.stock.usableWidth) }}"
+          </text>
+
+          <!-- Yield label -->
+          <text x="245" y="14" text-anchor="middle" font-size="9" fill="#555">
+            {{ r.summary.thicknessYield }}% thickness yield · {{ r.slabs.slabsPerBoard }} slabs/board
+          </text>
+        </svg>
+      </div>
+
+      <!-- Per-slab strip layout SVG -->
+      <div class="bg-surface border border-border rounded-lg p-5">
+        <h3 class="text-sm font-semibold text-text-primary mb-1">Panel Strip Layout (face view — one slab)</h3>
+        <p class="text-xs text-text-muted mb-3">Showing Standard SKU rip layout. Width = {{ fmtIn(r.stock.usableWidth) }}", Length = {{ fmtIn(r.input.stock.length) }}"</p>
+
+        <svg
+          viewBox="0 0 460 120"
+          class="w-full max-w-2xl mx-auto"
+          style="font-family: monospace;"
+        >
+          <!-- Panel rectangle: 420px wide × 80px tall -->
+          <rect x="20" y="20" width="420" height="80" fill="#e8d5b0" stroke="#8B6914" stroke-width="1.5"/>
+
+          <!-- Strip zones for first SKU -->
+          <g v-for="(strip, i) in stripZonesFirst" :key="'strip-' + i">
+            <!-- Kerf before strip (not before first) -->
+            <rect
+              v-if="i > 0"
+              :x="strip.x - stripKerfW"
+              y="20"
+              :width="stripKerfW"
+              height="80"
+              fill="#555"
+              opacity="0.5"
+            />
+            <rect
+              :x="strip.x"
+              y="20"
+              :width="strip.w"
+              height="80"
+              :fill="i % 2 === 0 ? '#d4a84b' : '#e8c470'"
+              opacity="0.8"
+              stroke="#8B6914"
+              stroke-width="0.3"
+            />
+            <text
+              v-if="strip.w > 12"
+              :x="strip.x + strip.w/2"
+              y="64"
+              text-anchor="middle"
+              font-size="7"
+              fill="#3d2000"
+            >
+              {{ i + 1 }}
+            </text>
+          </g>
+
+          <!-- Waste zone at right -->
+          <rect
+            v-if="stripWasteW > 0"
+            :x="20 + 420 - stripWasteW"
+            y="20"
+            :width="stripWasteW"
+            height="80"
+            fill="#aaa"
+            opacity="0.4"
+          />
+          <text
+            v-if="stripWasteW > 10"
+            :x="20 + 420 - stripWasteW/2"
+            y="64"
+            text-anchor="middle"
+            font-size="7"
+            fill="#555"
+          >W</text>
+
+          <!-- Labels -->
+          <text x="230" y="14" text-anchor="middle" font-size="9" fill="#555">
+            {{ r.stripResults[0]?.stripsPerPanel || 0 }} strips × {{ fmtIn(r.stripResults[0]?.roughWidth || 0) }}" rough rip ({{ r.stripResults[0]?.name }})
+          </text>
+          <text x="20" y="115" font-size="8" fill="#666">← {{ fmtIn(r.stock.usableWidth) }}" panel width →</text>
+        </svg>
+      </div>
+
+      <!-- Step-by-step instructions -->
+      <div class="bg-surface border border-border rounded-lg p-5">
+        <div class="flex items-center justify-between mb-4 no-print">
+          <h3 class="text-sm font-semibold text-text-primary">Milling Instructions</h3>
+          <button
+            @click="printInstructions"
+            class="text-sm px-3 py-1 border border-border rounded hover:bg-bg transition-colors text-text-primary"
+          >
+            🖨 Print
+          </button>
+        </div>
+
+        <div class="print-only mb-4">
+          <h2 class="text-xl font-bold">Resaw Planner — Milling Instructions</h2>
+          <p class="text-sm text-gray-600">{{ store.resawStock.qty }} boards · {{ new Date().toLocaleDateString() }}</p>
+        </div>
+
+        <div class="space-y-4 text-sm font-mono">
+          <!-- Step 1 -->
+          <div>
+            <div class="font-semibold text-text-primary">Step 1 — Prepare reference face</div>
+            <div class="text-text-muted mt-1 ml-4">
+              Condition: {{ conditionLabel }}<br/>
+              Nominal: {{ fmtIn(r.input.stock.thickness) }}" → Usable: {{ fmtIn(r.stock.usableThickness) }}"
+            </div>
+          </div>
+
+          <!-- Step 2: Resaw -->
+          <div>
+            <div class="font-semibold text-text-primary">Step 2 — Resaw on bandsaw</div>
+            <div class="text-text-muted mt-1 ml-4">
+              Set fence to {{ fmtIn(r.slabs.slabThickness) }}" ({{ r.slabs.slabThickness.toFixed(4) }}")<br/>
+              Kerf: {{ fmtIn(r.input.resawSettings.kerf) }}"<br/>
+              <div
+                v-for="seq in r.resawSequence"
+                :key="seq.cutNumber"
+                class="mt-0.5"
+              >
+                Cut {{ seq.cutNumber }}: fence position {{ fmtIn(r.slabs.slabThickness) }}" → Slab {{ seq.slabNumber }}
+              </div>
+              <div class="mt-0.5" v-if="r.slabs.thicknessWaste > 0">
+                Offcut: {{ r.slabs.thicknessWaste.toFixed(4) }}" (too thin for another slab)
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Drum sand -->
+          <div>
+            <div class="font-semibold text-text-primary">Step 3 — Drum sand to panel thickness</div>
+            <div class="text-text-muted mt-1 ml-4">
+              Target: {{ fmtIn(r.input.resawSettings.panelTarget) }}" ± 0.003"<br/>
+              Sand {{ r.slabs.slabsPerBoard }} slabs per board ({{ r.summary.slabsTotal }} total)
+            </div>
+          </div>
+
+          <!-- Step 4: Rip -->
+          <div>
+            <div class="font-semibold text-text-primary">Step 4 — Rip strips on table saw</div>
+            <div class="text-text-muted mt-1 ml-4">
+              <div v-for="sr in r.stripResults" :key="sr.id">
+                {{ sr.name }}: fence {{ fmtIn(sr.roughWidth) }}", {{ sr.stripsPerPanel }} strips/panel, {{ sr.stripsPerBoard }} per board, {{ sr.totalStrips }} total
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5: Hand plane -->
+          <div>
+            <div class="font-semibold text-text-primary">Step 5 — Hand plane (width reduction)</div>
+            <div class="text-text-muted mt-1 ml-4">
+              <div v-for="sr in r.stripResults" :key="'p-' + sr.id">
+                {{ sr.name }}: {{ fmtIn(sr.roughWidth) }}" → {{ (sr.roughWidth - sr.planeAllowance).toFixed(3) }}" (remove {{ sr.planeAllowance.toFixed(3) }}")
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 6: Final sander -->
+          <div>
+            <div class="font-semibold text-text-primary">Step 6 — Drum sand (thin side / final width)</div>
+            <div class="text-text-muted mt-1 ml-4">
+              <div v-for="sr in r.stripResults" :key="'s-' + sr.id">
+                {{ sr.name }}: → {{ fmtIn(sr.finalWidth) }}" final ± 0.003"
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Yield report table -->
+      <div class="bg-surface border border-border rounded-lg p-5">
+        <h3 class="text-sm font-semibold text-text-primary mb-3">Yield Report</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-text-muted border-b border-border">
+                <th class="pb-2 pr-4">SKU</th>
+                <th class="pb-2 pr-4">Final dims</th>
+                <th class="pb-2 pr-4">Strips/Panel</th>
+                <th class="pb-2 pr-4">Panels</th>
+                <th class="pb-2 pr-4">Total Strips</th>
+                <th class="pb-2">Width Waste</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="sr in r.stripResults"
+                :key="'yield-' + sr.id"
+                class="border-b border-border/50"
+              >
+                <td class="py-2 pr-4 font-medium">{{ sr.name }}</td>
+                <td class="py-2 pr-4 text-text-muted">
+                  {{ sr.finalWidth.toFixed(3) }}" × {{ fmtIn(r.input.resawSettings.panelTarget) }}" × {{ sr.length }}"
+                </td>
+                <td class="py-2 pr-4">{{ sr.stripsPerPanel }}</td>
+                <td class="py-2 pr-4">{{ r.summary.slabsTotal }}</td>
+                <td class="py-2 pr-4 font-semibold">{{ sr.totalStrips }}</td>
+                <td class="py-2">{{ sr.widthWastePct }}%</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="text-xs text-text-muted border-t border-border">
+                <td colspan="6" class="pt-2">
+                  Thickness yield: {{ r.summary.thicknessYield }}% · {{ r.slabs.slabsPerBoard }} slabs/board from {{ fmtIn(r.stock.usableThickness) }}" usable
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </template>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue'
+import { useProjectStore } from '@/stores/project'
+import { parseFraction, formatFraction } from '@/utils/fractions'
+
+const store = useProjectStore()
+const r = computed(() => store.resawResults)
+
+// Live: slab green thickness
+const slabGreenThickness = computed(() => {
+  const pt = parseFraction(store.resawSettings.panelTargetStr)
+  const sa = parseFraction(store.resawSettings.slabAllowanceStr)
+  return (pt + sa).toFixed(4)
+})
+
+// Human-readable condition label
+const conditionLabel = computed(() => {
+  const map = { 'rough': 'Rough', 'skip-planed': 'Skip Planed', 's3s': 'S3S', 's4s': 'S4S' }
+  return map[store.resawStock.condition] || store.resawStock.condition
+})
+
+// Format decimal inches to fraction string
+function fmtIn(val) {
+  if (val === undefined || val === null) return '?'
+  return formatFraction(val)
+}
+
+// ── SVG geometry ────────────────────────────────────────────────────────────
+
+// Board cross-section SVG
+// Board rect: x=70, y=20, width=350, height=170 (represents full nominal thickness)
+const SVG_BOARD_H = 170  // px for full nominal thickness
+const SVG_BOARD_Y = 20
+
+const condWasteH = computed(() => {
+  if (!r.value) return 0
+  const nominal = r.value.input.stock.thickness
+  const usable = r.value.stock.usableThickness
+  const condLoss = nominal - usable
+  return (condLoss / nominal) * SVG_BOARD_H
+})
+
+const slabZones = computed(() => {
+  if (!r.value) return []
+  const nominal = r.value.input.stock.thickness
+  const usable = r.value.stock.usableThickness
+  const condLossH = condWasteH.value
+  const usableH = SVG_BOARD_H - condLossH
+
+  const slabT = r.value.slabs.slabThickness
+  const kerfT = r.value.input.resawSettings.kerf
+  const n = r.value.slabs.slabsPerBoard
+
+  const slabPx = (slabT / usable) * usableH
+  const kerfPx = (kerfT / usable) * usableH
+
+  const zones = []
+  let cursor = SVG_BOARD_Y + condLossH
+  for (let i = 0; i < n; i++) {
+    zones.push({ y: cursor, h: slabPx })
+    cursor += slabPx
+    if (i < n - 1) cursor += kerfPx
+  }
+  return zones
+})
+
+const kerfH = computed(() => {
+  if (!r.value) return 0
+  const nominal = r.value.input.stock.thickness
+  const usable = r.value.stock.usableThickness
+  const condLossH = condWasteH.value
+  const usableH = SVG_BOARD_H - condLossH
+  return (r.value.input.resawSettings.kerf / usable) * usableH
+})
+
+const offcutY = computed(() => {
+  if (!r.value || slabZones.value.length === 0) return 0
+  const last = slabZones.value[slabZones.value.length - 1]
+  return last.y + last.h
+})
+
+const offcutH = computed(() => {
+  if (!r.value) return 0
+  return (SVG_BOARD_Y + SVG_BOARD_H) - offcutY.value
+})
+
+// Per-slab strip layout SVG
+// Panel rect: x=20, y=20, width=420, height=80
+const SVG_STRIP_W = 420
+
+const stripZonesFirst = computed(() => {
+  if (!r.value || !r.value.stripResults.length) return []
+  const sr = r.value.stripResults[0]
+  const usableW = r.value.stock.usableWidth
+  const stripW = sr.roughWidth
+  const kerfW = sr.tableKerf
+  const n = sr.stripsPerPanel
+
+  const stripPx = (stripW / usableW) * SVG_STRIP_W
+  const kerfPx = (kerfW / usableW) * SVG_STRIP_W
+
+  const zones = []
+  let cursor = 20
+  for (let i = 0; i < n; i++) {
+    if (i > 0) cursor += kerfPx
+    zones.push({ x: cursor, w: stripPx })
+    cursor += stripPx
+  }
+  return zones
+})
+
+const stripKerfW = computed(() => {
+  if (!r.value || !r.value.stripResults.length) return 0
+  const sr = r.value.stripResults[0]
+  return (sr.tableKerf / r.value.stock.usableWidth) * SVG_STRIP_W
+})
+
+const stripWasteW = computed(() => {
+  if (!r.value || !r.value.stripResults.length) return 0
+  const sr = r.value.stripResults[0]
+  return (sr.widthWaste / r.value.stock.usableWidth) * SVG_STRIP_W
+})
+
+function printInstructions() {
+  window.print()
+}
+</script>

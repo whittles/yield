@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { solve } from '@/solver'
 import { parseFraction } from '@/utils/fractions'
+import { solveResaw } from '@/resawSolver'
 
 export const useProjectStore = defineStore('project', () => {
   // ─── Settings ──────────────────────────────────────────────────────────────
@@ -101,9 +102,78 @@ export const useProjectStore = defineStore('project', () => {
     activeTab.value  = 'input'
   }
 
+  // ─── Resaw Planner ─────────────────────────────────────────────────────────
+  const resawStock = ref({
+    qty: 5,
+    thicknessStr: '2',
+    widthStr: '7',
+    lengthStr: '12',
+    condition: 'skip-planed',
+  })
+
+  const resawSettings = ref({
+    kerfStr: '1/16',
+    panelTargetStr: '3/8',
+    slabAllowanceStr: '1/16',
+  })
+
+  const defaultSkus = [
+    { id: 'sku1', name: 'Standard 12"', roughWidthStr: '0.150', planeAllowance: 0.010, sanderAllowance: 0.010, finalWidthStr: '0.130', length: 12, tableKerfStr: '1/8' },
+    { id: 'sku2', name: 'Wide 12"',     roughWidthStr: '0.800', planeAllowance: 0.025, sanderAllowance: 0.025, finalWidthStr: '0.750', length: 12, tableKerfStr: '1/8' },
+    { id: 'sku3', name: 'Standard 24"', roughWidthStr: '0.150', planeAllowance: 0.010, sanderAllowance: 0.010, finalWidthStr: '0.130', length: 24, tableKerfStr: '1/8' },
+    { id: 'sku4', name: 'Wide 24"',     roughWidthStr: '0.800', planeAllowance: 0.025, sanderAllowance: 0.025, finalWidthStr: '0.750', length: 24, tableKerfStr: '1/8' },
+  ]
+
+  const resawSkus = ref([...defaultSkus])
+  const resawResults = ref(null)
+
+  function addResawSku() {
+    resawSkus.value.push({
+      id: `rsku${nextId.value++}`,
+      name: 'New SKU',
+      roughWidthStr: '0.150',
+      planeAllowance: 0.010,
+      sanderAllowance: 0.010,
+      finalWidthStr: '0.130',
+      length: 12,
+      tableKerfStr: '1/8',
+    })
+  }
+
+  function removeResawSku(id) {
+    resawSkus.value = resawSkus.value.filter(s => s.id !== id)
+  }
+
+  function calculateResaw() {
+    resawResults.value = solveResaw({
+      stock: {
+        thickness: parseFraction(resawStock.value.thicknessStr),
+        width:     parseFraction(resawStock.value.widthStr),
+        length:    parseFraction(resawStock.value.lengthStr),
+        qty:       resawStock.value.qty,
+        condition: resawStock.value.condition,
+      },
+      resawSettings: {
+        kerf:          parseFraction(resawSettings.value.kerfStr),
+        panelTarget:   parseFraction(resawSettings.value.panelTargetStr),
+        slabAllowance: parseFraction(resawSettings.value.slabAllowanceStr),
+      },
+      stripSettings: resawSkus.value.map(s => ({
+        ...s,
+        roughWidth: parseFraction(s.roughWidthStr),
+        finalWidth: parseFraction(s.finalWidthStr),
+        tableKerf:  parseFraction(s.tableKerfStr),
+        depth:      parseFraction(resawSettings.value.panelTargetStr),
+      })),
+    })
+  }
+
   return {
     settings, stock, parts, results, activeTab,
     addStock, removeStock, addPart, removePart,
     calculate, loadProject,
+    // Resaw Planner
+    resawStock, resawSettings, resawSkus, resawResults,
+    addResawSku, removeResawSku, calculateResaw,
   }
 })
