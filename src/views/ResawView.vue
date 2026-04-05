@@ -353,8 +353,72 @@
     <!-- ── Results ─────────────────────────────────────────────────── -->
     <template v-if="r">
 
+      <!-- ── Print header (full batch summary) ─────────────────────── -->
+      <div class="print-only print-no-break mb-6">
+        <!-- Logo + title row -->
+        <div style="display:flex; align-items:center; gap:12pt; border-bottom:2px solid #333; padding-bottom:8pt; margin-bottom:8pt;">
+          <img src="/logo.png" style="width:40pt; height:40pt; object-fit:contain;" alt="Althoff Woodshop"/>
+          <div>
+            <div style="font-size:14pt; font-weight:700; letter-spacing:0.5pt;">ALTHOFF WOODSHOP</div>
+            <div style="font-size:10pt; color:#555;">Resaw Planner — Milling Sheet</div>
+          </div>
+          <div style="margin-left:auto; text-align:right; font-size:9pt; color:#555;">
+            <div>{{ new Date().toLocaleDateString('en-US', { weekday:'short', year:'numeric', month:'short', day:'numeric' }) }}</div>
+            <div>v{{ version }}</div>
+          </div>
+        </div>
+
+        <!-- Batch summary table -->
+        <table style="width:100%; border-collapse:collapse; font-size:10pt; margin-bottom:8pt;">
+          <thead>
+            <tr style="background:#f0f0f0;">
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Condition</th>
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Dimensions</th>
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Boards</th>
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Resaw Fence</th>
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Panel Depth</th>
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Blanks</th>
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Slabs/Blank</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border:1px solid #ccc; padding:4pt 6pt;">{{ store.resawStock.condition }}</td>
+              <td style="border:1px solid #ccc; padding:4pt 6pt; font-family:monospace;">{{ store.resawStock.thicknessStr }}" × {{ store.resawStock.widthStr }}" × {{ store.resawStock.lengthStr }}"<br/>{{ r.input.stock.thickness }}" nom · {{ fmtIn(r.stock.usableThickness) }}" usable</td>
+              <td style="border:1px solid #ccc; padding:4pt 6pt; font-weight:bold;">{{ store.resawStock.qty }}</td>
+              <td style="border:1px solid #ccc; padding:4pt 6pt; font-family:monospace; font-weight:bold;">{{ r.slabs.slabThickness.toFixed(4) }}"</td>
+              <td style="border:1px solid #ccc; padding:4pt 6pt; font-family:monospace;">{{ fmtIn(r.input.resawSettings.panelTarget) }}"</td>
+              <td style="border:1px solid #ccc; padding:4pt 6pt; font-weight:bold;">{{ r.roughCrosscut.blanksTotal }}</td>
+              <td style="border:1px solid #ccc; padding:4pt 6pt; font-weight:bold;">{{ r.slabs.slabsPerBlank }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- SKU yield summary -->
+        <table style="width:100%; border-collapse:collapse; font-size:10pt; margin-bottom:4pt;">
+          <thead>
+            <tr style="background:#f0f0f0;">
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">SKU</th>
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Final Dims (Face × Depth × Length)</th>
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Rip Fence</th>
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Strips/Panel</th>
+              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:right; font-weight:bold;">TOTAL STRIPS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="sr in r.stripResults" :key="'ph-' + sr.id">
+              <td style="border:1px solid #ccc; padding:4pt 6pt; font-weight:bold;">{{ sr.name }}</td>
+              <td style="border:1px solid #ccc; padding:4pt 6pt; font-family:monospace;">{{ sr.finalWidth.toFixed(3) }}" × {{ fmtIn(r.input.resawSettings.panelTarget) }}" × {{ sr.length }}"</td>
+              <td style="border:1px solid #ccc; padding:4pt 6pt; font-family:monospace;">{{ fmtIn(sr.roughWidth) }}"</td>
+              <td style="border:1px solid #ccc; padding:4pt 6pt;">{{ sr.stripsPerPanel }}</td>
+              <td style="border:1px solid #ccc; padding:4pt 6pt; text-align:right; font-weight:bold; font-size:12pt;">{{ sr.totalStrips }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       <!-- Summary bar -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div class="no-print grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <div class="bg-surface border border-border rounded-lg p-4 text-center">
           <div class="text-2xl font-bold text-text-primary">{{ r.roughCrosscut.blanksPerBoard }}</div>
           <div class="text-xs text-text-muted mt-1">Blanks per board</div>
@@ -386,8 +450,18 @@
         </div>
       </div>
 
+      <!-- Print button (results top) -->
+      <div class="no-print flex justify-end mb-2">
+        <button
+          @click="printInstructions"
+          class="flex items-center gap-2 text-sm px-4 py-2 border border-border rounded hover:bg-surface transition-colors text-text-muted hover:text-text-primary"
+        >
+          🖨 Print Milling Sheet
+        </button>
+      </div>
+
       <!-- Step 1: Rough Crosscut SVG -->
-      <div class="bg-surface border border-border rounded-lg p-5">
+      <div class="bg-surface border border-border rounded-lg p-5 print-no-break">
         <h3 class="text-sm font-semibold text-text-primary mb-1">Step 1 — Rough Crosscut Layout</h3>
         <p class="text-xs text-text-muted mb-2">{{ r.roughCrosscut.cuts.map(c => c.qty + '\u00d7' + fmtIn(c.length) + '"').join(' + ') }} from {{ fmtIn(r.input.stock.length) }}" board · {{ fmtIn(r.roughCrosscut.waste) }}" waste</p>
         <div class="flex flex-wrap gap-3 text-xs text-text-muted mb-3">
@@ -408,7 +482,7 @@
       </div>
 
       <!-- Cross-section SVG (board end view) -->
-      <div class="bg-surface border border-border rounded-lg p-5">
+      <div class="bg-surface border border-border rounded-lg p-5 print-no-break">
         <h3 class="text-sm font-semibold text-text-primary mb-3">Board Cross-Section (end grain view)</h3>
         <div class="flex flex-wrap gap-4 text-xs text-text-muted mb-3">
           <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-yellow-600 opacity-80"></span> Slab (usable panel)</span>
@@ -598,7 +672,7 @@
       </div>
 
       <!-- Step-by-step instructions -->
-      <div class="bg-surface border border-border rounded-lg p-5">
+      <div class="bg-surface border border-border rounded-lg p-5 print-break-before">
         <div class="flex items-center justify-between mb-4 no-print">
           <h3 class="text-sm font-semibold text-text-primary">Milling Instructions</h3>
           <button
@@ -609,14 +683,9 @@
           </button>
         </div>
 
-        <div class="print-only mb-4">
-          <h2 class="text-xl font-bold">Resaw Planner — Milling Instructions</h2>
-          <p class="text-sm text-gray-600">{{ store.resawStock.qty }} boards · {{ new Date().toLocaleDateString() }}</p>
-        </div>
-
         <div class="space-y-4 text-sm font-mono">
           <!-- Step 1: Rough crosscut -->
-          <div>
+          <div class="print-step">
             <div class="font-semibold text-text-primary">Step 1 — Rough crosscut (miter saw)</div>
             <div class="text-text-muted mt-1 ml-4">
               Cut each board into blanks (stop block recommended, not a fence):<br/>
@@ -631,7 +700,7 @@
           </div>
 
           <!-- Step 2 -->
-          <div>
+          <div class="print-step">
             <div class="font-semibold text-text-primary">Step 2 — Joint reference face</div>
             <div class="text-text-muted mt-1 ml-4">
               <span v-if="r.input.stock.condition === 'skip-planed'">One face already skip planed — run a light jointer pass to establish a true reference face.</span>
@@ -642,7 +711,7 @@
           </div>
 
           <!-- Step 3: Resaw -->
-          <div>
+          <div class="print-step">
             <div class="font-semibold text-text-primary">Step 3 — Resaw on bandsaw</div>
             <div class="text-text-muted mt-1 ml-4">
               Fence setting: {{ r.slabs.slabThickness.toFixed(4) }}" — jointed face against fence<br/>
@@ -665,7 +734,7 @@
           </div>
 
           <!-- Step 4: Drum sand -->
-          <div>
+          <div class="print-step">
             <div class="font-semibold text-text-primary">Step 4 — Drum sand to panel depth</div>
             <div class="text-text-muted mt-1 ml-4">
               Target depth: {{ fmtIn(r.input.resawSettings.panelTarget) }}" ± 0.003" (this becomes the strip depth in the kumiko frame)<br/>
@@ -674,7 +743,7 @@
           </div>
 
           <!-- Step 5: Finish crosscut to length -->
-          <div>
+          <div class="print-step">
             <div class="font-semibold text-text-primary">Step 5 — Finish crosscut to length (miter saw)</div>
             <div class="text-text-muted mt-1 ml-4">
               <span v-if="r.roughCrosscut.snipeBuffer > 0">Snipe buffer ({{ fmtIn(r.roughCrosscut.snipeBuffer) }}") trimmed off here. Square the snipe end first (trailing end from the bandsaw), then measure and cut to length from the clean end.</span>
@@ -689,7 +758,7 @@
           </div>
 
           <!-- Step 6: Rip -->
-          <div>
+          <div class="print-step">
             <div class="font-semibold text-text-primary">Step 6 — Rip strips on table saw</div>
             <div class="text-text-muted mt-1 ml-4">
               Ripping sets the strip face dimension (visible front of kumiko strip):<br/>
@@ -700,7 +769,7 @@
           </div>
 
           <!-- Step 7: Hand plane -->
-          <div>
+          <div class="print-step">
             <div class="font-semibold text-text-primary">Step 7 — Hand plane strips to dimension</div>
             <div class="text-text-muted mt-1 ml-4">
               Plane each strip to reduce face from rough rip to near-final:<br/>
@@ -711,7 +780,7 @@
           </div>
 
           <!-- Step 8: Final sander -->
-          <div>
+          <div class="print-step">
             <div class="font-semibold text-text-primary">Step 8 — Drum sand to final face dimension</div>
             <div class="text-text-muted mt-1 ml-4">
               Sand the strip face to final dimension:<br/>
@@ -724,7 +793,7 @@
       </div>
 
       <!-- Yield report table -->
-      <div class="bg-surface border border-border rounded-lg p-5">
+      <div class="bg-surface border border-border rounded-lg p-5 no-print">
         <h3 class="text-sm font-semibold text-text-primary mb-3">Yield Report</h3>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
@@ -781,6 +850,7 @@ import { optimizeCrosscut } from '@/resawSolver'
 
 const store = useProjectStore()
 const r = computed(() => store.resawResults)
+const version = __APP_VERSION__
 
 // Live: optimal crosscut plan preview
 const crosscutPreview = computed(() => {
