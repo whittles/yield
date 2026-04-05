@@ -450,15 +450,6 @@
         </div>
       </div>
 
-      <!-- Print button (results top) -->
-      <div class="no-print flex justify-end mb-2">
-        <button
-          @click="printInstructions"
-          class="flex items-center gap-2 text-sm px-4 py-2 border border-border rounded hover:bg-surface transition-colors text-text-muted hover:text-text-primary"
-        >
-          🖨 Print Milling Sheet
-        </button>
-      </div>
 
       <!-- Step 1: Rough Crosscut SVG -->
       <div class="bg-surface border border-border rounded-lg p-5 print-no-break">
@@ -673,14 +664,8 @@
 
       <!-- Step-by-step instructions -->
       <div class="bg-surface border border-border rounded-lg p-5 print-break-before">
-        <div class="flex items-center justify-between mb-4 no-print">
+        <div class="mb-4 no-print">
           <h3 class="text-sm font-semibold text-text-primary">Milling Instructions</h3>
-          <button
-            @click="printInstructions"
-            class="text-sm px-3 py-1 border border-border rounded hover:bg-bg transition-colors text-text-primary"
-          >
-            🖨 Print
-          </button>
         </div>
 
         <div class="space-y-4 text-sm font-mono">
@@ -839,6 +824,25 @@
       </div>
 
     </template>
+
+    <!-- ── FAB: Print Sheet ───────────────────────────────────────────── -->
+    <Teleport to="body">
+      <button
+        v-if="r"
+        @click="printInstructions"
+        class="no-print fixed bottom-6 right-6 z-50
+               flex items-center gap-2
+               bg-accent hover:bg-indigo-600 active:bg-indigo-700
+               text-white font-semibold
+               px-5 py-3 rounded-full
+               shadow-lg
+               transition-all duration-150
+               text-sm"
+        aria-label="Print milling sheet"
+      >
+        🖨 <span class="hidden sm:inline">Print Sheet</span>
+      </button>
+    </Teleport>
   </div>
 </template>
 
