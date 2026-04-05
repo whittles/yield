@@ -209,3 +209,85 @@ export function packSheets(pieces, sheetW, sheetH, kerf) {
 
   return sheets
 }
+
+/**
+ * Pack pieces across multiple sheets of potentially different sizes.
+ * Tries each sheet in order — useful for partial sheets.
+ * @param {Array} pieces
+ * @param {Array<{w,h}>} sheetSizes - array of available sheets in order
+ * @param {number} kerf
+ */
+export function packMultipleSheets(pieces, sheetSizes, kerf) {
+  if (!sheetSizes.length) return packSheets(pieces, 48, 96, kerf);
+
+  // Expand pieces by qty
+  const items = [];
+  for (const p of pieces) {
+    for (let i = 0; i < p.qty; i++) {
+      items.push({ ...p, instanceId: `${p.id}-${i}`, w: p.length + kerf, h: p.width + kerf });
+    }
+  }
+  items.sort((a, b) => (b.w * b.h) - (a.w * a.h));
+
+  const sheets = [];
+  let remaining = [...items];
+
+  for (const size of sheetSizes) {
+    if (!remaining.length) break;
+    // Try to fit as many remaining items as possible on this sheet
+    const sheet = {
+      sheetIndex: sheets.length,
+      sheetW: size.w,
+      sheetH: size.h,
+      placed: [],
+      freeRects: [{ x: 0, y: 0, w: size.w, h: size.h }],
+    };
+    const stillRemaining = [];
+    for (const item of remaining) {
+      if (!_tryPlace(sheet, item, kerf)) stillRemaining.push(item);
+    }
+    sheets.push(sheet);
+    remaining = stillRemaining;
+  }
+
+  // If anything still left, overflow onto additional full sheets (last size)
+  const lastSize = sheetSizes[sheetSizes.length - 1];
+  while (remaining.length) {
+    const sheet = {
+      sheetIndex: sheets.length,
+      sheetW: lastSize.w,
+      sheetH: lastSize.h,
+      placed: [],
+      freeRects: [{ x: 0, y: 0, w: lastSize.w, h: lastSize.h }],
+    };
+    const stillRemaining = [];
+    for (const item of remaining) {
+      if (!_tryPlace(sheet, item, kerf)) stillRemaining.push(item);
+    }
+    sheets.push(sheet);
+    if (stillRemaining.length === remaining.length) break; // safety
+    remaining = stillRemaining;
+  }
+
+  return sheets;
+}
+
+function _tryPlace(sheet, item, kerf) {
+  for (const [iw, ih, rotated] of [
+    [item.w, item.h, false],
+    [item.h, item.w, true],
+  ]) {
+    for (let ri = 0; ri < sheet.freeRects.length; ri++) {
+      const r = sheet.freeRects[ri];
+      if (iw <= r.w && ih <= r.h) {
+        sheet.placed.push({ ...item, x: r.x, y: r.y, placedW: iw - kerf, placedH: ih - kerf, rotated });
+        const newRects = [];
+        if (r.w - iw > kerf) newRects.push({ x: r.x + iw, y: r.y, w: r.w - iw, h: ih });
+        if (r.h - ih > kerf) newRects.push({ x: r.x, y: r.y + ih, w: r.w, h: r.h - ih });
+        sheet.freeRects.splice(ri, 1, ...newRects);
+        return true;
+      }
+    }
+  }
+  return false;
+}

@@ -71,8 +71,8 @@
           <label class="block text-xs text-text-muted mb-1">Material thickness</label>
           <input type="text" v-model="matThicknessStr"
             class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
-            placeholder='1/2' />
-          <p class="text-xs text-text-muted mt-1">Plywood thickness</p>
+            placeholder='15/32' />
+          <p class="text-xs text-text-muted mt-1">Measure your actual sheet — nominal ½" is typically 15/32" (0.469")</p>
         </div>
       </div>
 
@@ -111,18 +111,26 @@
             <p class="text-xs text-text-muted mt-1">Fraction of inner length each lid overlaps (e.g. 1/3)</p>
           </div>
           <div>
-            <label class="block text-xs text-text-muted mb-1">Sheet width × length</label>
-            <div class="flex items-center gap-1">
-              <input type="text" v-model="sheetWStr"
-                class="w-16 border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
-                placeholder='48' />
-              <span class="text-text-muted text-xs">×</span>
-              <input type="text" v-model="sheetHStr"
-                class="w-16 border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
-                placeholder='96' />
-              <span class="text-xs text-text-muted">in</span>
+            <label class="block text-xs text-text-muted mb-1">Available plywood sheets</label>
+            <div class="space-y-1">
+              <div v-for="(sheet, i) in availableSheets" :key="i" class="flex items-center gap-1">
+                <input type="text" v-model="sheet.w"
+                  class="w-16 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                  placeholder='48' />
+                <span class="text-text-muted text-xs">×</span>
+                <input type="text" v-model="sheet.h"
+                  class="w-16 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                  placeholder='96' />
+                <span class="text-xs text-text-muted">in</span>
+                <button v-if="availableSheets.length > 1" @click="availableSheets.splice(i,1)"
+                  class="text-text-muted hover:text-danger text-sm px-1">×</button>
+              </div>
+              <button @click="availableSheets.push({w:'48',h:'96'})"
+                class="text-xs text-accent hover:opacity-80">
+                + Add sheet
+              </button>
             </div>
-            <p class="text-xs text-text-muted mt-1">Plywood sheet size (default 4×8)</p>
+            <p class="text-xs text-text-muted mt-1">Partial sheets welcome — solver tries each in order</p>
           </div>
           <div>
             <label class="block text-xs text-text-muted mb-1">Saw kerf</label>
@@ -237,9 +245,13 @@
       <div class="space-y-4">
         <h2 class="text-base font-semibold text-text-primary">Sheet Layout</h2>
         <div v-for="(sheet, si) in sheets" :key="'sheet-' + si" class="bg-surface border border-border rounded-lg p-5">
+          <!-- Sheet label -->
+          <p class="text-xs text-text-muted mb-2 no-print">
+            Sheet {{ si + 1 }}: {{ sheet.sheetW || (parseFraction(availableSheets[0]?.w)||48) }}" × {{ sheet.sheetH || (parseFraction(availableSheets[0]?.h)||96) }}"
+          </p>
           <!-- SVG layout -->
           <svg
-            :viewBox="`0 0 ${svgW} ${svgH}`"
+            :viewBox="`0 0 ${Math.round((sheet.sheetW||48) * (SVG_DISPLAY_W/(sheet.sheetW||48)))} ${Math.round((sheet.sheetH||96) * (SVG_DISPLAY_W/(sheet.sheetW||48)))}`"
             class="w-full"
             style="max-width: 100%; font-family: monospace;"
           >
@@ -250,23 +262,26 @@
             </defs>
 
             <!-- Sheet background (waste = hatch) -->
-            <rect x="0" y="0" :width="svgW" :height="svgH" :fill="`url(#hatch-${si})`" stroke="#555" stroke-width="1"/>
+            <rect x="0" y="0"
+              :width="Math.round((sheet.sheetW||48) * (SVG_DISPLAY_W/(sheet.sheetW||48)))"
+              :height="Math.round((sheet.sheetH||96) * (SVG_DISPLAY_W/(sheet.sheetW||48)))"
+              :fill="`url(#hatch-${si})`" stroke="#555" stroke-width="1"/>
 
             <!-- Placed pieces -->
             <g v-for="p in sheet.placed" :key="p.instanceId">
               <rect
-                :x="toSvgX(p.x)"
-                :y="toSvgY(p.y)"
-                :width="toSvgLen(p.placedW)"
-                :height="toSvgLen(p.placedH)"
+                :x="Math.round(p.x * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10"
+                :y="Math.round(p.y * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10"
+                :width="Math.max(1, Math.round(p.placedW * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10)"
+                :height="Math.max(1, Math.round(p.placedH * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10)"
                 :fill="PIECE_COLORS[p.id] || '#888'"
                 fill-opacity="0.75"
                 :stroke="darken(PIECE_COLORS[p.id] || '#888')"
                 stroke-width="0.8"
               />
               <text
-                :x="toSvgX(p.x) + toSvgLen(p.placedW) / 2"
-                :y="toSvgY(p.y) + toSvgLen(p.placedH) / 2 - 5"
+                :x="Math.round(p.x * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10 + Math.max(1, Math.round(p.placedW * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10) / 2"
+                :y="Math.round(p.y * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10 + Math.max(1, Math.round(p.placedH * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10) / 2 - 5"
                 text-anchor="middle"
                 dominant-baseline="middle"
                 font-size="9"
@@ -274,9 +289,9 @@
                 font-weight="600"
               >{{ p.label }}</text>
               <text
-                v-if="toSvgLen(p.placedH) > 18"
-                :x="toSvgX(p.x) + toSvgLen(p.placedW) / 2"
-                :y="toSvgY(p.y) + toSvgLen(p.placedH) / 2 + 7"
+                v-if="Math.round(p.placedH * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10 > 18"
+                :x="Math.round(p.x * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10 + Math.max(1, Math.round(p.placedW * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10) / 2"
+                :y="Math.round(p.y * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10 + Math.max(1, Math.round(p.placedH * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10) / 2 + 7"
                 text-anchor="middle"
                 dominant-baseline="middle"
                 font-size="7"
@@ -288,7 +303,7 @@
           <!-- Sheet utilization -->
           <div class="mt-2 flex items-center justify-between text-xs text-text-muted">
             <span>Sheet {{ si + 1 }} of {{ sheets.length }}</span>
-            <span class="font-semibold text-text-primary">{{ sheetUtilization(sheet) }}% utilization</span>
+            <span class="font-semibold text-text-primary">{{ sheetUtilization(sheet, si) }}% utilization</span>
           </div>
         </div>
       </div>
@@ -337,7 +352,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { parseFraction } from '@/utils/fractions'
-import { calculatePieces, packSheets, formatIn } from '@/toolboxSolver'
+import { calculatePieces, packSheets, packMultipleSheets, formatIn } from '@/toolboxSolver'
 
 const version = __APP_VERSION__
 
@@ -346,13 +361,12 @@ const mode = ref('inner')
 const lengthStr = ref('24')
 const widthStr = ref('10')
 const heightStr = ref('8')
-const matThicknessStr = ref('1/2')
+const matThicknessStr = ref('15/32')
 const dadoDepthStr = ref('1/4')
 const runnerClearanceStr = ref('1/16')
 const handleHeightStr = ref('3/4')
 const overlapFractionStr = ref('1/3')
-const sheetWStr = ref('48')
-const sheetHStr = ref('96')
+const availableSheets = ref([{ w: '48', h: '96' }])
 const kerfStr = ref('1/8')
 
 // ── State ────────────────────────────────────────────────────────────
@@ -386,16 +400,17 @@ function darken(hex) {
 // ── SVG scaling ───────────────────────────────────────────────────────
 // Target SVG display: max 480×240 for a 4×8 sheet
 const SVG_DISPLAY_W = 480
+// SVG scale based on first sheet (for display proportions)
 const svgScaleFactor = computed(() => {
-  const sheetW = parseFraction(sheetWStr.value) || 48
+  const sheetW = parseFraction(availableSheets.value[0]?.w) || 48
   return SVG_DISPLAY_W / sheetW
 })
 const svgW = computed(() => {
-  const sheetW = parseFraction(sheetWStr.value) || 48
+  const sheetW = parseFraction(availableSheets.value[0]?.w) || 48
   return Math.round(sheetW * svgScaleFactor.value)
 })
 const svgH = computed(() => {
-  const sheetH = parseFraction(sheetHStr.value) || 96
+  const sheetH = parseFraction(availableSheets.value[0]?.h) || 96
   return Math.round(sheetH * svgScaleFactor.value)
 })
 
@@ -403,9 +418,10 @@ function toSvgX(x) { return Math.round(x * svgScaleFactor.value * 10) / 10 }
 function toSvgY(y) { return Math.round(y * svgScaleFactor.value * 10) / 10 }
 function toSvgLen(l) { return Math.max(1, Math.round(l * svgScaleFactor.value * 10) / 10) }
 
-function sheetUtilization(sheet) {
-  const sheetW = parseFraction(sheetWStr.value) || 48
-  const sheetH = parseFraction(sheetHStr.value) || 96
+function sheetUtilization(sheet, sheetIndex) {
+  const s = availableSheets.value[sheetIndex] ?? availableSheets.value[availableSheets.value.length - 1]
+  const sheetW = parseFraction(s?.w) || 48
+  const sheetH = parseFraction(s?.h) || 96
   const total = sheetW * sheetH
   const used = sheet.placed.reduce((sum, p) => sum + p.placedW * p.placedH, 0)
   return Math.round((used / total) * 100)
@@ -428,8 +444,6 @@ function calculate() {
     const runner = parseFraction(runnerClearanceStr.value) || 0.0625
     const handle = parseFraction(handleHeightStr.value) || 0.75
     const overlap = parseFraction(overlapFractionStr.value) || (1 / 3)
-    const sheetW = parseFraction(sheetWStr.value) || 48
-    const sheetH = parseFraction(sheetHStr.value) || 96
     const kerf = parseFraction(kerfStr.value) || 0.125
 
     if (!length || !width || !height) {
@@ -450,7 +464,15 @@ function calculate() {
     })
 
     result.value = r
-    sheets.value = packSheets(r.pieces, sheetW, sheetH, kerf)
+
+    // Pack across all available sheets in order
+    const allSheetsSizes = availableSheets.value.map(s => ({
+      w: parseFraction(s.w) || 48,
+      h: parseFraction(s.h) || 96,
+    }))
+
+    // Use multi-sheet packing: try each sheet in sequence
+    sheets.value = packMultipleSheets(r.pieces, allSheetsSizes, kerf)
   } catch (e) {
     inputError.value = `Calculation error: ${e.message}`
   }
