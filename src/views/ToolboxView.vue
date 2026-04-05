@@ -486,12 +486,11 @@ function sheetUtilization(sheet, sheetIndex) {
 const isoBoxData = computed(() => {
   if (!result.value) return null
   const d = result.value.dimensions
-  // Box is oriented so the LONG face (oL) goes INTO the screen (z-axis)
-  // and the SHORT side (oW) goes left-to-right (x-axis)
-  // This makes the front face (long side) face the viewer
-  const oL = d.oW   // short side = x-axis width (left to right)
-  const oZ = d.oL   // long side = z-axis depth (into screen)
-  const oY = d.oH   // height stays y
+  // Long axis (oL) goes left-to-right (x), short axis (oW) goes into screen (z)
+  // Viewer is front-right-above: sees front face (z=0, full oL×oY), right face (x=oL, oW×oY), top (oL×oW)
+  const oL = d.oL   // length = x axis (left to right) — this is the big front face
+  const oZ = d.oW   // depth = z axis (into screen)
+  const oY = d.oH   // height = y axis (up)
   const matT = result.value.input.matThickness
   const handleH = result.value.input.handleHeight
   const battensH = d.battensWidth ?? (handleH + 0.5)
@@ -543,20 +542,20 @@ const isoBoxData = computed(() => {
   const rightBattenFace = pts(iso(oL,oY,0), iso(oL,oY,oZ), iso(oL,oY+battensH,oZ), iso(oL,oY+battensH,0))
 
   // Lid panel (slid 30% open toward x=0)
-  // Lid slides along z (long axis). Slid 30% toward viewer (z=0)
-  const lidSlide = oZ * 0.30
-  const lidZ0 = -lidSlide          // overhangs front
-  const lidZ1 = lidZ0 + lidLen
-  // Lid spans full x (oL = short side), sits at y=oY
-  const lidTop   = pts(iso(0,oY+lidThick,lidZ0), iso(oL,oY+lidThick,lidZ0), iso(oL,oY+lidThick,lidZ1), iso(0,oY+lidThick,lidZ1))
-  const lidFront = pts(iso(0,oY,lidZ0), iso(oL,oY,lidZ0), iso(oL,oY+lidThick,lidZ0), iso(0,oY+lidThick,lidZ0))
-  const lidRight = pts(iso(oL,oY,lidZ0), iso(oL,oY,lidZ1), iso(oL,oY+lidThick,lidZ1), iso(oL,oY+lidThick,lidZ0))
+  // Lid slides along x (long axis). Slid 30% open toward x=0 (left)
+  const lidSlide = oL * 0.30
+  const lidX0 = -lidSlide
+  const lidX1 = lidX0 + lidLen
+  // Lid spans full z (oZ = short depth), sits at y=oY
+  const lidTop   = pts(iso(lidX0,oY+lidThick,0), iso(lidX1,oY+lidThick,0), iso(lidX1,oY+lidThick,oZ), iso(lidX0,oY+lidThick,oZ))
+  const lidFront = pts(iso(lidX0,oY,0), iso(lidX1,oY,0), iso(lidX1,oY+lidThick,0), iso(lidX0,oY+lidThick,0))
+  const lidRight = pts(iso(lidX1,oY,0), iso(lidX1,oY,oZ), iso(lidX1,oY+lidThick,oZ), iso(lidX1,oY+lidThick,0))
 
-  // Interior gap (exposed where lid has slid away from far end)
-  const gapZ0 = lidZ1
-  const gapZ1 = oZ - matT
-  const interiorTop = gapZ1 > gapZ0
-    ? pts(iso(0,oY,gapZ0), iso(oL,oY,gapZ0), iso(oL,oY,gapZ1), iso(0,oY,gapZ1))
+  // Interior gap (exposed where lid has slid to the left)
+  const gapX0 = lidX1
+  const gapX1 = oL - matT
+  const interiorTop = gapX1 > gapX0
+    ? pts(iso(gapX0,oY,0), iso(gapX1,oY,0), iso(gapX1,oY,oZ), iso(gapX0,oY,oZ))
     : null
 
   // Ground shadow
