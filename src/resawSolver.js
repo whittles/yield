@@ -159,7 +159,7 @@ export function solveResaw(input) {
   const {
     stock,            // { thickness, width, length, qty, condition }
     resawSettings,    // { kerf, slabAllowance, panelTarget }
-    stripSettings,    // [{ name, roughWidth, planeAllowance, finalWidth, tableKerf, length }]
+    stripSettings,    // [{ name, roughWidth, planeAllowance, finalWidth, tableKerf, length, panelDepth? }]
     crosscutSettings, // { blankLengths: number[], miterKerf }
   } = input;
 
@@ -179,10 +179,9 @@ export function solveResaw(input) {
     ...crosscutPlan,
     blanksPerBoard: crosscutPlan.totalBlanks,
     blanksTotal: crosscutPlan.totalBlanks * stock.qty,
-    blankLengths,       // actual cut lengths (nominal + buffer)
-    blankTargetLengths, // nominal lengths (for finish crosscut)
+    blankLengths,
+    blankTargetLengths,
     snipeBuffer,
-    // Primary blank length = longest one (used for slab calc)
     primaryBlankLength: blankLengths[0] || 36,
   };
 
@@ -196,107 +195,129 @@ export function solveResaw(input) {
   const usableThickness = stock.thickness - (conditionLoss[stock.condition] || 0);
   const usableWidth = stock.width;
 
-  // Step 2: Slabs per blank
-  const slabThickness = resawSettings.panelTarget + resawSettings.slabAllowance;
-  const slabsPerBlank = Math.floor(
-    (usableThickness + resawSettings.kerf) / (slabThickness + resawSettings.kerf)
-  );
-  const slabsPerBoard = slabsPerBlank; // alias
+  // Group strip settings by panel depth.
+  // Each SKU can declare its own panelDepth; fallback to global resawSettings.panelTarget.
+  const groupsMap = new Map();
+  for (const strip of stripSettings) {
+    const depth = (strip.panelDepth != null) ? strip.panelDepth : resawSettings.panelTarget;
+    const key = depth.toFixed(4);
+    if (!groupsMap.has(key)) groupsMap.set(key, { panelDepth: depth, strips: [] });
+    groupsMap.get(key).strips.push(strip);
+  }
 
-  // Redistribute offcut back into slab thickness (thicker fence = more buffer for blade drift)
-  // Extra per slab = offcut / slabCount, drum sander absorbs the extra
-  const rawThicknessUsed = slabsPerBlank * slabThickness + Math.max(0, slabsPerBlank - 1) * resawSettings.kerf;
-  const rawOffcut = usableThickness - rawThicknessUsed;
-  const extraPerSlab = slabsPerBlank > 0 ? rawOffcut / slabsPerBlank : 0;
-  const optimizedSlabThickness = slabThickness + extraPerSlab;
+  // Solve each group independently
+  const resawGroups = [];
+  for (const [, group] of groupsMap) {
+    const slabThickness = group.panelDepth + resawSettings.slabAllowance;
+    const slabsPerBlank = Math.floor(
+      (usableThickness + resawSettings.kerf) / (slabThickness + resawSettings.kerf)
+    );
 
-  const thicknessUsed = slabsPerBlank * optimizedSlabThickness + Math.max(0, slabsPerBlank - 1) * resawSettings.kerf;
-  const thicknessWaste = Math.max(0, usableThickness - thicknessUsed);
-  const thicknessWastePct = Math.round((thicknessWaste / usableThickness) * 100);
+    // Redistribute offcut back into slab thickness
+    const rawThicknessUsed = slabsPerBlank * slabThickness + Math.max(0, slabsPerBlank - 1) * resawSettings.kerf;
+    const rawOffcut = usableThickness - rawThicknessUsed;
+    const extraPerSlab = slabsPerBlank > 0 ? rawOffcut / slabsPerBlank : 0;
+    const optimizedSlabThickness = slabThickness + extraPerSlab;
 
-  // Step 3: Strips per panel + finish crosscut per SKU (mixed blank lengths)
-  const stripResults = stripSettings.map(strip => {
-    // Finish crosscut: use the FULL blank length (buffer already baked in)
-    // Square one end, cut pieces from head — snipe buffer consumed as tail waste
-    const finishCrosscut = crosscutPlan.cuts.map(bc => {
-      const piecesPerBlank = Math.floor(
-        (bc.length + crosscutSettings.miterKerf) / (strip.length + crosscutSettings.miterKerf)
+    const thicknessUsed = slabsPerBlank * optimizedSlabThickness + Math.max(0, slabsPerBlank - 1) * resawSettings.kerf;
+    const thicknessWaste = Math.max(0, usableThickness - thicknessUsed);
+    const thicknessWastePct = Math.round((thicknessWaste / usableThickness) * 100);
+
+    const stripResults = group.strips.map(strip => {
+      const finishCrosscut = crosscutPlan.cuts.map(bc => {
+        const piecesPerBlank = Math.floor(
+          (bc.length + crosscutSettings.miterKerf) / (strip.length + crosscutSettings.miterKerf)
+        );
+        const kerfLoss = Math.max(0, piecesPerBlank - 1) * crosscutSettings.miterKerf;
+        const waste = bc.length - piecesPerBlank * strip.length - kerfLoss;
+        return {
+          blankLength: bc.length,
+          qty: bc.qty,
+          piecesPerBlank,
+          waste: Math.max(0, waste),
+          snipeBuffer,
+        };
+      });
+
+      const totalFinishedPiecesPerBoard = finishCrosscut.reduce(
+        (sum, fc) => sum + fc.piecesPerBlank * fc.qty, 0
       );
-      const kerfLoss = Math.max(0, piecesPerBlank - 1) * crosscutSettings.miterKerf;
-      // Waste at tail includes snipe buffer + any remainder
-      const waste = bc.length - piecesPerBlank * strip.length - kerfLoss;
+
+      const stripsPerPanel = Math.floor(
+        (usableWidth + strip.tableKerf) / (strip.roughWidth + strip.tableKerf)
+      );
+      const widthUsed = stripsPerPanel * strip.roughWidth + Math.max(0, stripsPerPanel - 1) * strip.tableKerf;
+      const widthWaste = usableWidth - widthUsed;
+
       return {
-        blankLength: bc.length,
-        qty: bc.qty,
-        piecesPerBlank,
-        waste: Math.max(0, waste),
-        snipeBuffer,
+        ...strip,
+        panelDepth: group.panelDepth,  // attach resolved depth to each result
+        stripsPerPanel,
+        widthUsed,
+        widthWaste,
+        widthWastePct: Math.round((widthWaste / usableWidth) * 100),
+        finishCrosscut,
+        totalFinishedPiecesPerBoard,
+        finishedPiecesPerBlank: finishCrosscut[0]?.piecesPerBlank ?? 0,
+        finishCrosscutWaste: finishCrosscut[0]?.waste ?? 0,
+        stripsPerBoard: stripsPerPanel * totalFinishedPiecesPerBoard * slabsPerBlank,
+        totalStrips: stripsPerPanel * totalFinishedPiecesPerBoard * slabsPerBlank * stock.qty,
       };
     });
 
-    // Total finished pieces per board (across all blank types)
-    const totalFinishedPiecesPerBoard = finishCrosscut.reduce(
-      (sum, fc) => sum + fc.piecesPerBlank * fc.qty, 0
-    );
-
-    // Strips per panel (width direction)
-    const stripsPerPanel = Math.floor(
-      (usableWidth + strip.tableKerf) / (strip.roughWidth + strip.tableKerf)
-    );
-    const widthUsed = stripsPerPanel * strip.roughWidth + Math.max(0, stripsPerPanel - 1) * strip.tableKerf;
-    const widthWaste = usableWidth - widthUsed;
-
-    return {
-      ...strip,
-      stripsPerPanel,
-      widthUsed,
-      widthWaste,
-      widthWastePct: Math.round((widthWaste / usableWidth) * 100),
-      finishCrosscut,
-      totalFinishedPiecesPerBoard,
-      // Legacy single-value for display
-      finishedPiecesPerBlank: finishCrosscut[0]?.piecesPerBlank ?? 0,
-      finishCrosscutWaste: finishCrosscut[0]?.waste ?? 0,
-      stripsPerBoard: stripsPerPanel * totalFinishedPiecesPerBoard * slabsPerBlank,
-      totalStrips: stripsPerPanel * totalFinishedPiecesPerBoard * slabsPerBlank * stock.qty,
-    };
-  });
-
-  // Resaw sequence for display
-  const resawSequence = [];
-  for (let i = 0; i < slabsPerBlank; i++) {
-    resawSequence.push({
+    const resawSequence = Array.from({ length: slabsPerBlank }, (_, i) => ({
       cutNumber: i + 1,
       slabNumber: i + 1,
       slabThickness: optimizedSlabThickness,
-      panelTarget: resawSettings.panelTarget,
+      panelTarget: group.panelDepth,
+    }));
+
+    resawGroups.push({
+      panelDepth: group.panelDepth,
+      panelDepthLabel: `${group.panelDepth}"`,
+      slabThickness: optimizedSlabThickness,
+      nominalSlabThickness: slabThickness,
+      extraPerSlab,
+      slabsPerBlank,
+      slabsPerBoard: slabsPerBlank,
+      stripResults,
+      resawSequence,
+      thicknessUsed,
+      thicknessWaste,
+      thicknessWastePct,
     });
   }
 
-  // Mixed strip optimization — find combo that minimizes panel waste
+  // Backward compat: expose first group's fields at top level
+  const firstGroup = resawGroups[0] || {};
+  const allStripResults = resawGroups.flatMap(g => g.stripResults);
+
+  // Mixed strip optimization — uses all strips across all groups
   const primaryTableKerf = stripSettings[0]?.tableKerf ?? 0.125;
-  const mixedResult = optimizeMixedStrips(usableWidth, stripSettings, primaryTableKerf);
+  const mixedResult = optimizeMixedStrips(usableWidth, allStripResults, primaryTableKerf);
 
   return {
     input: { stock, resawSettings, stripSettings, crosscutSettings },
     stock: { usableThickness, usableWidth, qty: stock.qty },
     roughCrosscut,
+    // Backward compat: first group's slab data
     slabs: {
-      slabThickness: optimizedSlabThickness,   // actual fence setting (redistributed)
-      nominalSlabThickness: slabThickness,      // original target (panelTarget + allowance)
-      extraPerSlab,                             // offcut distributed per slab
-      slabsPerBoard,
-      slabsPerBlank,
-      thicknessUsed,
-      thicknessWaste,
-      thicknessWastePct,
+      slabThickness:      firstGroup.slabThickness      ?? 0,
+      nominalSlabThickness: firstGroup.nominalSlabThickness ?? 0,
+      extraPerSlab:       firstGroup.extraPerSlab       ?? 0,
+      slabsPerBoard:      firstGroup.slabsPerBoard      ?? 0,
+      slabsPerBlank:      firstGroup.slabsPerBlank      ?? 0,
+      thicknessUsed:      firstGroup.thicknessUsed      ?? 0,
+      thicknessWaste:     firstGroup.thicknessWaste     ?? 0,
+      thicknessWastePct:  firstGroup.thicknessWastePct  ?? 0,
     },
-    stripResults,
-    resawSequence,
+    stripResults: allStripResults,           // flat list for backward compat
+    resawSequence: firstGroup.resawSequence || [],
+    resawGroups,                              // ← NEW: per-depth groups
     mixedOptimization: mixedResult,
     summary: {
-      slabsTotal: slabsPerBlank * crosscutPlan.totalBlanks * stock.qty,
-      thicknessYield: 100 - thicknessWastePct,
+      slabsTotal: (firstGroup.slabsPerBlank ?? 0) * crosscutPlan.totalBlanks * stock.qty,
+      thicknessYield: 100 - (firstGroup.thicknessWastePct ?? 0),
     },
   };
 }
