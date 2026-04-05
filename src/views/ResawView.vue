@@ -68,6 +68,38 @@
       </div>
     </div>
 
+    <!-- ── Section 1.5: Rough Crosscut ──────────────────────────────── -->
+    <div class="bg-surface border border-border rounded-lg p-5 no-print">
+      <h2 class="text-base font-semibold text-text-primary mb-1">Rough Crosscut</h2>
+      <p class="text-xs text-text-muted mb-4">Cut long boards to manageable lengths at the miter station before resawing</p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs text-text-muted mb-1">Target blank length (in)</label>
+          <input type="text" v-model="store.crosscutSettings.roughBlankLengthStr"
+                 placeholder='e.g. "36"'
+                 class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary" />
+          <p class="text-xs text-text-muted mt-1">How long you cut each blank at the miter station (typically 36–48")</p>
+        </div>
+        <div>
+          <label class="block text-xs text-text-muted mb-1">Miter saw kerf</label>
+          <select v-model="store.crosscutSettings.miterKerfStr"
+                  class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary">
+            <option value="1/8">1/8" (standard)</option>
+            <option value="3/32">3/32"</option>
+            <option value="1/16">1/16"</option>
+          </select>
+          <p class="text-xs text-text-muted mt-1">Used for both rough crosscut and finish crosscut to length</p>
+        </div>
+        <div class="flex flex-col justify-end">
+          <div class="text-xs text-text-muted mb-1">Blanks per board (calculated)</div>
+          <div class="text-sm font-semibold text-text-primary px-2 py-1.5 bg-bg border border-border rounded">
+            {{ blanksPerBoardPreview }}
+          </div>
+          <p class="text-xs text-text-muted mt-1">From {{ store.resawStock.lengthStr }}" board</p>
+        </div>
+      </div>
+    </div>
+
     <!-- ── Section 2: Resaw Settings ──────────────────────────────── -->
     <div class="bg-surface border border-border rounded-lg p-5 no-print">
       <h2 class="text-base font-semibold text-text-primary mb-1">Resaw Settings</h2>
@@ -268,9 +300,11 @@
       <div class="px-5 pb-5 pt-2 text-sm text-text-muted space-y-2 border-t border-border">
         <p>Enter your stock dimensions and condition, set your resaw parameters, define your strip SKUs, then hit Calculate.</p>
         <ol class="list-decimal ml-4 space-y-1.5">
+          <li><strong class="text-text-primary">Rough crosscut</strong> — miter saw cuts long boards to manageable blank lengths (e.g. 36–48"). Kerf is 1/8".</li>
           <li><strong class="text-text-primary">Condition allowance</strong> — subtracts material lost to the mill's surfacing (e.g. skip planed removes ~⅛" from thickness)</li>
           <li><strong class="text-text-primary">Resaw</strong> — divides usable thickness into slabs. Each slab = panel target + drum sanding allowance. Kerf is lost between slabs.</li>
           <li><strong class="text-text-primary">Drum sand to panel</strong> — each slab is sanded flat to your panel target (e.g. 3/8")</li>
+          <li><strong class="text-text-primary">Finish crosscut to length</strong> — miter saw cuts slabs to exact finished length per SKU (e.g. 12" or 24"). Kerf is 1/8".</li>
           <li><strong class="text-text-primary">Rip strips</strong> — panels are ripped to rough width on the table saw. Kerf lost between each strip.</li>
           <li><strong class="text-text-primary">Hand plane</strong> — strips are planed to reduce width (plane loss column)</li>
           <li><strong class="text-text-primary">Final drum sand</strong> — strips are sanded to final width on the thin side (drum sand loss column)</li>
@@ -298,10 +332,18 @@
     <template v-if="r">
 
       <!-- Summary bar -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <div class="bg-surface border border-border rounded-lg p-4 text-center">
-          <div class="text-2xl font-bold text-text-primary">{{ r.slabs.slabsPerBoard }}</div>
-          <div class="text-xs text-text-muted mt-1">Slabs per board</div>
+          <div class="text-2xl font-bold text-text-primary">{{ r.roughCrosscut.blanksPerBoard }}</div>
+          <div class="text-xs text-text-muted mt-1">Blanks per board</div>
+        </div>
+        <div class="bg-surface border border-border rounded-lg p-4 text-center">
+          <div class="text-2xl font-bold text-text-primary">{{ r.roughCrosscut.blanksTotal }}</div>
+          <div class="text-xs text-text-muted mt-1">Total blanks</div>
+        </div>
+        <div class="bg-surface border border-border rounded-lg p-4 text-center">
+          <div class="text-2xl font-bold text-text-primary">{{ r.slabs.slabsPerBlank }}</div>
+          <div class="text-xs text-text-muted mt-1">Slabs per blank</div>
         </div>
         <div class="bg-surface border border-border rounded-lg p-4 text-center">
           <div class="text-2xl font-bold text-text-primary">{{ r.summary.slabsTotal }}</div>
@@ -525,18 +567,28 @@
         </div>
 
         <div class="space-y-4 text-sm font-mono">
-          <!-- Step 1 -->
+          <!-- Step 1: Rough crosscut -->
           <div>
-            <div class="font-semibold text-text-primary">Step 1 — Prepare reference face</div>
+            <div class="font-semibold text-text-primary">Step 1 — Rough crosscut (miter saw)</div>
+            <div class="text-text-muted mt-1 ml-4">
+              Set miter fence to {{ fmtIn(r.roughCrosscut.roughBlankLength) }}"<br/>
+              Cut each board into blanks: {{ r.roughCrosscut.blanksPerBoard }} blanks/board × {{ r.stock.qty }} boards = {{ r.roughCrosscut.blanksTotal }} blanks<br/>
+              Kerf: {{ fmtIn(r.input.crosscutSettings.miterKerf) }}" · Offcut per board: {{ fmtIn(r.roughCrosscut.lengthWaste) }}"
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div>
+            <div class="font-semibold text-text-primary">Step 2 — Prepare reference face</div>
             <div class="text-text-muted mt-1 ml-4">
               Condition: {{ conditionLabel }}<br/>
               Nominal: {{ fmtIn(r.input.stock.thickness) }}" → Usable: {{ fmtIn(r.stock.usableThickness) }}"
             </div>
           </div>
 
-          <!-- Step 2: Resaw -->
+          <!-- Step 3: Resaw -->
           <div>
-            <div class="font-semibold text-text-primary">Step 2 — Resaw on bandsaw</div>
+            <div class="font-semibold text-text-primary">Step 3 — Resaw on bandsaw</div>
             <div class="text-text-muted mt-1 ml-4">
               Set fence to {{ fmtIn(r.slabs.slabThickness) }}" ({{ r.slabs.slabThickness.toFixed(4) }}")<br/>
               Kerf: {{ fmtIn(r.input.resawSettings.kerf) }}"<br/>
@@ -553,18 +605,29 @@
             </div>
           </div>
 
-          <!-- Step 3: Drum sand -->
+          <!-- Step 4: Drum sand -->
           <div>
-            <div class="font-semibold text-text-primary">Step 3 — Drum sand to panel thickness</div>
+            <div class="font-semibold text-text-primary">Step 4 — Drum sand to panel thickness</div>
             <div class="text-text-muted mt-1 ml-4">
               Target: {{ fmtIn(r.input.resawSettings.panelTarget) }}" ± 0.003"<br/>
-              Sand {{ r.slabs.slabsPerBoard }} slabs per board ({{ r.summary.slabsTotal }} total)
+              Sand {{ r.slabs.slabsPerBlank }} slabs per blank ({{ r.summary.slabsTotal }} total across all blanks)
             </div>
           </div>
 
-          <!-- Step 4: Rip -->
+          <!-- Step 5: Finish crosscut to length -->
           <div>
-            <div class="font-semibold text-text-primary">Step 4 — Rip strips on table saw</div>
+            <div class="font-semibold text-text-primary">Step 5 — Finish crosscut to length (miter saw)</div>
+            <div class="text-text-muted mt-1 ml-4">
+              Cut slabs to exact finished length per SKU:<br/>
+              <div v-for="sr in r.stripResults" :key="'fc-' + sr.id" class="mt-0.5">
+                {{ sr.name }}: fence at {{ sr.length }}" → {{ sr.finishedPiecesPerBlank }} pieces/blank, {{ fmtIn(sr.finishCrosscutWaste) }}" waste/blank
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 6: Rip -->
+          <div>
+            <div class="font-semibold text-text-primary">Step 6 — Rip strips on table saw</div>
             <div class="text-text-muted mt-1 ml-4">
               <div v-for="sr in r.stripResults" :key="sr.id">
                 {{ sr.name }}: fence {{ fmtIn(sr.roughWidth) }}", {{ sr.stripsPerPanel }} strips/panel, {{ sr.stripsPerBoard }} per board, {{ sr.totalStrips }} total
@@ -572,9 +635,9 @@
             </div>
           </div>
 
-          <!-- Step 5: Hand plane -->
+          <!-- Step 7: Hand plane -->
           <div>
-            <div class="font-semibold text-text-primary">Step 5 — Hand plane (width reduction)</div>
+            <div class="font-semibold text-text-primary">Step 7 — Hand plane (width reduction)</div>
             <div class="text-text-muted mt-1 ml-4">
               <div v-for="sr in r.stripResults" :key="'p-' + sr.id">
                 {{ sr.name }}: {{ fmtIn(sr.roughWidth) }}" → {{ (sr.roughWidth - sr.planeAllowance).toFixed(3) }}" (remove {{ sr.planeAllowance.toFixed(3) }}")
@@ -582,9 +645,9 @@
             </div>
           </div>
 
-          <!-- Step 6: Final sander -->
+          <!-- Step 8: Final sander -->
           <div>
-            <div class="font-semibold text-text-primary">Step 6 — Drum sand (thin side / final width)</div>
+            <div class="font-semibold text-text-primary">Step 8 — Drum sand (thin side / final width)</div>
             <div class="text-text-muted mt-1 ml-4">
               <div v-for="sr in r.stripResults" :key="'s-' + sr.id">
                 {{ sr.name }}: → {{ fmtIn(sr.finalWidth) }}" final ± 0.003"
@@ -604,6 +667,7 @@
                 <th class="pb-2 pr-4">SKU</th>
                 <th class="pb-2 pr-4">Final Dims (W × D × L)</th>
                 <th class="pb-2 pr-4">Strips/Panel</th>
+                <th class="pb-2 pr-4">Pieces/Blank</th>
                 <th class="pb-2 pr-4">Panels (slabs)</th>
                 <th class="pb-2 pr-4 font-bold">Total Strips</th>
                 <th class="pb-2">Width Waste</th>
@@ -620,6 +684,7 @@
                   {{ sr.finalWidth.toFixed(3) }}" × {{ fmtIn(r.input.resawSettings.panelTarget) }}" × {{ sr.length }}"
                 </td>
                 <td class="py-2 pr-4">{{ sr.stripsPerPanel }}</td>
+                <td class="py-2 pr-4">{{ sr.finishedPiecesPerBlank }}</td>
                 <td class="py-2 pr-4">{{ r.summary.slabsTotal }}</td>
                 <td class="py-2 pr-4 font-semibold">{{ sr.totalStrips }}</td>
                 <td class="py-2">{{ sr.widthWastePct }}%</td>
@@ -627,8 +692,9 @@
             </tbody>
             <tfoot>
               <tr class="text-xs text-text-muted border-t border-border">
-                <td colspan="6" class="pt-2">
-                  Thickness yield: {{ r.summary.thicknessYield }}% · {{ r.slabs.slabsPerBoard }} slabs/board from {{ fmtIn(r.stock.usableThickness) }}" usable
+                <td colspan="7" class="pt-2">
+                  Total strips = blanks/board × slabs/blank × pieces/blank × strips/panel × boards<br/>
+                  Thickness yield: {{ r.summary.thicknessYield }}% · {{ r.slabs.slabsPerBlank }} slabs/blank from {{ fmtIn(r.stock.usableThickness) }}" usable
                 </td>
               </tr>
             </tfoot>
@@ -648,6 +714,15 @@ import { parseFraction, formatFraction } from '@/utils/fractions'
 
 const store = useProjectStore()
 const r = computed(() => store.resawResults)
+
+// Live: blanks per board preview
+const blanksPerBoardPreview = computed(() => {
+  const boardLen = parseFraction(store.resawStock.lengthStr)
+  const blankLen = parseFraction(store.crosscutSettings.roughBlankLengthStr)
+  const kerf = parseFraction(store.crosscutSettings.miterKerfStr)
+  if (!boardLen || !blankLen) return '—'
+  return Math.floor((boardLen + kerf) / (blankLen + kerf))
+})
 
 // Live: slab green thickness
 const slabGreenThickness = computed(() => {

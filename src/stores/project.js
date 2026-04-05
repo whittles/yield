@@ -117,6 +117,11 @@ export const useProjectStore = defineStore('project', () => {
     slabAllowanceStr: '0.010',
   })
 
+  const crosscutSettings = ref({
+    roughBlankLengthStr: '36',
+    miterKerfStr: '1/8',
+  })
+
   const defaultSkus = [
     { id: 'sku1', name: 'Standard 12"', roughWidthStr: '0.150', planeAllowance: 0.010, sanderAllowance: 0.010, finalWidthStr: '0.130', length: 12, tableKerfStr: '1/8' },
     { id: 'sku2', name: 'Wide 12"',     roughWidthStr: '0.800', planeAllowance: 0.025, sanderAllowance: 0.025, finalWidthStr: '0.750', length: 12, tableKerfStr: '1/8' },
@@ -161,6 +166,10 @@ export const useProjectStore = defineStore('project', () => {
         panelTarget:   parseFraction(resawSettings.value.panelTargetStr),
         slabAllowance: parseFraction(resawSettings.value.slabAllowanceStr),
       },
+      crosscutSettings: {
+        roughBlankLength: parseFraction(crosscutSettings.value.roughBlankLengthStr),
+        miterKerf:        parseFraction(crosscutSettings.value.miterKerfStr),
+      },
       stripSettings: resawSkus.value.map(s => ({
         ...s,
         roughWidth: parseFraction(s.roughWidthStr),
@@ -181,7 +190,7 @@ export const useProjectStore = defineStore('project', () => {
     addStock, removeStock, addPart, removePart,
     calculate, loadProject,
     // Resaw Planner
-    resawStock, resawSettings, resawSkus, resawResults, resawError,
+    resawStock, resawSettings, crosscutSettings, resawSkus, resawResults, resawError,
     addResawSku, removeResawSku, calculateResaw,
   }
 })
