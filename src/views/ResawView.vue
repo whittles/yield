@@ -289,6 +289,11 @@
       </button>
     </div>
 
+    <!-- ── Error state ────────────────────────────────────────────── -->
+    <div v-if="store.resawError" class="bg-red-500/10 border border-red-500/40 rounded-lg p-4 text-sm text-red-400">
+      ⚠ Calculation error: {{ store.resawError }}
+    </div>
+
     <!-- ── Results ─────────────────────────────────────────────────── -->
     <template v-if="r">
 

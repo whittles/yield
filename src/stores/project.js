@@ -126,6 +126,7 @@ export const useProjectStore = defineStore('project', () => {
 
   const resawSkus = ref([...defaultSkus])
   const resawResults = ref(null)
+  const resawError = ref(null)
 
   function addResawSku() {
     resawSkus.value.push({
@@ -145,6 +146,7 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   function calculateResaw() {
+    resawError.value = null
     try {
     resawResults.value = solveResaw({
       stock: {
@@ -170,6 +172,7 @@ export const useProjectStore = defineStore('project', () => {
     } catch(e) {
       console.error('[calculateResaw]', e)
       resawResults.value = null
+      resawError.value = e.message || 'Unknown error'
     }
   }
 
@@ -178,7 +181,7 @@ export const useProjectStore = defineStore('project', () => {
     addStock, removeStock, addPart, removePart,
     calculate, loadProject,
     // Resaw Planner
-    resawStock, resawSettings, resawSkus, resawResults,
+    resawStock, resawSettings, resawSkus, resawResults, resawError,
     addResawSku, removeResawSku, calculateResaw,
   }
 })
