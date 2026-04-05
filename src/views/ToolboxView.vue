@@ -246,42 +246,33 @@
         <h2 class="text-base font-semibold text-text-primary mb-1">3D Preview</h2>
         <p class="text-xs text-text-muted mb-3">Isometric view — lid partially open to show interior</p>
 
-        <svg viewBox="0 0 500 420" class="w-full max-w-lg mx-auto" style="font-family: monospace;">
+        <svg viewBox="0 0 500 420" class="w-full max-w-lg mx-auto" style="font-family: monospace; display: block;">
           <!-- Ground shadow -->
           <ellipse
-            :cx="isoBoxData.groundCenter[0]"
-            :cy="isoBoxData.groundCenter[1]"
-            :rx="isoBoxData.groundRx"
-            :ry="isoBoxData.groundRy"
-            fill="#000" opacity="0.12"
+            :cx="isoBoxData.ground.cx" :cy="isoBoxData.ground.cy"
+            :rx="isoBoxData.ground.rx" :ry="isoBoxData.ground.ry"
+            fill="#000" opacity="0.10"
           />
 
-          <!-- Box front face -->
+          <!-- Box body — draw order: top, right, front -->
+          <polygon :points="isoBoxData.topFace"   fill="#d4b87a" stroke="#8B6914" stroke-width="0.8"/>
+          <polygon :points="isoBoxData.rightFace" fill="#a07840" stroke="#8B6914" stroke-width="0.8"/>
           <polygon :points="isoBoxData.frontFace" fill="#c8a96e" stroke="#8B6914" stroke-width="0.8"/>
 
-          <!-- Box right face (in shadow) -->
-          <polygon :points="isoBoxData.rightFace" fill="#b8955a" stroke="#8B6914" stroke-width="0.8"/>
+          <!-- Interior gap (visible where lid A is open) -->
+          <polygon v-if="isoBoxData.interiorTop" :points="isoBoxData.interiorTop" fill="#2a1f0e" stroke="#1a0f00" stroke-width="0.5"/>
 
-          <!-- Interior top (exposed where lid is open) -->
-          <polygon :points="isoBoxData.interiorTop" fill="#2a1f0e" stroke="#1a0f00" stroke-width="0.5"/>
+          <!-- Lid panel B (closed, right) -->
+          <polygon :points="isoBoxData.lidBFrontEdge" fill="#a07840" stroke="#8B6914" stroke-width="0.8"/>
+          <polygon :points="isoBoxData.lidBTop"       fill="#d4a84b" stroke="#8B6914" stroke-width="0.8"/>
+          <polygon :points="isoBoxData.lidBRight"     fill="#8B6914" stroke="#5a4000" stroke-width="0.8"/>
 
-          <!-- Box top face (partially hidden behind lid panels) -->
-          <polygon :points="isoBoxData.topFace" fill="#c8a96e" stroke="#8B6914" stroke-width="0.5" opacity="0.3"/>
-
-          <!-- Handle strips -->
-          <polygon :points="isoBoxData.leftHandle"  fill="#8B6914" stroke="#5a4000" stroke-width="0.6" opacity="0.8"/>
-          <polygon :points="isoBoxData.rightHandle" fill="#8B6914" stroke="#5a4000" stroke-width="0.6" opacity="0.8"/>
-
-          <!-- Lid B (closed, right side) — front edge then top face -->
-          <polygon :points="isoBoxData.lidBTopFace" fill="#b8955a" stroke="#8B6914" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.lidBTop"     fill="#d4a84b" stroke="#8B6914" stroke-width="0.8"/>
-
-          <!-- Lid A (open, slid left) — front edge then top face -->
-          <polygon :points="isoBoxData.lidATopFace" fill="#b8955a" stroke="#8B6914" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.lidATop"     fill="#d4a84b" stroke="#8B6914" stroke-width="0.8"/>
+          <!-- Lid panel A (open, slid left) -->
+          <polygon :points="isoBoxData.lidAFrontEdge" fill="#a07840" stroke="#8B6914" stroke-width="0.8"/>
+          <polygon :points="isoBoxData.lidATop"       fill="#d4a84b" stroke="#8B6914" stroke-width="0.8"/>
 
           <!-- Dimension label -->
-          <text x="20" y="410" font-size="9" fill="#64748b">
+          <text x="20" y="415" font-size="9" fill="#64748b">
             {{ fmtIn(result.dimensions.oL) }}" L × {{ fmtIn(result.dimensions.oW) }}" W × {{ fmtIn(result.dimensions.oH) }}" H (outer)
           </text>
         </svg>
@@ -493,70 +484,68 @@ function sheetUtilization(sheet, sheetIndex) {
 const isoBoxData = computed(() => {
   if (!result.value) return null
   const d = result.value.dimensions
-  const { oL, oW, oH, lidPanelLength } = d
-  // matThickness and handleHeight live in result.input
-  const matThickness = result.value.input.matThickness
-  const handleHeight = result.value.input.handleHeight
+  const { oL, oW: oZ, oH: oY, lidPanelLength } = d
+  const matT = result.value.input.matThickness
 
-  // Scale to fit in viewBox 500×400
-  // The isometric projection of oL along x spans oL*cos(30)*scale horizontally
-  // and oH spans oH*scale vertically, oW adds (oW*sin(30)*scale) diagonally
-  // Target: total width ~380px, total height ~300px
-  const isoW = (oL + oW) * Math.cos(Math.PI / 6) // projected width in units
-  const isoH = oH + (oL + oW) * Math.sin(Math.PI / 6) // projected height in units
-  const scale = Math.min(380 / isoW, 260 / isoH)
-  const ox = 60 + oW * Math.cos(Math.PI / 6) * scale // left margin + depth offset
-  const oy = 340 - (oL + oW) * Math.sin(Math.PI / 6) * scale / 2 // bottom margin
+  const cos30 = Math.cos(Math.PI / 6)
+  const sin30 = Math.sin(Math.PI / 6)
+
+  const projW = (oL + oZ) * cos30
+  const projH = oY + (oL + oZ) * sin30
+  const scale = Math.min(440 / projW, 360 / projH)
+
+  const cos30s = cos30 * scale
+  const sin30s = sin30 * scale
+  const originX = 30 + oZ * cos30s
+  const originY = 390 - (oL + oZ) * sin30s
 
   function iso(x, y, z) {
-    const sx = ox + (x - z) * Math.cos(Math.PI / 6) * scale
-    const sy = oy - y * scale + (x + z) * Math.sin(Math.PI / 6) * scale
+    const sx = originX + (x - z) * cos30s
+    const sy = originY - y * scale + (x + z) * sin30s
     return [Math.round(sx * 10) / 10, Math.round(sy * 10) / 10]
   }
-
   function pts(...coords) {
     return coords.map(([x, y]) => `${x},${y}`).join(' ')
   }
 
-  // Box body faces
-  const frontFace = pts(iso(0, 0, 0), iso(oL, 0, 0), iso(oL, oH, 0), iso(0, oH, 0))
-  const rightFace = pts(iso(oL, 0, 0), iso(oL, 0, oW), iso(oL, oH, oW), iso(oL, oH, 0))
-  const topFace   = pts(iso(0, oH, 0), iso(oL, oH, 0), iso(oL, oH, oW), iso(0, oH, oW))
+  // Box faces (draw order: top, right, front)
+  const topFace   = pts(iso(0,oY,0), iso(oL,oY,0), iso(oL,oY,oZ), iso(0,oY,oZ))
+  const rightFace = pts(iso(oL,0,0), iso(oL,0,oZ), iso(oL,oY,oZ), iso(oL,oY,0))
+  const frontFace = pts(iso(0,0,0), iso(oL,0,0), iso(oL,oY,0), iso(0,oY,0))
 
-  // Lid panel thickness
-  const lt = matThickness
+  // Lid panel B (closed, right side)
+  const lidBx0 = oL - lidPanelLength
+  const lidBx1 = oL
+  const lidBFrontEdge = pts(iso(lidBx0,oY,0), iso(lidBx1,oY,0), iso(lidBx1,oY+matT,0), iso(lidBx0,oY+matT,0))
+  const lidBTop       = pts(iso(lidBx0,oY+matT,0), iso(lidBx1,oY+matT,0), iso(lidBx1,oY+matT,oZ), iso(lidBx0,oY+matT,oZ))
+  const lidBRight     = pts(iso(oL,oY,0), iso(oL,oY,oZ), iso(oL,oY+matT,oZ), iso(oL,oY+matT,0))
 
-  // Lid panel B (closed, right half)
-  const lidBx = oL - lidPanelLength
-  const lidBTopFace = pts(iso(lidBx, oH, 0), iso(oL, oH, 0), iso(oL, oH + lt, 0), iso(lidBx, oH + lt, 0))
-  const lidBTop     = pts(iso(lidBx, oH + lt, 0), iso(oL, oH + lt, 0), iso(oL, oH + lt, oW), iso(lidBx, oH + lt, oW))
+  // Lid panel A (open, slid left 25%)
+  const lidAx0 = -oL * 0.25
+  const lidAx1 = lidAx0 + lidPanelLength
+  const lidAFrontEdge = pts(iso(lidAx0,oY,0), iso(lidAx1,oY,0), iso(lidAx1,oY+matT,0), iso(lidAx0,oY+matT,0))
+  const lidATop       = pts(iso(lidAx0,oY+matT,0), iso(lidAx1,oY+matT,0), iso(lidAx1,oY+matT,oZ), iso(lidAx0,oY+matT,oZ))
 
-  // Lid panel A (open, slid left ~1/4)
-  const lidAoffset  = -oL * 0.25
-  const lidATopFace = pts(iso(lidAoffset, oH, 0), iso(lidAoffset + lidPanelLength, oH, 0), iso(lidAoffset + lidPanelLength, oH + lt, 0), iso(lidAoffset, oH + lt, 0))
-  const lidATop     = pts(iso(lidAoffset, oH + lt, 0), iso(lidAoffset + lidPanelLength, oH + lt, 0), iso(lidAoffset + lidPanelLength, oH + lt, oW), iso(lidAoffset, oH + lt, oW))
+  // Interior gap (exposed opening)
+  const gapX0 = lidAx1
+  const gapX1 = lidBx0
+  const interiorTop = gapX1 > gapX0
+    ? pts(iso(gapX0,oY,0), iso(gapX1,oY,0), iso(gapX1,oY,oZ), iso(gapX0,oY,oZ))
+    : null
 
-  // Interior visible (gap between lid A right edge and lid B left edge)
-  const exposedX   = lidAoffset + lidPanelLength
-  const interiorTop = pts(iso(exposedX, oH, 0), iso(lidBx, oH, 0), iso(lidBx, oH, oW), iso(exposedX, oH, oW))
-
-  // Handle strips (left and right end faces, at top)
-  const hb = handleHeight || 0.75
-  const leftHandle  = pts(iso(0, oH - hb, 0), iso(0, oH, 0), iso(0, oH, oW), iso(0, oH - hb, oW))
-  const rightHandle = pts(iso(oL, oH - hb, 0), iso(oL, oH, 0), iso(oL, oH, oW), iso(oL, oH - hb, oW))
-
-  // Ground shadow ellipse
-  const [cx, cy] = iso(oL / 2, 0, oW / 2)
+  // Ground shadow
+  const [gcx, gcy] = iso(oL/2, 0, oZ/2)
 
   return {
-    frontFace, rightFace, topFace,
-    lidBTop, lidBTopFace,
-    lidATop, lidATopFace,
+    topFace, rightFace, frontFace,
+    lidBFrontEdge, lidBTop, lidBRight,
+    lidAFrontEdge, lidATop,
     interiorTop,
-    leftHandle, rightHandle,
-    groundCenter: [cx, cy + 8],
-    groundRx: oL * scale * 0.6,
-    groundRy: oW * scale * 0.2,
+    ground: {
+      cx: gcx, cy: gcy + 10,
+      rx: (oL + oZ) * cos30s * 0.4,
+      ry: (oL + oZ) * cos30s * 0.1,
+    },
   }
 })
 
