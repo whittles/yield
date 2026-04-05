@@ -9,7 +9,8 @@
 
     <!-- ── Section 1: Stock Input ──────────────────────────────────── -->
     <div class="bg-surface border border-border rounded-lg p-5 no-print">
-      <h2 class="text-base font-semibold text-text-primary mb-4">Stock</h2>
+      <h2 class="text-base font-semibold text-text-primary mb-1">Stock</h2>
+      <p class="text-xs text-text-muted mb-4">Your rough lumber before any milling</p>
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <div>
           <label class="block text-xs text-text-muted mb-1">Qty (boards)</label>
@@ -19,6 +20,7 @@
             min="1"
             class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
           />
+          <p class="text-xs text-text-muted mt-1">Number of boards in this batch</p>
         </div>
         <div>
           <label class="block text-xs text-text-muted mb-1">Nominal thickness</label>
@@ -28,6 +30,7 @@
             placeholder='e.g. "2" or "1 3/4"'
             class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
           />
+          <p class="text-xs text-text-muted mt-1">As-purchased dimension (e.g. "2" for 8/4 lumber)</p>
         </div>
         <div>
           <label class="block text-xs text-text-muted mb-1">Width (in)</label>
@@ -37,6 +40,7 @@
             placeholder='e.g. "7"'
             class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
           />
+          <p class="text-xs text-text-muted mt-1">Actual board width — usable for ripping</p>
         </div>
         <div>
           <label class="block text-xs text-text-muted mb-1">Length (in)</label>
@@ -46,6 +50,7 @@
             placeholder='e.g. "12"'
             class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
           />
+          <p class="text-xs text-text-muted mt-1">Board length — affects how many strip lengths you get</p>
         </div>
         <div>
           <label class="block text-xs text-text-muted mb-1">Condition</label>
@@ -58,13 +63,15 @@
             <option value="s3s">S3S</option>
             <option value="s4s">S4S</option>
           </select>
+          <p class="text-xs text-text-muted mt-1">How the lumber was surfaced at the mill</p>
         </div>
       </div>
     </div>
 
     <!-- ── Section 2: Resaw Settings ──────────────────────────────── -->
     <div class="bg-surface border border-border rounded-lg p-5 no-print">
-      <h2 class="text-base font-semibold text-text-primary mb-4">Resaw Settings</h2>
+      <h2 class="text-base font-semibold text-text-primary mb-1">Resaw Settings</h2>
+      <p class="text-xs text-text-muted mb-4">How you'll cut the stock into thin panels</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <label class="block text-xs text-text-muted mb-1">Resaw tool / kerf</label>
@@ -76,6 +83,7 @@
             <option value="3/32">Bandsaw — 3/32" kerf</option>
             <option value="1/8">Table Saw — 1/8" kerf</option>
           </select>
+          <p class="text-xs text-text-muted mt-1">Blade thickness lost at each cut</p>
         </div>
         <div>
           <label class="block text-xs text-text-muted mb-1">Panel target thickness</label>
@@ -85,6 +93,7 @@
             placeholder='e.g. "3/8"'
             class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
           />
+          <p class="text-xs text-text-muted mt-1">Finished panel thickness after drum sanding (e.g. "3/8")</p>
         </div>
         <div>
           <label class="block text-xs text-text-muted mb-1">Drum sanding allowance</label>
@@ -94,12 +103,14 @@
             placeholder='e.g. "1/16"'
             class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
           />
+          <p class="text-xs text-text-muted mt-1">Extra thickness left on each slab for drum sanding flat — removed during Step 3</p>
         </div>
         <div class="flex flex-col justify-end">
-          <div class="text-xs text-text-muted mb-1">Slab green thickness</div>
+          <div class="text-xs text-text-muted mb-1">Slab green thickness (fence setting)</div>
           <div class="text-sm font-semibold text-text-primary px-2 py-1.5 bg-bg border border-border rounded">
             {{ slabGreenThickness }}"
           </div>
+          <p class="text-xs text-text-muted mt-1">Set your bandsaw fence to this dimension for each resaw pass</p>
         </div>
       </div>
     </div>
@@ -107,7 +118,8 @@
     <!-- ── Section 3: Strip SKUs ───────────────────────────────────── -->
     <div class="bg-surface border border-border rounded-lg p-5 no-print">
       <div class="flex items-center justify-between mb-4">
-        <h2 class="text-base font-semibold text-text-primary">Strip SKUs</h2>
+        <h2 class="text-base font-semibold text-text-primary mb-1">Strip SKUs</h2>
+        <p class="text-xs text-text-muted mb-4">The finished strips you're producing — one row per product</p>
         <button
           @click="store.addResawSku()"
           class="text-sm px-3 py-1 border border-border rounded hover:bg-bg transition-colors text-text-primary"
@@ -163,13 +175,13 @@
         <table class="w-full text-sm">
           <thead>
             <tr class="text-left text-xs text-text-muted border-b border-border">
-              <th class="pb-2 pr-3">SKU Name</th>
-              <th class="pb-2 pr-3">Rough Width"</th>
-              <th class="pb-2 pr-3">Plane Loss"</th>
-              <th class="pb-2 pr-3">Sander Loss"</th>
-              <th class="pb-2 pr-3">Final Width"</th>
-              <th class="pb-2 pr-3">Length"</th>
-              <th class="pb-2 pr-3">Rip Kerf</th>
+              <th class="pb-2 pr-3" title="Product name for this strip size">SKU Name</th>
+              <th class="pb-2 pr-3" title="Width to rip on the table saw — includes material for hand planing and drum sanding">Rough Rip Width"</th>
+              <th class="pb-2 pr-3" title="Width removed by the hand plane (Step 5)">Hand Plane Loss"</th>
+              <th class="pb-2 pr-3" title="Width removed by the drum sander on the thin side (Step 6)">Drum Sand Loss"</th>
+              <th class="pb-2 pr-3" title="Finished strip width — what you sell">Final Width"</th>
+              <th class="pb-2 pr-3" title="Strip length in inches">Length"</th>
+              <th class="pb-2 pr-3" title="Table saw blade thickness">Rip Kerf</th>
               <th class="pb-2"></th>
             </tr>
           </thead>
@@ -248,6 +260,25 @@
       </div>
     </div>
 
+    <!-- How it works -->
+    <details class="bg-surface border border-border rounded-lg no-print">
+      <summary class="px-5 py-3 text-sm font-semibold text-text-primary cursor-pointer hover:bg-bg/50 transition-colors select-none">
+        ℹ️ How this calculator works
+      </summary>
+      <div class="px-5 pb-5 pt-2 text-sm text-text-muted space-y-2 border-t border-border">
+        <p>Enter your stock dimensions and condition, set your resaw parameters, define your strip SKUs, then hit Calculate.</p>
+        <ol class="list-decimal ml-4 space-y-1.5">
+          <li><strong class="text-text-primary">Condition allowance</strong> — subtracts material lost to the mill's surfacing (e.g. skip planed removes ~⅛" from thickness)</li>
+          <li><strong class="text-text-primary">Resaw</strong> — divides usable thickness into slabs. Each slab = panel target + drum sanding allowance. Kerf is lost between slabs.</li>
+          <li><strong class="text-text-primary">Drum sand to panel</strong> — each slab is sanded flat to your panel target (e.g. 3/8")</li>
+          <li><strong class="text-text-primary">Rip strips</strong> — panels are ripped to rough width on the table saw. Kerf lost between each strip.</li>
+          <li><strong class="text-text-primary">Hand plane</strong> — strips are planed to reduce width (plane loss column)</li>
+          <li><strong class="text-text-primary">Final drum sand</strong> — strips are sanded to final width on the thin side (drum sand loss column)</li>
+        </ol>
+        <p class="text-xs">All dimensions in inches. Accept fractions like "1 3/4" or decimals like "1.75".</p>
+      </div>
+    </details>
+
     <!-- ── Calculate Button ────────────────────────────────────────── -->
     <div class="no-print flex justify-center">
       <button
@@ -284,6 +315,11 @@
       <!-- Cross-section SVG (board end view) -->
       <div class="bg-surface border border-border rounded-lg p-5">
         <h3 class="text-sm font-semibold text-text-primary mb-3">Board Cross-Section (end grain view)</h3>
+        <div class="flex flex-wrap gap-4 text-xs text-text-muted mb-3">
+          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-yellow-600 opacity-80"></span> Slab (usable panel)</span>
+          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-gray-400 opacity-80"></span> Kerf / waste</span>
+          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-gray-300 opacity-60"></span> Condition loss</span>
+        </div>
         <svg
           viewBox="0 0 460 220"
           class="w-full max-w-2xl mx-auto"
@@ -391,6 +427,10 @@
       <!-- Per-slab strip layout SVG -->
       <div class="bg-surface border border-border rounded-lg p-5">
         <h3 class="text-sm font-semibold text-text-primary mb-1">Panel Strip Layout (face view — one slab)</h3>
+        <div class="flex flex-wrap gap-4 text-xs text-text-muted mb-3">
+          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-yellow-600 opacity-80"></span> Strip (rough rip width)</span>
+          <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-gray-400 opacity-80"></span> Kerf / waste</span>
+        </div>
         <p class="text-xs text-text-muted mb-3">Showing Standard SKU rip layout. Width = {{ fmtIn(r.stock.usableWidth) }}", Length = {{ fmtIn(r.input.stock.length) }}"</p>
 
         <svg
@@ -557,10 +597,10 @@
             <thead>
               <tr class="text-left text-xs text-text-muted border-b border-border">
                 <th class="pb-2 pr-4">SKU</th>
-                <th class="pb-2 pr-4">Final dims</th>
+                <th class="pb-2 pr-4">Final Dims (W × D × L)</th>
                 <th class="pb-2 pr-4">Strips/Panel</th>
-                <th class="pb-2 pr-4">Panels</th>
-                <th class="pb-2 pr-4">Total Strips</th>
+                <th class="pb-2 pr-4">Panels (slabs)</th>
+                <th class="pb-2 pr-4 font-bold">Total Strips</th>
                 <th class="pb-2">Width Waste</th>
               </tr>
             </thead>
@@ -588,6 +628,7 @@
               </tr>
             </tfoot>
           </table>
+          <p class="text-xs text-text-muted mt-3">W = face width (visible dimension) · D = depth (how deep strip sits in kumiko frame) · L = length</p>
         </div>
       </div>
 
