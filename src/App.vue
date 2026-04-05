@@ -105,6 +105,8 @@
       </a>
       <span class="mx-2">·</span>
       Board Yield Calculator
+      <span class="mx-2">·</span>
+      v{{ version }}
     </footer>
 
   </div>
@@ -118,6 +120,7 @@ import { exportProject, importProject } from '@/utils/export'
 
 const store  = useProjectStore()
 const router = useRouter()
+const version = __APP_VERSION__
 
 const hasResults = computed(() => !!store.results)
 const activeTab  = computed(() => store.activeTab)
