@@ -317,9 +317,16 @@ export function minimumSheet(pieces, kerf) {
   for (let i = 0; i <= steps; i++) {
     const trialW = minW + (maxW - minW) * (i / steps);
     const result = _packIntoWidth(items, trialW, kerf);
+    // Only accept results where ALL pieces were placed
+    if (result.placed.length < items.length) continue;
     if (!bestResult || result.w * result.h < bestResult.w * bestResult.h) {
       bestResult = result;
     }
+  }
+
+  // Fallback: if nothing worked, use maxW
+  if (!bestResult) {
+    bestResult = _packIntoWidth(items, maxW, kerf);
   }
 
   return bestResult;
@@ -350,6 +357,7 @@ function _packIntoWidth(items, sheetW, kerf) {
     placed: sheet.placed,
     sheetW,
     sheetH: actualH,
+    totalItems: items.length,
   };
 }
 
