@@ -243,45 +243,6 @@
         <p class="text-xs text-text-muted mt-3">Highlighted rows (End ×2) use accented border. All dimensions in inches.</p>
       </div>
 
-      <!-- 3D Isometric Preview -->
-      <div v-if="result && isoBoxData" class="bg-surface border border-border rounded-lg p-5">
-        <h2 class="text-base font-semibold text-text-primary mb-1">3D Preview</h2>
-        <p class="text-xs text-text-muted mb-3">Isometric view — lid partially open to show interior</p>
-
-        <svg viewBox="0 0 500 420" class="w-full max-w-lg mx-auto" style="display:block;">
-          <ellipse :cx="isoBoxData.ground.cx" :cy="isoBoxData.ground.cy"
-                   :rx="isoBoxData.ground.rx" :ry="isoBoxData.ground.ry"
-                   fill="#000" opacity="0.12"/>
-          <polygon :points="isoBoxData.topFace"   fill="#d4b87a" stroke="#8B6914" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.rightFace" fill="#a07840" stroke="#8B6914" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.frontFace" fill="#c8a96e" stroke="#8B6914" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.handleFace" fill="#7a4f20" stroke="#5a3a10" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.battenFace" fill="#5a3a10" stroke="#3a2000" stroke-width="0.8"/>
-          <polygon v-if="isoBoxData.interior" :points="isoBoxData.interior" fill="#1a0f05" stroke="#0a0500" stroke-width="0.5"/>
-          <polygon :points="isoBoxData.lidFront" fill="#b8954a" stroke="#8B6914" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.lidRight"  fill="#9a7a30" stroke="#7a5a10" stroke-width="0.8"/>
-          <polygon :points="isoBoxData.lidTop"   fill="#e8c870" stroke="#8B6914" stroke-width="0.8"/>
-          <text x="15" y="415" font-size="9" fill="#64748b">
-            {{ fmtIn(result.dimensions.oL) }}" L × {{ fmtIn(result.dimensions.oW) }}" W × {{ fmtIn(result.dimensions.oH) }}" H (outer)
-          </text>
-        </svg>
-
-        <!-- Dimension callouts -->
-        <div class="grid grid-cols-3 gap-3 mt-3 text-center text-xs">
-          <div>
-            <div class="text-text-muted">Outer length</div>
-            <div class="font-semibold text-text-primary font-mono">{{ fmtIn(result.dimensions.oL) }}"</div>
-          </div>
-          <div>
-            <div class="text-text-muted">Outer width</div>
-            <div class="font-semibold text-text-primary font-mono">{{ fmtIn(result.dimensions.oW) }}"</div>
-          </div>
-          <div>
-            <div class="text-text-muted">Outer height</div>
-            <div class="font-semibold text-text-primary font-mono">{{ fmtIn(result.dimensions.oH) }}"</div>
-          </div>
-        </div>
-      </div>
 
       <!-- Sheet layout SVGs -->
       <div class="space-y-4">
@@ -470,70 +431,6 @@ function sheetUtilization(sheet, sheetIndex) {
   const used = sheet.placed.reduce((sum, p) => sum + p.placedW * p.placedH, 0)
   return Math.round((used / total) * 100)
 }
-
-// ── Isometric 3D preview ────────────────────────────────────────────────
-const isoBoxData = computed(() => {
-  if (!result.value) return null
-  const dim = result.value.dimensions
-  const L = dim.oL
-  const D = dim.oW
-  const H = dim.oH
-  const matT  = result.value.input.matThickness
-  const handleH = result.value.input?.handleHeight ?? 1.5
-  const battensH = dim.battensWidth ?? (handleH + 0.5)
-  const lidLen   = dim.lidLength   ?? (L * 0.89)
-  const lidThick = dim.lidThickness ?? 0.25
-
-  const cos30 = Math.cos(Math.PI / 6)
-  const sin30 = 0.5
-  const projW = (L + D) * cos30
-  const projH = H + (L + D) * sin30
-  const scale = Math.min(420 / projW, 320 / projH)
-  const cos30s = cos30 * scale
-  const sin30s = sin30 * scale
-  const originX = 40 + D * cos30s
-  const originY = 375 - (L + D) * sin30s
-
-  function iso(x, y, z) {
-    return [
-      Math.round((originX + (x - z) * cos30s) * 10) / 10,
-      Math.round((originY - y * scale + (x + z) * sin30s) * 10) / 10,
-    ]
-  }
-  function pts(...pairs) {
-    return pairs.map(([px, py]) => `${px},${py}`).join(' ')
-  }
-
-  const topFace   = pts(iso(0,H,0), iso(L,H,0), iso(L,H,D), iso(0,H,D))
-  const rightFace = pts(iso(L,0,0), iso(L,0,D), iso(L,H,D), iso(L,H,0))
-  const frontFace = pts(iso(0,0,0), iso(L,0,0), iso(L,H,0), iso(0,H,0))
-
-  const handleFace = pts(iso(L,H-handleH,0), iso(L,H-handleH,D), iso(L,H,D), iso(L,H,0))
-  const battenFace = pts(iso(L,H,0), iso(L,H,D), iso(L,H+battensH,D), iso(L,H+battensH,0))
-
-  const lidSlide = L * 0.30
-  const lx0 = -lidSlide
-  const lx1 = lx0 + lidLen
-  const lidTop   = pts(iso(lx0,H+lidThick,0), iso(lx1,H+lidThick,0), iso(lx1,H+lidThick,D), iso(lx0,H+lidThick,D))
-  const lidFront = pts(iso(lx0,H,0), iso(lx1,H,0), iso(lx1,H+lidThick,0), iso(lx0,H+lidThick,0))
-  const lidRight = pts(iso(lx1,H,0), iso(lx1,H,D), iso(lx1,H+lidThick,D), iso(lx1,H+lidThick,0))
-
-  const gx0 = lx1
-  const gx1 = L - matT
-  const interior = gx1 > gx0
-    ? pts(iso(gx0,H,0), iso(gx1,H,0), iso(gx1,H,D), iso(gx0,H,D))
-    : null
-
-  const [gcx, gcy] = iso(L/2, 0, D/2)
-
-  return {
-    topFace, rightFace, frontFace,
-    handleFace, battenFace,
-    lidTop, lidFront, lidRight,
-    interior,
-    ground: { cx: gcx, cy: gcy + 10, rx: (L+D)*cos30s*0.35, ry: (L+D)*cos30s*0.09 },
-  }
-})
 
 // ── Format helper ─────────────────────────────────────────────────────
 function fmtIn(val) {
