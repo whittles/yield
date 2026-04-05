@@ -145,6 +145,7 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   function calculateResaw() {
+    try {
     resawResults.value = solveResaw({
       stock: {
         thickness: parseFraction(resawStock.value.thicknessStr),
@@ -166,6 +167,10 @@ export const useProjectStore = defineStore('project', () => {
         depth:      parseFraction(resawSettings.value.panelTargetStr),
       })),
     })
+    } catch(e) {
+      console.error('[calculateResaw]', e)
+      resawResults.value = null
+    }
   }
 
   return {

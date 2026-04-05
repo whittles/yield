@@ -730,6 +730,7 @@ const stripZonesFirst = computed(() => {
   if (!r.value || !r.value.stripResults.length) return []
   const sr = r.value.stripResults[0]
   const usableW = r.value.stock.usableWidth
+  if (!usableW || usableW <= 0) return []
   const stripW = sr.roughWidth
   const kerfW = sr.tableKerf
   const n = sr.stripsPerPanel
@@ -756,7 +757,9 @@ const stripKerfW = computed(() => {
 const stripWasteW = computed(() => {
   if (!r.value || !r.value.stripResults.length) return 0
   const sr = r.value.stripResults[0]
-  return (sr.widthWaste / r.value.stock.usableWidth) * SVG_STRIP_W
+  const usableW = r.value.stock.usableWidth
+  if (!usableW || usableW <= 0) return 0
+  return Math.max(0, (sr.widthWaste / usableW) * SVG_STRIP_W)
 })
 
 function printInstructions() {
