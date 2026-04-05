@@ -7,9 +7,9 @@
         <!-- Brand -->
         <div class="flex items-center gap-3">
           <img
-            src="https://althoffwoodshop.com/cdn/shop/files/aws_logo.png"
+            src="/logo.png"
             alt="Althoff Woodshop logo"
-            class="w-8 h-8 object-contain"
+            class="w-10 h-10 object-contain"
           />
           <div>
             <div class="font-semibold text-base leading-tight tracking-wide">Althoff Woodshop</div>
