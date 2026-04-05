@@ -248,7 +248,7 @@
         <h2 class="text-base font-semibold text-text-primary mb-1">3D Preview</h2>
         <p class="text-xs text-text-muted mb-3">Isometric view — lid partially open to show interior</p>
 
-        <svg viewBox="0 0 500 400" class="w-full max-w-lg mx-auto" style="display:block;">
+        <svg viewBox="0 0 500 420" class="w-full max-w-lg mx-auto" style="display:block;">
           <ellipse :cx="isoBoxData.ground.cx" :cy="isoBoxData.ground.cy"
                    :rx="isoBoxData.ground.rx" :ry="isoBoxData.ground.ry"
                    fill="#000" opacity="0.12"/>
@@ -261,7 +261,7 @@
           <polygon :points="isoBoxData.lidFront" fill="#b8954a" stroke="#8B6914" stroke-width="0.8"/>
           <polygon :points="isoBoxData.lidRight"  fill="#9a7a30" stroke="#7a5a10" stroke-width="0.8"/>
           <polygon :points="isoBoxData.lidTop"   fill="#e8c870" stroke="#8B6914" stroke-width="0.8"/>
-          <text x="15" y="395" font-size="9" fill="#64748b">
+          <text x="15" y="415" font-size="9" fill="#64748b">
             {{ fmtIn(result.dimensions.oL) }}" L × {{ fmtIn(result.dimensions.oW) }}" W × {{ fmtIn(result.dimensions.oH) }}" H (outer)
           </text>
         </svg>
@@ -479,7 +479,7 @@ const isoBoxData = computed(() => {
   const D = dim.oW
   const H = dim.oH
   const matT  = result.value.input.matThickness
-  const handleH = result.value.input.handleHeight
+  const handleH = result.value.input?.handleHeight ?? 1.5
   const battensH = dim.battensWidth ?? (handleH + 0.5)
   const lidLen   = dim.lidLength   ?? (L * 0.89)
   const lidThick = dim.lidThickness ?? 0.25
@@ -492,7 +492,7 @@ const isoBoxData = computed(() => {
   const cos30s = cos30 * scale
   const sin30s = sin30 * scale
   const originX = 40 + D * cos30s
-  const originY = 360 - (L + D) * sin30s
+  const originY = 375 - (L + D) * sin30s
 
   function iso(x, y, z) {
     return [
