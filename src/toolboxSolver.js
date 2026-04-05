@@ -292,71 +292,86 @@ export function packMultipleSheets(pieces, sheetSizes, kerf) {
  * trying both orientations to minimise width.
  * Returns { w, h, sheet } where sheet has .placed[] for SVG rendering.
  */
+/**
+ * Row-packing approach for minimum sheet calculation.
+ * Sorts pieces by height desc, packs into rows left-to-right.
+ * Tries multiple sheet widths and picks minimum area.
+ */
 export function minimumSheet(pieces, kerf) {
-  // Expand by qty
   const items = [];
   for (const p of pieces) {
     for (let i = 0; i < p.qty; i++) {
-      items.push({ ...p, instanceId: `${p.id}-${i}` });
+      // Orient each piece so its longer dimension is the height (sorts rows better)
+      const pw = Math.min(p.length, p.width);
+      const ph = Math.max(p.length, p.width);
+      items.push({ ...p, instanceId: `${p.id}-${i}`, pw, ph });
     }
   }
-  // Sort by height (longest dimension) descending
-  items.sort((a, b) => Math.max(b.length, b.width) - Math.max(a.length, a.width));
+  items.sort((a, b) => b.ph - a.ph);
 
-  // Try a wide range of sheet widths and pick the one with smallest area
-  // Use the widest piece as minimum width, 4× widest as max
-  const maxDim = Math.max(...items.map(it => Math.max(it.length, it.width)));
-  const totalArea = items.reduce((s, it) => s + it.length * it.width, 0);
-  const minW = maxDim + kerf;
-  const maxW = Math.max(minW * 4, Math.sqrt(totalArea) * 2.5);
+  const maxW = Math.max(...items.map(it => it.pw));
+  const totalArea = items.reduce((s, it) => s + it.pw * it.ph, 0);
 
-  let bestResult = null;
+  // Try candidate sheet widths — start at 2× widest piece (practical minimum)
+  // up to totalArea / 8" height (reasonably square-ish sheets)
+  const candidates = [];
+  const minW = maxW * 2;  // at least 2 pieces wide
+  const maxTrialW = Math.max(minW * 4, totalArea / 8);  // assume ~8" min height
+  for (let i = 0; i <= 50; i++) {
+    candidates.push(minW + (maxTrialW - minW) * (i / 50));
+  }
 
-  // Sample candidate widths
-  const steps = 40;
-  for (let i = 0; i <= steps; i++) {
-    const trialW = minW + (maxW - minW) * (i / steps);
-    const result = _packIntoWidth(items, trialW, kerf);
-    // Only accept results where ALL pieces were placed
-    if (result.placed.length < items.length) continue;
-    if (!bestResult || result.w * result.h < bestResult.w * bestResult.h) {
-      bestResult = result;
+  let best = null;
+  for (const sheetW of candidates) {
+    const result = _rowPack(items, sheetW, kerf);
+    if (!best || result.w * result.h < best.w * best.h) {
+      best = result;
     }
   }
-
-  // Fallback: if nothing worked, use maxW
-  if (!bestResult) {
-    bestResult = _packIntoWidth(items, maxW, kerf);
-  }
-
-  return bestResult;
+  return best;
 }
 
-function _packIntoWidth(items, sheetW, kerf) {
-  // Guillotine pack into a sheet of given width, unlimited height
-  // Use a large height sentinel
-  const bigH = 10000;
-  const sheet = {
-    sheetW,
-    sheetH: bigH,
-    placed: [],
-    freeRects: [{ x: 0, y: 0, w: sheetW, h: bigH }],
-  };
+function _rowPack(items, sheetW, kerf) {
+  const placed = [];
+  let curRowX = 0, curRowY = 0, curRowH = 0;
+
   for (const item of items) {
-    _tryPlace(sheet, item, kerf);
+    // Try normal orientation first, then rotated
+    let iw = item.pw + kerf, ih = item.ph + kerf;
+    if (iw > sheetW + 0.001) {
+      // Try rotated
+      iw = item.ph + kerf;
+      ih = item.pw + kerf;
+    }
+    if (iw > sheetW + 0.001) continue; // can't fit either way
+
+    if (curRowX + iw > sheetW + 0.001) {
+      // Start new row
+      curRowY += curRowH;
+      curRowX = 0;
+      curRowH = 0;
+    }
+
+    placed.push({
+      ...item,
+      x: curRowX,
+      y: curRowY,
+      placedW: iw - kerf,
+      placedH: ih - kerf,
+    });
+    curRowX += iw;
+    curRowH = Math.max(curRowH, ih);
   }
-  // Compute actual used height
-  const usedH = sheet.placed.reduce((max, p) => Math.max(max, p.y + p.placedH + kerf), 0);
-  const actualH = Math.max(usedH, 1);
-  // Utilization
-  const usedArea = sheet.placed.reduce((s, p) => s + p.placedW * p.placedH, 0);
+
+  const totalH = curRowY + curRowH;
+  const usedArea = placed.reduce((s, p) => s + p.placedW * p.placedH, 0);
   return {
     w: sheetW,
-    h: actualH,
-    wastePct: Math.round((1 - usedArea / (sheetW * actualH)) * 100),
-    placed: sheet.placed,
+    h: totalH,
+    placed,
     sheetW,
-    sheetH: actualH,
+    sheetH: totalH,
+    wastePct: Math.round((1 - usedArea / (sheetW * totalH)) * 100),
     totalItems: items.length,
   };
 }
