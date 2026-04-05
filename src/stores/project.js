@@ -114,7 +114,7 @@ export const useProjectStore = defineStore('project', () => {
   const resawSettings = ref({
     kerfStr: '1/16',
     panelTargetStr: '3/8',
-    slabAllowanceStr: '1/16',
+    slabAllowanceStr: '0.010',
   })
 
   const defaultSkus = [

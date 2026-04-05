@@ -100,10 +100,10 @@
           <input
             type="text"
             v-model="store.resawSettings.slabAllowanceStr"
-            placeholder='e.g. "1/16"'
+            placeholder='e.g. "0.010"'
             class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
           />
-          <p class="text-xs text-text-muted mt-1">Extra thickness left on each slab for drum sanding flat — removed during Step 3</p>
+          <p class="text-xs text-text-muted mt-1">Typically 0.010" — just enough to clean up resaw marks without long passes</p>
         </div>
         <div class="flex flex-col justify-end">
           <div class="text-xs text-text-muted mb-1">Slab green thickness (fence setting)</div>
