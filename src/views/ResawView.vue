@@ -608,18 +608,25 @@
           <div>
             <div class="font-semibold text-text-primary">Step 1 — Rough crosscut (miter saw)</div>
             <div class="text-text-muted mt-1 ml-4">
-              Set miter fence to {{ fmtIn(r.roughCrosscut.roughBlankLength) }}"<br/>
-              Cut each board into blanks: {{ r.roughCrosscut.blanksPerBoard }} blanks/board × {{ r.stock.qty }} boards = {{ r.roughCrosscut.blanksTotal }} blanks<br/>
-              Kerf: {{ fmtIn(r.input.crosscutSettings.miterKerf) }}" · Offcut per board: {{ fmtIn(r.roughCrosscut.lengthWaste) }}"
+              Cut each board into blanks (stop block recommended, not a fence):<br/>
+              <div v-for="cut in r.roughCrosscut.cuts" :key="cut.length" class="mt-0.5">
+                {{ cut.qty }}× {{ fmtIn(cut.length) }}" blanks
+                <span v-if="r.roughCrosscut.snipeBuffer > 0" class="opacity-70">
+                  ({{ fmtIn(cut.length - r.roughCrosscut.snipeBuffer) }}" nominal + {{ fmtIn(r.roughCrosscut.snipeBuffer) }}" snipe buffer)
+                </span>
+              </div>
+              Total: {{ r.roughCrosscut.blanksTotal }} blanks · Waste per board: {{ fmtIn(r.roughCrosscut.waste) }}"
             </div>
           </div>
 
           <!-- Step 2 -->
           <div>
-            <div class="font-semibold text-text-primary">Step 2 — Prepare reference face</div>
+            <div class="font-semibold text-text-primary">Step 2 — Joint reference face</div>
             <div class="text-text-muted mt-1 ml-4">
-              Condition: {{ conditionLabel }}<br/>
-              Nominal: {{ fmtIn(r.input.stock.thickness) }}" → Usable: {{ fmtIn(r.stock.usableThickness) }}"
+              <span v-if="r.input.stock.condition === 'skip-planed'">One face already skip planed — run a light jointer pass to establish a true reference face.</span>
+              <span v-else-if="r.input.stock.condition === 'rough'">Rough stock: joint one face flat before resawing. Take passes until face is true.</span>
+              <span v-else>{{ conditionLabel }} stock — reference face should already be suitable.</span><br/>
+              Nominal: {{ fmtIn(r.input.stock.thickness) }}" → Usable after conditioning: {{ fmtIn(r.stock.usableThickness) }}"
             </div>
           </div>
 
@@ -627,26 +634,27 @@
           <div>
             <div class="font-semibold text-text-primary">Step 3 — Resaw on bandsaw</div>
             <div class="text-text-muted mt-1 ml-4">
-              Set fence to {{ fmtIn(r.slabs.slabThickness) }}" ({{ r.slabs.slabThickness.toFixed(4) }}")<br/>
-              Kerf: {{ fmtIn(r.input.resawSettings.kerf) }}"<br/>
-              <div
-                v-for="seq in r.resawSequence"
-                :key="seq.cutNumber"
-                class="mt-0.5"
-              >
-                Cut {{ seq.cutNumber }}: fence position {{ fmtIn(r.slabs.slabThickness) }}" → Slab {{ seq.slabNumber }}
+              Fence setting: {{ fmtIn(r.slabs.slabThickness) }}" ({{ r.slabs.slabThickness.toFixed(4) }}") — reference face against fence<br/>
+              Kerf: {{ fmtIn(r.input.resawSettings.kerf) }}" per cut<br/>
+              <div v-for="seq in r.resawSequence" :key="seq.cutNumber" class="mt-0.5">
+                Cut {{ seq.cutNumber }}: {{ fmtIn(r.slabs.slabThickness) }}" fence → Slab {{ seq.slabNumber }}
               </div>
-              <div class="mt-0.5" v-if="r.slabs.thicknessWaste > 0">
-                Offcut: {{ r.slabs.thicknessWaste.toFixed(4) }}" (too thin for another slab)
+              <div class="mt-1" v-if="r.slabs.thicknessWaste > 0.01">
+                <span v-if="r.slabs.thicknessWaste >= r.slabs.slabThickness * 0.5" class="text-warning">
+                  ⚠ Offcut {{ r.slabs.thicknessWaste.toFixed(3) }}" — consider adjusting fence to distribute this across slabs for blade drift buffer
+                </span>
+                <span v-else>
+                  Offcut: {{ r.slabs.thicknessWaste.toFixed(3) }}" (insufficient for another slab)
+                </span>
               </div>
             </div>
           </div>
 
           <!-- Step 4: Drum sand -->
           <div>
-            <div class="font-semibold text-text-primary">Step 4 — Drum sand to panel thickness</div>
+            <div class="font-semibold text-text-primary">Step 4 — Drum sand to panel depth</div>
             <div class="text-text-muted mt-1 ml-4">
-              Target: {{ fmtIn(r.input.resawSettings.panelTarget) }}" ± 0.003"<br/>
+              Target depth: {{ fmtIn(r.input.resawSettings.panelTarget) }}" ± 0.003" (this becomes the strip depth in the kumiko frame)<br/>
               Sand {{ r.slabs.slabsPerBlank }} slabs per blank ({{ r.summary.slabsTotal }} total across all blanks)
             </div>
           </div>
@@ -655,9 +663,13 @@
           <div>
             <div class="font-semibold text-text-primary">Step 5 — Finish crosscut to length (miter saw)</div>
             <div class="text-text-muted mt-1 ml-4">
-              Cut slabs to exact finished length per SKU:<br/>
-              <div v-for="sr in r.stripResults" :key="'fc-' + sr.id" class="mt-0.5">
-                {{ sr.name }}: fence at {{ sr.length }}" → {{ sr.finishedPiecesPerBlank }} pieces/blank, {{ fmtIn(sr.finishCrosscutWaste) }}" waste/blank
+              <span v-if="r.roughCrosscut.snipeBuffer > 0">Snipe buffer ({{ fmtIn(r.roughCrosscut.snipeBuffer) }}") trimmed off here. Square one end, then cut to length.</span>
+              <span v-else>Square one end, then cut to length.</span><br/>
+              <div v-for="sr in r.stripResults" :key="'fc-' + sr.id" class="mt-1">
+                <span class="text-text-primary">{{ sr.name }}:</span>
+                <div v-for="fc in sr.finishCrosscut" :key="fc.blankLength" class="ml-2 mt-0.5">
+                  From {{ fmtIn(fc.blankLength) }}" blank → cut to {{ sr.length }}" × {{ fc.piecesPerBlank }} pieces ({{ fc.qty }} blanks like this) · {{ fmtIn(fc.waste) }}" waste
+                </div>
               </div>
             </div>
           </div>
@@ -666,28 +678,31 @@
           <div>
             <div class="font-semibold text-text-primary">Step 6 — Rip strips on table saw</div>
             <div class="text-text-muted mt-1 ml-4">
-              <div v-for="sr in r.stripResults" :key="sr.id">
-                {{ sr.name }}: fence {{ fmtIn(sr.roughWidth) }}", {{ sr.stripsPerPanel }} strips/panel, {{ sr.stripsPerBoard }} per board, {{ sr.totalStrips }} total
+              Ripping sets the strip face dimension (visible front of kumiko strip):<br/>
+              <div v-for="sr in r.stripResults" :key="sr.id" class="mt-0.5">
+                {{ sr.name }}: fence {{ fmtIn(sr.roughWidth) }}" rough face · {{ sr.stripsPerPanel }} strips/panel · {{ sr.stripsPerBoard }}/board · {{ sr.totalStrips }} total
               </div>
             </div>
           </div>
 
           <!-- Step 7: Hand plane -->
           <div>
-            <div class="font-semibold text-text-primary">Step 7 — Hand plane (width reduction)</div>
+            <div class="font-semibold text-text-primary">Step 7 — Hand plane strips to dimension</div>
             <div class="text-text-muted mt-1 ml-4">
-              <div v-for="sr in r.stripResults" :key="'p-' + sr.id">
-                {{ sr.name }}: {{ fmtIn(sr.roughWidth) }}" → {{ (sr.roughWidth - sr.planeAllowance).toFixed(3) }}" (remove {{ sr.planeAllowance.toFixed(3) }}")
+              Plane each strip to reduce face from rough rip to near-final:<br/>
+              <div v-for="sr in r.stripResults" :key="'p-' + sr.id" class="mt-0.5">
+                {{ sr.name }}: {{ fmtIn(sr.roughWidth) }}" → {{ (sr.roughWidth - sr.planeAllowance).toFixed(3) }}" · remove {{ sr.planeAllowance.toFixed(3) }}"
               </div>
             </div>
           </div>
 
           <!-- Step 8: Final sander -->
           <div>
-            <div class="font-semibold text-text-primary">Step 8 — Drum sand (thin side / final width)</div>
+            <div class="font-semibold text-text-primary">Step 8 — Drum sand to final face dimension</div>
             <div class="text-text-muted mt-1 ml-4">
-              <div v-for="sr in r.stripResults" :key="'s-' + sr.id">
-                {{ sr.name }}: → {{ fmtIn(sr.finalWidth) }}" final ± 0.003"
+              Sand the strip face to final dimension:<br/>
+              <div v-for="sr in r.stripResults" :key="'s-' + sr.id" class="mt-0.5">
+                {{ sr.name }}: {{ (sr.roughWidth - sr.planeAllowance).toFixed(3) }}" → {{ sr.finalWidth.toFixed(3) }}" ± 0.003" final face
               </div>
             </div>
           </div>
