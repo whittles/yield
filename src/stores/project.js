@@ -120,6 +120,7 @@ export const useProjectStore = defineStore('project', () => {
   const crosscutSettings = ref({
     blankLengths: ['36', '24'],  // multiple acceptable blank lengths for optimizer
     miterKerfStr: '1/8',
+    snipeBufferStr: '2',          // extra length per blank to account for planer snipe / safety
   })
 
   const defaultSkus = [
@@ -167,7 +168,12 @@ export const useProjectStore = defineStore('project', () => {
         slabAllowance: parseFraction(resawSettings.value.slabAllowanceStr),
       },
       crosscutSettings: {
-        blankLengths: crosscutSettings.value.blankLengths.map(s => parseFraction(s)).filter(l => l > 0),
+        // Add snipe buffer to each blank length before optimizer runs
+        blankLengths: crosscutSettings.value.blankLengths
+          .map(s => parseFraction(s) + parseFraction(crosscutSettings.value.snipeBufferStr))
+          .filter(l => l > 0),
+        blankTargetLengths: crosscutSettings.value.blankLengths.map(s => parseFraction(s)).filter(l => l > 0), // nominal (without buffer)
+        snipeBuffer: parseFraction(crosscutSettings.value.snipeBufferStr),
         miterKerf:    parseFraction(crosscutSettings.value.miterKerfStr),
       },
       stripSettings: resawSkus.value.map(s => ({

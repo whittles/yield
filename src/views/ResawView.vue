@@ -72,7 +72,7 @@
     <div class="bg-surface border border-border rounded-lg p-5 no-print">
       <h2 class="text-base font-semibold text-text-primary mb-1">Rough Crosscut</h2>
       <p class="text-xs text-text-muted mb-4">Cut long boards to manageable lengths at the miter station before resawing</p>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <label class="block text-xs text-text-muted mb-1">Acceptable blank lengths (in)</label>
           <div class="space-y-1">
@@ -88,6 +88,13 @@
             <button @click="store.addBlankLength()" class="text-xs text-accent hover:opacity-80 mt-1">+ Add length</button>
           </div>
           <p class="text-xs text-text-muted mt-1">Solver finds the mix that minimizes waste (e.g. 36" + 24")</p>
+        </div>
+        <div>
+          <label class="block text-xs text-text-muted mb-1">Snipe buffer per blank (in)</label>
+          <input type="text" v-model="store.crosscutSettings.snipeBufferStr"
+                 placeholder='e.g. "2"'
+                 class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary" />
+          <p class="text-xs text-text-muted mt-1">Extra length added to each blank for planer snipe. 0" = light passes, 2" = moderate, 6" = aggressive. Trimmed off at the finish crosscut.</p>
         </div>
         <div>
           <label class="block text-xs text-text-muted mb-1">Miter saw kerf</label>
@@ -750,17 +757,20 @@ const r = computed(() => store.resawResults)
 const crosscutPreview = computed(() => {
   const boardLen = parseFraction(store.resawStock.lengthStr)
   const kerf = parseFraction(store.crosscutSettings.miterKerfStr)
-  const lengths = store.crosscutSettings.blankLengths.map(s => parseFraction(s)).filter(l => l > 0)
+  const buffer = parseFraction(store.crosscutSettings.snipeBufferStr) || 0
+  const lengths = store.crosscutSettings.blankLengths.map(s => parseFraction(s) + buffer).filter(l => l > 0)
   if (!boardLen || !lengths.length) return '—'
   const plan = optimizeCrosscut(boardLen, lengths, kerf)
   if (!plan.cuts.length) return 'No cuts fit'
-  return plan.cuts.map(c => `${c.qty}×${fmtIn(c.length)}"`).join(' + ')
+  // Show nominal + buffer in label
+  return plan.cuts.map(c => `${c.qty}×${fmtIn(c.length)}"${buffer > 0 ? ` (${fmtIn(c.length - buffer)}+${fmtIn(buffer)})` : ''}`).join(' + ')
 })
 
 const wastePreview = computed(() => {
   const boardLen = parseFraction(store.resawStock.lengthStr)
   const kerf = parseFraction(store.crosscutSettings.miterKerfStr)
-  const lengths = store.crosscutSettings.blankLengths.map(s => parseFraction(s)).filter(l => l > 0)
+  const buffer = parseFraction(store.crosscutSettings.snipeBufferStr) || 0
+  const lengths = store.crosscutSettings.blankLengths.map(s => parseFraction(s) + buffer).filter(l => l > 0)
   if (!boardLen || !lengths.length) return '—'
   const plan = optimizeCrosscut(boardLen, lengths, kerf)
   return fmtIn(plan.waste)

@@ -83,13 +83,20 @@ export function solveResaw(input) {
     .filter(l => l > 0)
     .sort((a, b) => b - a);
 
+  const snipeBuffer = crosscutSettings.snipeBuffer || 0;
+  const blankTargetLengths = (crosscutSettings.blankTargetLengths || blankLengths.map(l => l - snipeBuffer))
+    .filter(l => l > 0)
+    .sort((a, b) => b - a);
+
   const crosscutPlan = optimizeCrosscut(stock.length, blankLengths, crosscutSettings.miterKerf);
 
   const roughCrosscut = {
     ...crosscutPlan,
     blanksPerBoard: crosscutPlan.totalBlanks,
     blanksTotal: crosscutPlan.totalBlanks * stock.qty,
-    blankLengths,
+    blankLengths,       // actual cut lengths (nominal + buffer)
+    blankTargetLengths, // nominal lengths (for finish crosscut)
+    snipeBuffer,
     // Primary blank length = longest one (used for slab calc)
     primaryBlankLength: blankLengths[0] || 36,
   };
@@ -117,14 +124,24 @@ export function solveResaw(input) {
 
   // Step 3: Strips per panel + finish crosscut per SKU (mixed blank lengths)
   const stripResults = stripSettings.map(strip => {
-    // Finish crosscut: per blank-length in the cut plan
+    // Finish crosscut: use NOMINAL blank lengths (without snipe buffer)
+    // The buffer is consumed during finish crosscut trim — pieces come from nominal length
     const finishCrosscut = crosscutPlan.cuts.map(bc => {
+      // Find matching nominal length (buffered → nominal by subtracting snipeBuffer)
+      const nominalLength = Math.max(0, bc.length - snipeBuffer);
       const piecesPerBlank = Math.floor(
-        (bc.length + crosscutSettings.miterKerf) / (strip.length + crosscutSettings.miterKerf)
+        (nominalLength + crosscutSettings.miterKerf) / (strip.length + crosscutSettings.miterKerf)
       );
       const kerfLoss = Math.max(0, piecesPerBlank - 1) * crosscutSettings.miterKerf;
-      const waste = bc.length - piecesPerBlank * strip.length - kerfLoss;
-      return { blankLength: bc.length, qty: bc.qty, piecesPerBlank, waste: Math.max(0, waste) };
+      const waste = nominalLength - piecesPerBlank * strip.length - kerfLoss;
+      return {
+        blankLength: bc.length,        // actual cut length (with buffer)
+        nominalLength,                  // usable after buffer trim
+        qty: bc.qty,
+        piecesPerBlank,
+        waste: Math.max(0, waste),
+        snipeBuffer,
+      };
     });
 
     // Total finished pieces per board (across all blank types)
