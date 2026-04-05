@@ -451,6 +451,50 @@
       </div>
 
 
+      <!-- Mixed Strip Optimization -->
+      <div v-if="r.mixedOptimization && r.stripResults.length > 1"
+           class="no-print bg-surface border border-border rounded-lg p-5">
+        <h3 class="text-sm font-semibold text-text-primary mb-1">Mixed Strip Optimization</h3>
+        <p class="text-xs text-text-muted mb-4">Best combination of SKUs per panel to minimize waste</p>
+
+        <!-- Comparison: pure vs mixed -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="bg-bg border border-border rounded p-3">
+            <div class="text-xs text-text-muted mb-1">{{ r.stripResults[0]?.name }} only</div>
+            <div class="text-lg font-bold text-text-primary">{{ r.stripResults[0]?.stripsPerPanel }} strips</div>
+            <div class="text-xs text-text-muted">{{ r.stripResults[0]?.widthWastePct }}% waste</div>
+          </div>
+          <div class="bg-bg border border-accent/30 rounded p-3">
+            <div class="text-xs text-text-muted mb-1">Optimized mix</div>
+            <div class="text-sm font-bold text-accent leading-snug">
+              {{ r.mixedOptimization.mix.map(m => m.qty + '\u00d7 ' + m.sku.name).join(', ') }}
+            </div>
+            <div class="text-xs mt-1" :class="r.mixedOptimization.wastePct < r.stripResults[0]?.widthWastePct ? 'text-green-400' : 'text-text-muted'">
+              {{ r.mixedOptimization.wastePct }}% waste
+              <span v-if="r.mixedOptimization.wastePct < r.stripResults[0]?.widthWastePct" class="text-green-400">
+                &#8595; {{ r.stripResults[0]?.widthWastePct - r.mixedOptimization.wastePct }}% better
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total strips from mixed approach -->
+        <div class="text-xs text-text-muted mb-2">Using mixed approach across {{ r.summary.slabsTotal }} slabs:</div>
+        <div class="space-y-1">
+          <div v-for="m in r.mixedOptimization.mix" :key="m.sku.id" class="flex items-center justify-between text-sm">
+            <span class="text-text-muted">{{ m.sku.name }}</span>
+            <span class="font-mono font-semibold text-text-primary">
+              {{ m.qty }} &times; {{ r.summary.slabsTotal }} slabs = {{ m.qty * r.summary.slabsTotal }} strips
+            </span>
+          </div>
+        </div>
+
+        <p class="text-xs text-text-muted mt-3 italic">
+          Note: Mixed approach sets the rip fence differently for each strip type in the same panel.
+          Rip all of one width first before adjusting the fence.
+        </p>
+      </div>
+
       <!-- Step 1: Rough Crosscut SVG -->
       <div class="bg-surface border border-border rounded-lg p-5 print-no-break">
         <h3 class="text-sm font-semibold text-text-primary mb-1">Step 1 — Rough Crosscut Layout</h3>
@@ -749,6 +793,12 @@
               Ripping sets the strip face dimension (visible front of kumiko strip):<br/>
               <div v-for="sr in r.stripResults" :key="sr.id" class="mt-0.5">
                 {{ sr.name }}: fence {{ fmtIn(sr.roughWidth) }}" rough face · {{ sr.stripsPerPanel }} strips/panel · {{ sr.stripsPerBoard }}/board · {{ sr.totalStrips }} total
+              </div>
+              <div v-if="r.mixedOptimization && r.mixedOptimization.mix.length > 1" class="mt-2 text-yellow-400 text-xs">
+                ★ Mixed panel: rip all strips of one width before changing fence.
+                <div v-for="m in r.mixedOptimization.mix" :key="m.sku.id" class="ml-2">
+                  {{ m.qty }}&times; {{ m.sku.name }}: fence {{ fmtIn(m.sku.roughWidth) }}"
+                </div>
               </div>
             </div>
           </div>

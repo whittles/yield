@@ -72,6 +72,89 @@ export function optimizeCrosscut(boardLength, blankLengths, kerf) {
   };
 }
 
+/**
+ * Mixed strip optimizer — finds the combination of SKU strip counts per panel
+ * that minimizes width waste. Bounded knapsack variant.
+ *
+ * @param {number} panelWidth - usable panel width in inches
+ * @param {Array}  skus       - [{roughWidth, tableKerf, name, id, ...}]
+ * @param {number} tableKerf  - saw kerf for all rip cuts
+ * @returns {{ mix, waste, widthUsed, wastePct }}
+ */
+export function optimizeMixedStrips(panelWidth, skus, tableKerf) {
+  if (!skus || skus.length === 0) return { mix: [], waste: panelWidth, widthUsed: 0, wastePct: 100 };
+
+  let bestWaste = panelWidth + tableKerf; // sentinel (worse than all-waste)
+  let bestMix = [];
+  let iterations = 0;
+  const MAX_ITER = 10000;
+  let hitLimit = false;
+
+  function tryMix(skuIndex, remaining, currentMix, totalStrips) {
+    if (hitLimit) return;
+    if (skuIndex === skus.length) {
+      iterations++;
+      if (iterations > MAX_ITER) { hitLimit = true; return; }
+      // Add back last kerf (each strip was charged width+kerf, but last strip has no trailing kerf)
+      const adjustedWaste = totalStrips > 0 ? remaining + tableKerf : remaining;
+      if (adjustedWaste < bestWaste) {
+        bestWaste = adjustedWaste;
+        bestMix = currentMix.map(m => ({ ...m }));
+      }
+      return;
+    }
+
+    const sku = skus[skuIndex];
+    const stripPlusKerf = sku.roughWidth + tableKerf;
+    const maxQty = Math.floor((remaining + tableKerf) / stripPlusKerf);
+
+    for (let qty = maxQty; qty >= 0; qty--) {
+      if (hitLimit) return;
+      const used = qty > 0 ? qty * stripPlusKerf : 0;
+      currentMix.push({ sku, qty });
+      tryMix(skuIndex + 1, remaining - used, currentMix, totalStrips + qty);
+      currentMix.pop();
+    }
+  }
+
+  tryMix(0, panelWidth, [], 0);
+
+  if (hitLimit || bestMix.length === 0) {
+    // Fall back to best single-SKU
+    let fallbackBest = { mix: [], waste: panelWidth, widthUsed: 0, wastePct: 100 };
+    for (const sku of skus) {
+      const k = tableKerf;
+      const n = Math.floor((panelWidth + k) / (sku.roughWidth + k));
+      if (n === 0) continue;
+      const used = n * sku.roughWidth + (n - 1) * k;
+      const waste = panelWidth - used;
+      if (waste < fallbackBest.waste) {
+        fallbackBest = {
+          mix: [{ sku, qty: n }],
+          waste: Math.max(0, waste),
+          widthUsed: used,
+          wastePct: Math.round((Math.max(0, waste) / panelWidth) * 100),
+        };
+      }
+    }
+    return fallbackBest;
+  }
+
+  // Recalculate widthUsed from bestMix for the return value
+  const totalStrips = bestMix.reduce((sum, m) => sum + m.qty, 0);
+  const widthUsed = totalStrips > 0
+    ? bestMix.reduce((sum, m) => sum + m.qty * (m.sku.roughWidth + tableKerf), 0) - tableKerf
+    : 0;
+  const actualWaste = panelWidth - widthUsed;
+
+  return {
+    mix: bestMix.filter(m => m.qty > 0),
+    waste: Math.max(0, actualWaste),
+    widthUsed: Math.max(0, widthUsed),
+    wastePct: Math.round((Math.max(0, actualWaste) / panelWidth) * 100),
+  };
+}
+
 export function solveResaw(input) {
   const {
     stock,            // { thickness, width, length, qty, condition }
@@ -190,6 +273,10 @@ export function solveResaw(input) {
     });
   }
 
+  // Mixed strip optimization — find combo that minimizes panel waste
+  const primaryTableKerf = stripSettings[0]?.tableKerf ?? 0.125;
+  const mixedResult = optimizeMixedStrips(usableWidth, stripSettings, primaryTableKerf);
+
   return {
     input: { stock, resawSettings, stripSettings, crosscutSettings },
     stock: { usableThickness, usableWidth, qty: stock.qty },
@@ -206,6 +293,7 @@ export function solveResaw(input) {
     },
     stripResults,
     resawSequence,
+    mixedOptimization: mixedResult,
     summary: {
       slabsTotal: slabsPerBlank * crosscutPlan.totalBlanks * stock.qty,
       thicknessYield: 100 - thicknessWastePct,
