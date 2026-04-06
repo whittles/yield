@@ -427,14 +427,24 @@
           <div class="text-2xl font-bold text-text-primary">{{ r.roughCrosscut.blanksTotal }}</div>
           <div class="text-xs text-text-muted mt-1">Total blanks</div>
         </div>
-        <div class="bg-surface border border-border rounded-lg p-4 text-center">
-          <div class="text-2xl font-bold text-text-primary">{{ r.slabs.slabsPerBlank }}</div>
-          <div class="text-xs text-text-muted mt-1">Slabs per blank</div>
-        </div>
-        <div class="bg-surface border border-border rounded-lg p-4 text-center">
-          <div class="text-2xl font-bold text-text-primary">{{ r.summary.slabsTotal }}</div>
-          <div class="text-xs text-text-muted mt-1">Total slabs</div>
-        </div>
+        <!-- Per-group slab counts when multiple runs -->
+        <template v-if="r.resawGroups && r.resawGroups.length > 1">
+          <div v-for="(g, gi) in r.resawGroups" :key="'sc-'+gi"
+               class="bg-surface border border-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-text-primary">{{ g.slabsPerBlank }}</div>
+            <div class="text-xs text-text-muted mt-1">Slabs/blank ({{ fmtIn(g.panelDepth) }}" run)</div>
+          </div>
+        </template>
+        <template v-else>
+          <div class="bg-surface border border-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-text-primary">{{ r.slabs.slabsPerBlank }}</div>
+            <div class="text-xs text-text-muted mt-1">Slabs per blank</div>
+          </div>
+          <div class="bg-surface border border-border rounded-lg p-4 text-center">
+            <div class="text-2xl font-bold text-text-primary">{{ r.summary.slabsTotal }}</div>
+            <div class="text-xs text-text-muted mt-1">Total slabs</div>
+          </div>
+        </template>
         <div
           v-for="sr in r.stripResults.slice(0, 2)"
           :key="sr.id"
@@ -605,18 +615,18 @@
 
           <!-- Offcut zone -->
           <rect
-            v-if="offcutH > 0"
+            v-if="getOffcutH(group) > 0"
             :x="70"
-            :y="offcutY"
+            :y="getOffcutY(group)"
             width="350"
-            :height="offcutH"
+            :height="getOffcutH(group)"
             fill="#aaa"
             opacity="0.4"
             stroke="#888"
             stroke-width="0.5"
           />
-          <text v-if="offcutH > 6" x="245" :y="offcutY + offcutH/2 + 4" text-anchor="middle" font-size="9" fill="#555">
-            Offcut {{ fmtIn(r.slabs.thicknessWaste) }}
+          <text v-if="getOffcutH(group) > 6" x="245" :y="getOffcutY(group) + getOffcutH(group)/2 + 4" text-anchor="middle" font-size="9" fill="#555">
+            Offcut {{ fmtIn(group.thicknessWaste ?? 0) }}
           </text>
 
           <!-- Dimension line: left side (usable thickness) -->
@@ -708,25 +718,18 @@
             </div>
           </div>
 
-          <!-- Step 3: Resaw -->
+          <!-- Step 3: Resaw — one sub-step per group -->
           <div class="print-step">
             <div class="font-semibold text-text-primary">Step 3 — Resaw on bandsaw</div>
-            <div class="text-text-muted mt-1 ml-4">
-              Fence setting: {{ r.slabs.slabThickness.toFixed(4) }}" — jointed face against fence<br/>
-              <span v-if="r.slabs.extraPerSlab > 0.001" class="text-success">
-                ✓ Offcut redistributed: +{{ r.slabs.extraPerSlab.toFixed(4) }}" per slab (nominal was {{ r.slabs.nominalSlabThickness.toFixed(4) }}", extra absorbed by drum sander)
+            <div v-for="(g, gi) in (r.resawGroups ?? [r.slabs])" :key="'rs-'+gi" class="text-text-muted mt-2 ml-4">
+              <div v-if="r.resawGroups && r.resawGroups.length > 1" class="font-medium text-text-primary mb-0.5">Run {{ gi + 1 }} — {{ fmtIn(g.panelDepth) }}" depth panels:</div>
+              Fence setting: {{ (g.slabThickness ?? r.slabs.slabThickness).toFixed(4) }}" — jointed face against fence<br/>
+              <span v-if="(g.extraPerSlab ?? 0) > 0.001" class="text-success">
+                ✓ Offcut redistributed: +{{ (g.extraPerSlab ?? 0).toFixed(4) }}" per slab (nominal {{ (g.nominalSlabThickness ?? g.slabThickness ?? 0).toFixed(4) }}", extra absorbed by drum sander)
               </span><br/>
               Kerf: {{ fmtIn(r.input.resawSettings.kerf) }}" per cut<br/>
-              <div v-for="seq in r.resawSequence" :key="seq.cutNumber" class="mt-0.5">
-                Cut {{ seq.cutNumber }}: {{ fmtIn(r.slabs.slabThickness) }}" fence → Slab {{ seq.slabNumber }}
-              </div>
-              <div class="mt-1" v-if="r.slabs.thicknessWaste > 0.01">
-                <span v-if="r.slabs.thicknessWaste >= r.slabs.slabThickness * 0.5" class="text-warning">
-                  ⚠ Offcut {{ r.slabs.thicknessWaste.toFixed(3) }}" — consider adjusting fence to distribute this across slabs for blade drift buffer
-                </span>
-                <span v-else>
-                  Offcut: {{ r.slabs.thicknessWaste.toFixed(3) }}" (insufficient for another slab)
-                </span>
+              <div v-for="seq in (g.resawSequence ?? r.resawSequence)" :key="seq.cutNumber" class="mt-0.5">
+                Cut {{ seq.cutNumber }}: {{ fmtIn(g.slabThickness ?? r.slabs.slabThickness) }}" fence → Slab {{ seq.slabNumber }}
               </div>
             </div>
           </div>
@@ -735,8 +738,15 @@
           <div class="print-step">
             <div class="font-semibold text-text-primary">Step 4 — Drum sand to panel depth</div>
             <div class="text-text-muted mt-1 ml-4">
-              Target depth: {{ fmtIn(r.input.resawSettings.panelTarget) }}" ± 0.003" (this becomes the strip depth in the kumiko frame)<br/>
-              Sand {{ r.slabs.slabsPerBlank }} slabs per blank ({{ r.summary.slabsTotal }} total across all blanks)
+              <template v-if="r.resawGroups && r.resawGroups.length > 1">
+                <div v-for="(g, gi) in r.resawGroups" :key="'sd-'+gi" class="mb-1">
+                  Run {{ gi + 1 }}: target {{ fmtIn(g.panelDepth) }}" ± 0.003" · {{ g.slabsPerBlank }} slabs/blank · {{ g.slabsPerBlank * r.roughCrosscut.blanksTotal * r.stock.qty }} total slabs
+                </div>
+              </template>
+              <template v-else>
+                Target depth: {{ fmtIn(r.input.resawSettings.panelTarget) }}" ± 0.003" (strip depth in kumiko frame)<br/>
+                Sand {{ r.slabs.slabsPerBlank }} slabs per blank ({{ r.summary.slabsTotal }} total across all blanks)
+              </template>
             </div>
           </div>
 
@@ -971,16 +981,19 @@ function getKerfH(group) {
 }
 const kerfH = computed(() => getKerfH(null))
 
-const offcutY = computed(() => {
-  if (!r.value || slabZones.value.length === 0) return 0
-  const last = slabZones.value[slabZones.value.length - 1]
+function getOffcutY(group) {
+  const zones = getSlabZones(group)
+  if (!zones.length) return 0
+  const last = zones[zones.length - 1]
   return last.y + last.h
-})
-
-const offcutH = computed(() => {
+}
+function getOffcutH(group) {
   if (!r.value) return 0
-  return (SVG_BOARD_Y + SVG_BOARD_H) - offcutY.value
-})
+  return (SVG_BOARD_Y + SVG_BOARD_H) - getOffcutY(group)
+}
+// backward compat
+const offcutY = computed(() => getOffcutY(r.value?.resawGroups?.[0] ?? null))
+const offcutH = computed(() => getOffcutH(r.value?.resawGroups?.[0] ?? null))
 
 // Rough crosscut SVG computeds
 const SVG_ROUGH_W = 520
