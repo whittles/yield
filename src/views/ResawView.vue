@@ -647,41 +647,33 @@
         </svg>
       </div>
 
-      <!-- Per-slab strip layout SVG — one per SKU in this group -->
-      <div v-for="sr in (group.stripResults ?? r.stripResults)" :key="'sl-' + sr.id"
-           class="bg-surface border border-border rounded-lg p-5">
-        <h3 class="text-sm font-semibold text-text-primary mb-1">Panel Strip Layout — {{ sr.name }}</h3>
+      </template> <!-- end group loop -->
+
+      <!-- Single strip layout SVG — rip is the same for all SKUs (always 0.150" face) -->
+      <div class="bg-surface border border-border rounded-lg p-5">
+        <h3 class="text-sm font-semibold text-text-primary mb-1">Panel Strip Layout (face view — applies to all SKUs)</h3>
         <div class="flex flex-wrap gap-4 text-xs text-text-muted mb-3">
           <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-yellow-600 opacity-80"></span> Strip (rough rip face)</span>
           <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-gray-400 opacity-80"></span> Kerf / waste</span>
         </div>
-        <p class="text-xs text-text-muted mb-3">{{ sr.stripsPerPanel }} strips × {{ fmtIn(sr.roughWidth) }}" rough rip. Panel width = {{ fmtIn(r.stock.usableWidth) }}", length = {{ sr.length }}"</p>
-
-        <svg
-          viewBox="0 0 460 120"
-          class="w-full max-w-2xl mx-auto"
-          style="font-family: monospace;"
-        >
-          <!-- Panel rectangle: 420px wide × 80px tall -->
+        <p class="text-xs text-text-muted mb-3">
+          Table saw rip: {{ fmtIn(r.stripResults[0]?.roughWidth) }}" fence · {{ r.stripResults[0]?.stripsPerPanel }} strips per panel · Panel width = {{ fmtIn(r.stock.usableWidth) }}"
+        </p>
+        <svg viewBox="0 0 460 120" class="w-full max-w-2xl mx-auto" style="font-family: monospace;">
           <rect x="20" y="20" width="420" height="80" fill="#e8d5b0" stroke="#8B6914" stroke-width="1.5"/>
-
-          <!-- Strip zones computed inline from sr -->
-          <g v-for="(strip, i) in getStripZones(sr)" :key="'strip-' + i">
-            <rect v-if="i > 0" :x="strip.x - getStripKerfW(sr)" y="20" :width="getStripKerfW(sr)" height="80" fill="#555" opacity="0.5"/>
+          <g v-for="(strip, i) in getStripZones(r.stripResults[0])" :key="'strip-' + i">
+            <rect v-if="i > 0" :x="strip.x - getStripKerfW(r.stripResults[0])" y="20" :width="getStripKerfW(r.stripResults[0])" height="80" fill="#555" opacity="0.5"/>
             <rect :x="strip.x" y="20" :width="strip.w" height="80" :fill="i % 2 === 0 ? '#d4a84b' : '#e8c470'" opacity="0.8" stroke="#8B6914" stroke-width="0.3"/>
             <text v-if="strip.w > 12" :x="strip.x + strip.w/2" y="64" text-anchor="middle" font-size="7" fill="#3d2000">{{ i + 1 }}</text>
           </g>
-          <!-- Waste zone -->
-          <rect v-if="getStripWasteW(sr) > 0" :x="20 + 420 - getStripWasteW(sr)" y="20" :width="getStripWasteW(sr)" height="80" fill="#aaa" opacity="0.4"/>
-          <text v-if="getStripWasteW(sr) > 10" :x="20 + 420 - getStripWasteW(sr)/2" y="64" text-anchor="middle" font-size="7" fill="#555">W</text>
+          <rect v-if="getStripWasteW(r.stripResults[0]) > 0" :x="20 + 420 - getStripWasteW(r.stripResults[0])" y="20" :width="getStripWasteW(r.stripResults[0])" height="80" fill="#aaa" opacity="0.4"/>
+          <text v-if="getStripWasteW(r.stripResults[0]) > 10" :x="20 + 420 - getStripWasteW(r.stripResults[0])/2" y="64" text-anchor="middle" font-size="7" fill="#555">W</text>
           <text x="230" y="14" text-anchor="middle" font-size="9" fill="#555">
-            {{ sr.stripsPerPanel }} strips × {{ fmtIn(sr.roughWidth) }}" rough rip
+            {{ r.stripResults[0]?.stripsPerPanel }} strips × {{ fmtIn(r.stripResults[0]?.roughWidth) }}" rough rip (same fence for all SKUs)
           </text>
           <text x="20" y="115" font-size="8" fill="#666">← {{ fmtIn(r.stock.usableWidth) }}" panel width →</text>
         </svg>
       </div>
-
-      </template> <!-- end group loop -->
 
       <!-- Step-by-step instructions -->
       <div class="bg-surface border border-border rounded-lg p-5 print-break-before">
