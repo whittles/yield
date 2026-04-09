@@ -495,8 +495,8 @@ function calculate() {
       h: parseFraction(s.h) || 96,
     }))
 
-    sheets.value = packMultipleSheets(r.pieces, allSheetsSizes, kerf)
-    minSheet.value = minimumSheet(r.pieces, kerf)
+    sheets.value = packMultipleSheets(r.pieces, allSheetsSizes, kerf, false)  // no rotation — keep grain direction consistent
+    minSheet.value = minimumSheet(r.pieces, kerf, false)  // no rotation — keep grain consistent
   } catch (e) {
     inputError.value = `Calculation error: ${e.message}`
   }

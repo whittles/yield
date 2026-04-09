@@ -231,7 +231,7 @@ export function packSheets(pieces, sheetW, sheetH, kerf) {
  * @param {Array<{w,h}>} sheetSizes - array of available sheets in order
  * @param {number} kerf
  */
-export function packMultipleSheets(pieces, sheetSizes, kerf) {
+export function packMultipleSheets(pieces, sheetSizes, kerf, allowRotation = true) {
   if (!sheetSizes.length) return packSheets(pieces, 48, 96, kerf);
 
   // Expand pieces by qty
@@ -258,7 +258,7 @@ export function packMultipleSheets(pieces, sheetSizes, kerf) {
     };
     const stillRemaining = [];
     for (const item of remaining) {
-      if (!_tryPlace(sheet, item, kerf)) stillRemaining.push(item);
+      if (!_tryPlace(sheet, item, kerf, allowRotation)) stillRemaining.push(item);
     }
     sheets.push(sheet);
     remaining = stillRemaining;
@@ -276,7 +276,7 @@ export function packMultipleSheets(pieces, sheetSizes, kerf) {
     };
     const stillRemaining = [];
     for (const item of remaining) {
-      if (!_tryPlace(sheet, item, kerf)) stillRemaining.push(item);
+      if (!_tryPlace(sheet, item, kerf, allowRotation)) stillRemaining.push(item);
     }
     sheets.push(sheet);
     if (stillRemaining.length === remaining.length) break; // safety
@@ -296,7 +296,7 @@ export function packMultipleSheets(pieces, sheetSizes, kerf) {
  * Find the minimum sheet size by trying many widths with row-packing
  * and picking the layout with smallest total area.
  */
-export function minimumSheet(pieces, kerf) {
+export function minimumSheet(pieces, kerf, allowRotation = true) {
   const items = [];
   for (const p of pieces) {
     for (let i = 0; i < p.qty; i++) {
@@ -314,15 +314,15 @@ export function minimumSheet(pieces, kerf) {
   let best = null;
   for (let i = 0; i <= 60; i++) {
     const trialW = minW + (maxW - minW) * (i / 60);
-    const result = _rowPack(items, trialW, kerf);
+    const result = _rowPack(items, trialW, kerf, allowRotation);
     if (result.placed.length === items.length) {
       if (!best || result.w * result.h < best.w * best.h) best = result;
     }
   }
-  return best ?? _rowPack(items, maxW, kerf);
+  return best ?? _rowPack(items, maxW, kerf, allowRotation);
 }
 
-function _rowPack(items, sheetW, kerf) {
+function _rowPack(items, sheetW, kerf, allowRotation = true) {
   const placed = [];
   let curRowX = 0, curRowY = 0, curRowH = 0;
 
@@ -353,11 +353,11 @@ function _rowPack(items, sheetW, kerf) {
   };
 }
 
-function _tryPlace(sheet, item, kerf) {
-  for (const [iw, ih, rotated] of [
-    [item.w, item.h, false],
-    [item.h, item.w, true],
-  ]) {
+function _tryPlace(sheet, item, kerf, allowRotation = true) {
+  const orientations = allowRotation
+    ? [[item.w, item.h, false], [item.h, item.w, true]]
+    : [[item.w, item.h, false]]
+  for (const [iw, ih, rotated] of orientations) {
     for (let ri = 0; ri < sheet.freeRects.length; ri++) {
       const r = sheet.freeRects[ri];
       if (iw <= r.w && ih <= r.h) {
