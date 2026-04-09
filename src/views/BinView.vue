@@ -7,7 +7,7 @@
         <img src="/logo.png" style="width:40pt; height:40pt; object-fit:contain;" alt="Althoff Woodshop"/>
         <div>
           <div style="font-size:14pt; font-weight:700; letter-spacing:0.5pt;">ALTHOFF WOODSHOP</div>
-          <div style="font-size:10pt; color:#555;">Simple Bin Planner</div>
+          <div style="font-size:10pt; color:#555;">Simple Box Planner</div>
         </div>
         <div style="margin-left:auto; text-align:right; font-size:9pt; color:#555;">
           <div>{{ new Date().toLocaleDateString('en-US', { weekday:'short', year:'numeric', month:'short', day:'numeric' }) }}</div>
@@ -23,7 +23,7 @@
 
     <!-- ── Page header ─────────────────────────────────────────────── -->
     <div class="no-print">
-      <h1 class="text-2xl font-bold text-text-primary">Simple Bin Planner</h1>
+      <h1 class="text-2xl font-bold text-text-primary">Simple Box Planner</h1>
       <p class="text-text-muted text-sm mt-1">Open-top box · Dado bottom joint</p>
     </div>
 

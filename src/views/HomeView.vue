@@ -37,11 +37,11 @@
         <div class="mt-3 text-xs text-accent font-medium">Open →</div>
       </button>
 
-      <!-- Bin Planner -->
+      <!-- Box Planner -->
       <button @click="$router.push('/bin')"
         class="text-left bg-surface border border-border rounded-xl p-5 hover:border-accent/50 hover:bg-surface/80 transition-all group">
         <div class="text-2xl mb-3">📦</div>
-        <h2 class="text-base font-semibold text-text-primary mb-1 group-hover:text-accent transition-colors">Bin Planner</h2>
+        <h2 class="text-base font-semibold text-text-primary mb-1 group-hover:text-accent transition-colors">Box Planner</h2>
         <p class="text-xs text-text-muted leading-relaxed">
           Simple open-top storage bin with a dado bottom. Enter inner or outer dimensions and quantity — get a complete cut list and optimised sheet layout showing the minimum stock needed.
         </p>

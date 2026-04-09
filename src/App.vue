@@ -113,7 +113,7 @@
                 : 'border-transparent text-gray-400 hover:text-white hover:border-white/40'
             ]"
           >
-            Bin
+            Box Planner
           </button>
         </div>
       </div>
