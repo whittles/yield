@@ -310,59 +310,57 @@
         </div>
       </div>
 
-      <!-- Sheet layout SVGs -->
-      <div class="space-y-4">
-        <h2 class="text-base font-semibold text-text-primary">Sheet Layout</h2>
-        <p class="text-xs text-text-muted -mt-2">How pieces nest on your available stock (defined in settings above)</p>
-        <div v-for="(sheet, si) in sheets" :key="'sheet-' + si" class="bg-surface border border-border rounded-lg p-5">
-          <p class="text-xs text-text-muted mb-2 no-print">
-            Sheet {{ si + 1 }}: {{ sheet.sheetW || (parseFraction(availableSheets[0]?.w) || 48) }}" × {{ sheet.sheetH || (parseFraction(availableSheets[0]?.h) || 96) }}"
-          </p>
-          <svg
-            :viewBox="`0 0 ${Math.round((sheet.sheetW||48) * (SVG_DISPLAY_W/(sheet.sheetW||48)))} ${Math.round((sheet.sheetH||96) * (SVG_DISPLAY_W/(sheet.sheetW||48)))}`"
-            class="w-full"
-            style="max-width: 100%; font-family: monospace;"
-          >
-            <defs>
-              <pattern :id="`hatch-${si}`" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
-                <line x1="0" y1="0" x2="0" y2="8" stroke="#888" stroke-width="0.8" opacity="0.25"/>
-              </pattern>
-            </defs>
-            <rect x="0" y="0"
-              :width="Math.round((sheet.sheetW||48) * (SVG_DISPLAY_W/(sheet.sheetW||48)))"
-              :height="Math.round((sheet.sheetH||96) * (SVG_DISPLAY_W/(sheet.sheetW||48)))"
-              :fill="`url(#hatch-${si})`" stroke="#555" stroke-width="1"/>
-            <g v-for="p in sheet.placed" :key="p.instanceId">
-              <rect
-                :x="Math.round(p.x * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10"
-                :y="Math.round(p.y * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10"
-                :width="Math.max(1, Math.round(p.placedW * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10)"
-                :height="Math.max(1, Math.round(p.placedH * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10)"
-                :fill="PIECE_COLORS[p.id] || '#888'"
-                fill-opacity="0.75"
-                :stroke="darken(PIECE_COLORS[p.id] || '#888')"
-                stroke-width="0.8"
-              />
-              <text
-                :x="Math.round(p.x * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10 + Math.max(1, Math.round(p.placedW * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10) / 2"
-                :y="Math.round(p.y * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10 + Math.max(1, Math.round(p.placedH * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10) / 2 - 5"
-                text-anchor="middle" dominant-baseline="middle"
-                font-size="9" fill="#fff" font-weight="600"
-              >{{ p.label }}</text>
-              <text
-                v-if="Math.round(p.placedH * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10 > 18"
-                :x="Math.round(p.x * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10 + Math.max(1, Math.round(p.placedW * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10) / 2"
-                :y="Math.round(p.y * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10 + Math.max(1, Math.round(p.placedH * (SVG_DISPLAY_W/(sheet.sheetW||48)) * 10)/10) / 2 + 7"
-                text-anchor="middle" dominant-baseline="middle"
-                font-size="7" fill="#ffffffcc"
-              >{{ fmtIn(p.placedW) }}" × {{ fmtIn(p.placedH) }}"</text>
-            </g>
-          </svg>
-          <div class="mt-2 flex items-center justify-between text-xs text-text-muted">
-            <span>Sheet {{ si + 1 }} of {{ sheets.length }}</span>
-            <span class="font-semibold text-text-primary">{{ sheetUtilization(sheet, si) }}% utilization</span>
+      <!-- Strip-based sheet layout SVG — visualises the actual cut sequence -->
+      <div v-if="stripPlan && stripPlan.length" class="bg-surface border border-border rounded-lg p-5">
+        <h2 class="text-base font-semibold text-text-primary mb-1">Sheet Layout</h2>
+        <p class="text-xs text-text-muted mb-4">Strip-based layout — matches your actual cut sequence. Each row = one rip pass.</p>
+
+        <!-- One SVG per strip group, stacked vertically -->
+        <div class="space-y-3">
+          <div v-for="(strip, si) in stripPlan" :key="'sv-'+si">
+            <!-- Strip label -->
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs font-mono font-semibold text-text-primary">Rip {{ si+1 }}: {{ fmtIn(strip.ripWidth) }}" fence</span>
+              <span class="text-xs text-text-muted">→ {{ strip.totalCrosscuts }} crosscuts</span>
+            </div>
+            <!-- SVG for this strip -->
+            <svg
+              :viewBox="`0 0 480 ${Math.max(30, Math.round(strip.ripWidth * stripSvgScale))}`"
+              class="w-full"
+              style="font-family: monospace; display: block;"
+            >
+              <!-- Strip background (waste) -->
+              <rect x="0" y="0" width="480" :height="Math.max(30, Math.round(strip.ripWidth * stripSvgScale))" fill="#aaa" opacity="0.2" stroke="#555" stroke-width="0.5"/>
+              <!-- Pieces within strip -->
+              <g v-for="(seg, pi) in getStripSegments(strip)" :key="pi">
+                <rect
+                  :x="seg.x" :y="0"
+                  :width="seg.w"
+                  :height="Math.max(30, Math.round(strip.ripWidth * stripSvgScale))"
+                  :fill="PIECE_COLORS[seg.id] || '#888'"
+                  fill-opacity="0.8"
+                  stroke="#333" stroke-width="0.5"
+                />
+                <!-- Kerf line -->
+                <rect v-if="pi > 0" :x="seg.x - 2" y="0" width="2"
+                  :height="Math.max(30, Math.round(strip.ripWidth * stripSvgScale))"
+                  fill="#222" opacity="0.6"/>
+                <text
+                  :x="seg.x + seg.w/2" :y="Math.max(30, Math.round(strip.ripWidth * stripSvgScale))/2 - 4"
+                  text-anchor="middle" dominant-baseline="middle"
+                  font-size="9" fill="#fff" font-weight="600"
+                >{{ seg.label }}</text>
+                <text
+                  :x="seg.x + seg.w/2" :y="Math.max(30, Math.round(strip.ripWidth * stripSvgScale))/2 + 8"
+                  text-anchor="middle" dominant-baseline="middle"
+                  font-size="7" fill="#ffffffcc"
+                >{{ fmtIn(seg.length) }}"</text>
+              </g>
+            </svg>
           </div>
         </div>
+
+        <p class="text-xs text-text-muted mt-3">← Lengths are proportional to piece size. Waste shown as grey at right of each strip.</p>
       </div>
 
       <!-- Assembly notes -->
@@ -438,6 +436,41 @@ const PIECE_COLORS = {
 }
 
 const SVG_DISPLAY_W = 480
+
+// Strip SVG: scale so widest strip = 60px tall (max), narrowest = 30px
+const stripSvgScale = computed(() => {
+  if (!stripPlan.value?.length) return 10
+  const maxRip = Math.max(...stripPlan.value.map(s => s.ripWidth))
+  return Math.min(60, Math.max(30, 60)) / maxRip  // 60px for the widest strip
+})
+
+// Generate segment positions for one strip's SVG (480px wide canvas)
+function getStripSegments(strip) {
+  if (!strip?.items?.length) return []
+  // Total length of all pieces in this strip
+  const totalPieceLength = strip.items.reduce((s, it) => s + it.qty * it.crosscutLength, 0)
+  const totalKerfs = (strip.totalCrosscuts - 1) * 0.125
+  const totalUsed = totalPieceLength + totalKerfs
+  // Scale to 480px leaving some waste at end
+  const scale = 460 / Math.max(totalUsed, strip.items[0]?.crosscutLength || 1)
+  const segments = []
+  let cursor = 0
+  for (const item of strip.items) {
+    for (let i = 0; i < item.qty; i++) {
+      segments.push({
+        id: strip.items.indexOf(item) === 0 ? 'front'
+          : strip.items.indexOf(item) === 1 ? 'back'
+          : strip.items.indexOf(item) === 2 ? 'side' : 'bottom',
+        label: item.label,
+        length: item.crosscutLength,
+        x: Math.round(cursor * scale),
+        w: Math.max(2, Math.round(item.crosscutLength * scale)),
+      })
+      cursor += item.crosscutLength + 0.125
+    }
+  }
+  return segments
+}
 
 function darken(hex) {
   const r = parseInt(hex.slice(1, 3), 16)
