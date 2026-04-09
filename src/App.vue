@@ -93,6 +93,17 @@
           >
             Tool Box
           </button>
+          <button
+            @click="router.push('/bin')"
+            :class="[
+              'px-3 sm:px-5 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+              activeTab === 'bin'
+                ? 'border-white text-white'
+                : 'border-transparent text-gray-400 hover:text-white hover:border-white/40'
+            ]"
+          >
+            Bin
+          </button>
         </div>
       </div>
     </header>
@@ -143,6 +154,7 @@ const activeTab = computed(() => {
   if (route.path === '/resaw') return 'resaw'
   if (route.path === '/results') return 'results'
   if (route.path === '/toolbox') return 'toolbox'
+  if (route.path === '/bin') return 'bin'
   return 'input'
 })
 
