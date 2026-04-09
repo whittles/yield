@@ -253,6 +253,63 @@
         </svg>
       </div>
 
+      <!-- Strip Cut Layout -->
+      <div v-if="stripPlan && stripPlan.length" class="bg-surface border border-border rounded-lg p-5">
+        <h2 class="text-base font-semibold text-text-primary mb-1">Strip Cut Layout</h2>
+        <p class="text-xs text-text-muted mb-4">
+          How to cut this efficiently at the table saw — rip strips first, then crosscut each strip.
+          Fewer fence changes = faster setup.
+        </p>
+
+        <div class="space-y-4">
+          <div v-for="(strip, si) in stripPlan" :key="si"
+               class="border border-border rounded-lg overflow-hidden">
+
+            <!-- Strip header -->
+            <div class="bg-bg px-4 py-2.5 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-semibold text-text-primary font-mono">
+                  Rip #{{ si + 1 }}: {{ fmtIn(strip.ripWidth) }}" fence
+                </span>
+                <span class="text-xs text-text-muted">
+                  {{ strip.totalCrosscuts }} crosscuts · {{ fmtIn(strip.totalLength) }}" total length
+                </span>
+              </div>
+              <span class="text-xs text-text-muted">
+                {{ strip.stripsFromSheet }} strip{{ strip.stripsFromSheet !== 1 ? 's' : '' }} fit across sheet
+              </span>
+            </div>
+
+            <!-- Crosscut list -->
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs text-text-muted border-b border-border">
+                  <th class="px-4 py-2">Part</th>
+                  <th class="px-4 py-2">Crosscut length</th>
+                  <th class="px-4 py-2">Qty</th>
+                  <th class="px-4 py-2">Total from strip</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="item in strip.items" :key="item.label"
+                    class="border-b border-border/50 last:border-0">
+                  <td class="px-4 py-2 font-medium text-text-primary">{{ item.label }}</td>
+                  <td class="px-4 py-2 font-mono text-text-primary">{{ fmtIn(item.crosscutLength) }}"</td>
+                  <td class="px-4 py-2 text-text-muted">{{ item.qty }}</td>
+                  <td class="px-4 py-2 text-text-muted">{{ fmtIn(item.qty * item.crosscutLength + (item.qty - 1) * 0.125) }}" used</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="mt-4 pt-4 border-t border-border text-xs text-text-muted space-y-1">
+          <div>Total rip passes: <span class="font-semibold text-text-primary">{{ stripPlan.length }}</span> (one fence setting each)</div>
+          <div>Total crosscuts: <span class="font-semibold text-text-primary">{{ stripPlan.reduce((s, p) => s + p.totalCrosscuts, 0) }}</span></div>
+        </div>
+      </div>
+
       <!-- Sheet layout SVGs -->
       <div class="space-y-4">
         <h2 class="text-base font-semibold text-text-primary">Sheet Layout</h2>
@@ -349,7 +406,7 @@
 <script setup>
 import { ref } from 'vue'
 import { parseFraction } from '@/utils/fractions'
-import { calculateBin, formatIn } from '@/binSolver'
+import { calculateBin, formatIn, stripCutPlan } from '@/binSolver'
 import { packMultipleSheets, minimumSheet } from '@/toolboxSolver'
 
 const version = __APP_VERSION__
@@ -369,6 +426,7 @@ const availableSheets = ref([{ w: '48', h: '96' }])
 const result = ref(null)
 const sheets = ref([])
 const minSheet = ref(null)
+const stripPlan = ref(null)
 const inputError = ref('')
 
 // ── Piece colors ─────────────────────────────────────────────────────
@@ -430,6 +488,7 @@ function calculate() {
     })
 
     result.value = r
+    stripPlan.value = stripCutPlan(r.pieces, 48, kerf)
 
     const allSheetsSizes = availableSheets.value.map(s => ({
       w: parseFraction(s.w) || 48,
