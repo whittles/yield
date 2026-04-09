@@ -325,33 +325,33 @@
             </div>
             <!-- SVG for this strip -->
             <svg
-              :viewBox="`0 0 480 ${Math.max(30, Math.round(strip.ripWidth * stripSvgScale))}`"
+              :viewBox="`0 0 480 ${Math.max(30, Math.round(strip.ripWidth * stripSvgScale()))}`"
               class="w-full"
               style="font-family: monospace; display: block;"
             >
               <!-- Strip background (waste) -->
-              <rect x="0" y="0" width="480" :height="Math.max(30, Math.round(strip.ripWidth * stripSvgScale))" fill="#aaa" opacity="0.2" stroke="#555" stroke-width="0.5"/>
+              <rect x="0" y="0" width="480" :height="Math.max(30, Math.round(strip.ripWidth * stripSvgScale()))" fill="#aaa" opacity="0.2" stroke="#555" stroke-width="0.5"/>
               <!-- Pieces within strip -->
               <g v-for="(seg, pi) in getStripSegments(strip)" :key="pi">
                 <rect
                   :x="seg.x" :y="0"
                   :width="seg.w"
-                  :height="Math.max(30, Math.round(strip.ripWidth * stripSvgScale))"
+                  :height="Math.max(30, Math.round(strip.ripWidth * stripSvgScale()))"
                   :fill="PIECE_COLORS[seg.id] || '#888'"
                   fill-opacity="0.8"
                   stroke="#333" stroke-width="0.5"
                 />
                 <!-- Kerf line -->
                 <rect v-if="pi > 0" :x="seg.x - 2" y="0" width="2"
-                  :height="Math.max(30, Math.round(strip.ripWidth * stripSvgScale))"
+                  :height="Math.max(30, Math.round(strip.ripWidth * stripSvgScale()))"
                   fill="#222" opacity="0.6"/>
                 <text
-                  :x="seg.x + seg.w/2" :y="Math.max(30, Math.round(strip.ripWidth * stripSvgScale))/2 - 4"
+                  :x="seg.x + seg.w/2" :y="Math.max(30, Math.round(strip.ripWidth * stripSvgScale()))/2 - 4"
                   text-anchor="middle" dominant-baseline="middle"
                   font-size="9" fill="#fff" font-weight="600"
                 >{{ seg.label }}</text>
                 <text
-                  :x="seg.x + seg.w/2" :y="Math.max(30, Math.round(strip.ripWidth * stripSvgScale))/2 + 8"
+                  :x="seg.x + seg.w/2" :y="Math.max(30, Math.round(strip.ripWidth * stripSvgScale()))/2 + 8"
                   text-anchor="middle" dominant-baseline="middle"
                   font-size="7" fill="#ffffffcc"
                 >{{ fmtIn(seg.length) }}"</text>
@@ -402,7 +402,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { parseFraction } from '@/utils/fractions'
 import { calculateBin, formatIn, stripCutPlan } from '@/binSolver'
 import { packMultipleSheets, minimumSheet } from '@/toolboxSolver'
@@ -438,13 +438,13 @@ const PIECE_COLORS = {
 const SVG_DISPLAY_W = 480
 
 // Strip SVG: pixels per inch for the height dimension
-// Scale so the widest strip renders at 60px tall
-const stripSvgScale = computed(() => {
+// Plain function so it can be called directly in template without unwrap issues
+function stripSvgScale() {
   if (!stripPlan.value?.length) return 8
   const maxRip = Math.max(...stripPlan.value.map(s => s.ripWidth))
   if (!maxRip) return 8
   return Math.round(60 / maxRip * 10) / 10
-})
+}
 
 // Generate segment positions for one strip's SVG (480px wide canvas)
 function getStripSegments(strip) {
