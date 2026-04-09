@@ -437,11 +437,13 @@ const PIECE_COLORS = {
 
 const SVG_DISPLAY_W = 480
 
-// Strip SVG: scale so widest strip = 60px tall (max), narrowest = 30px
+// Strip SVG: pixels per inch for the height dimension
+// Scale so the widest strip renders at 60px tall
 const stripSvgScale = computed(() => {
-  if (!stripPlan.value?.length) return 10
+  if (!stripPlan.value?.length) return 8
   const maxRip = Math.max(...stripPlan.value.map(s => s.ripWidth))
-  return Math.min(60, Math.max(30, 60)) / maxRip  // 60px for the widest strip
+  if (!maxRip) return 8
+  return Math.round(60 / maxRip * 10) / 10
 })
 
 // Generate segment positions for one strip's SVG (480px wide canvas)
@@ -457,10 +459,11 @@ function getStripSegments(strip) {
   let cursor = 0
   for (const item of strip.items) {
     for (let i = 0; i < item.qty; i++) {
+      const labelLower = item.label.toLowerCase()
       segments.push({
-        id: strip.items.indexOf(item) === 0 ? 'front'
-          : strip.items.indexOf(item) === 1 ? 'back'
-          : strip.items.indexOf(item) === 2 ? 'side' : 'bottom',
+        id: labelLower.includes('front') ? 'front'
+          : labelLower.includes('back') ? 'back'
+          : labelLower.includes('side') ? 'side' : 'bottom',
         label: item.label,
         length: item.crosscutLength,
         x: Math.round(cursor * scale),
