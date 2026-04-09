@@ -42,6 +42,17 @@
       <div class="border-t border-white/10">
         <div class="max-w-5xl mx-auto px-2 flex overflow-x-auto">
           <button
+            @click="router.push('/home')"
+            :class="[
+              'px-3 sm:px-5 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
+              activeTab === 'home'
+                ? 'border-white text-white'
+                : 'border-transparent text-gray-400 hover:text-white hover:border-white/40'
+            ]"
+          >
+            Home
+          </button>
+          <button
             @click="goToInput"
             :class="[
               'px-3 sm:px-5 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap',
@@ -151,6 +162,7 @@ const version = __APP_VERSION__
 
 // Derive active tab from URL — survives page refresh
 const activeTab = computed(() => {
+  if (route.path === '/home') return 'home'
   if (route.path === '/resaw') return 'resaw'
   if (route.path === '/results') return 'results'
   if (route.path === '/toolbox') return 'toolbox'
