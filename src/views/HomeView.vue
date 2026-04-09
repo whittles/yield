@@ -46,23 +46,7 @@
           Simple open-top storage bin with a dado bottom. Enter inner or outer dimensions and quantity — get a complete cut list and optimised sheet layout showing the minimum stock needed.
         </p>
         <div class="mt-3 text-xs text-accent font-medium">Open →</div>
-      </button>
-
-      <!-- Tool Box Planner -->
-      <button @click="$router.push('/toolbox')"
-        class="text-left bg-surface border border-border rounded-xl p-5 hover:border-accent/50 hover:bg-surface/80 transition-all group">
-        <div class="text-2xl mb-3">🧰</div>
-        <h2 class="text-base font-semibold text-text-primary mb-1 group-hover:text-accent transition-colors">Tool Box Planner</h2>
-        <p class="text-xs text-text-muted leading-relaxed">
-          Traditional Japanese sliding-lid tool box. Dado joinery, single sliding panel with wedge lock, shaped handle strips. Enter dimensions and get a full cut list, sheet layout, and assembly sequence.
-        </p>
-        <div class="mt-3 flex items-center gap-2">
-          <span class="text-xs text-accent font-medium">Open →</span>
-          <span class="text-xs text-text-muted bg-bg border border-border px-1.5 py-0.5 rounded">Dev preview</span>
-        </div>
-      </button>
-
-    </div>
+      </button></div>
 
     <!-- Quick tips -->
     <div class="bg-surface border border-border rounded-xl p-5 space-y-3">
