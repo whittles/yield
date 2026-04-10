@@ -39,6 +39,13 @@
                    class="w-full border border-border rounded px-2 py-1.5 text-sm bg-transparent text-text-primary" placeholder="3/4" />
           </div>
         </div>
+        <!-- Board Feet -->
+        <div class="flex items-center justify-between text-xs text-text-muted">
+          <span>Board Feet:</span>
+          <span class="font-medium text-text-primary">
+            {{ (() => { const v = parseFraction(part.lengthStr) * parseFraction(part.widthStr) * parseFraction(part.thicknessStr) * part.qty / 144; return (!v || isNaN(v)) ? '—' : v.toFixed(2) })() }}
+          </span>
+        </div>
       </div>
       <button @click="store.addPart()"
               class="w-full border border-dashed border-border rounded-lg py-2 text-sm text-text-muted hover:text-text-primary hover:border-accent/50 transition-colors">
@@ -57,6 +64,7 @@
             <th class="px-3 py-2 text-center font-medium w-32">Length (in)</th>
             <th class="px-3 py-2 text-center font-medium w-32">Width (in)</th>
             <th class="px-3 py-2 text-center font-medium w-32">Thickness (in)</th>
+            <th class="px-3 py-2 text-center font-medium w-20">Bd Ft</th>
             <th class="px-3 py-2 w-10"></th>
           </tr>
         </thead>
@@ -111,6 +119,9 @@
                 placeholder='3/4'
               />
             </td>
+            <td class="px-3 py-1.5 text-center text-sm text-text-muted">
+              {{ (() => { const v = parseFraction(part.lengthStr) * parseFraction(part.widthStr) * parseFraction(part.thicknessStr) * part.qty / 144; return (!v || isNaN(v)) ? '—' : v.toFixed(2) })() }}
+            </td>
             <td class="px-3 py-1.5 text-center">
               <button
                 @click="store.removePart(part.id)"
@@ -143,5 +154,6 @@
 
 <script setup>
 import { useProjectStore } from '@/stores/project'
+import { parseFraction } from '@/utils/fractions'
 const store = useProjectStore()
 </script>

@@ -57,6 +57,13 @@
                    placeholder='1 1/2' />
           </div>
         </div>
+        <!-- Board Feet -->
+        <div class="flex items-center justify-between text-xs text-text-muted">
+          <span>Board Feet:</span>
+          <span class="font-medium text-text-primary">
+            {{ (() => { const v = parseFraction(board.lengthStr) * parseFraction(board.widthStr) * parseFraction(board.thicknessStr) * board.qty / 144; return (!v || isNaN(v)) ? '—' : v.toFixed(2) })() }}
+          </span>
+        </div>
       </div>
       <!-- Add button -->
       <button @click="store.addStock()"
@@ -76,6 +83,7 @@
             <th class="px-3 py-2 text-center font-medium w-32">Length (in)</th>
             <th class="px-3 py-2 text-center font-medium w-32">Width (in)</th>
             <th class="px-3 py-2 text-center font-medium w-32">Thickness (in)</th>
+            <th class="px-3 py-2 text-center font-medium w-20">Bd Ft</th>
             <th class="px-3 py-2 text-center font-medium w-40">Condition</th>
             <th class="px-3 py-2 w-10"></th>
           </tr>
@@ -131,6 +139,9 @@
                 placeholder='1 1/2'
               />
             </td>
+            <td class="px-3 py-1.5 text-center text-sm text-text-muted">
+              {{ (() => { const v = parseFraction(board.lengthStr) * parseFraction(board.widthStr) * parseFraction(board.thicknessStr) * board.qty / 144; return (!v || isNaN(v)) ? '—' : v.toFixed(2) })() }}
+            </td>
             <td class="px-3 py-1.5">
               <select
                 v-model="board.condition"
@@ -175,5 +186,6 @@
 
 <script setup>
 import { useProjectStore } from '@/stores/project'
+import { parseFraction } from '@/utils/fractions'
 const store = useProjectStore()
 </script>
