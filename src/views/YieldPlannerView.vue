@@ -218,6 +218,11 @@
     </Teleport>
 
   </div>
+
+  <!-- Print footer — appears at the bottom of every printed page -->
+  <div class="print-only print-footer">
+    www.althoffwoodshop.com
+  </div>
 </template>
 
 <script setup>
