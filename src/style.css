@@ -82,6 +82,9 @@ textarea {
     border-top: 1px solid #ddd;
     padding-top: 4pt;
   }
+
+  /* Ensure content doesn't run under the fixed footer */
+  body { padding-bottom: 24pt; }
 }
 
 .print-only { display: none; }
