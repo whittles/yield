@@ -65,6 +65,10 @@
           </span>
         </div>
       </div>
+      <!-- Mobile total -->
+      <div class="text-xs text-text-muted text-right pt-1">
+        Total: <span class="font-semibold text-text-primary">{{ totalBoardFeet }} bd ft</span>
+      </div>
       <!-- Add button -->
       <button @click="store.addStock()"
               class="w-full border border-dashed border-border rounded-lg py-2 text-sm text-text-muted hover:text-text-primary hover:border-accent/50 transition-colors">
@@ -163,6 +167,13 @@
             </td>
           </tr>
         </tbody>
+        <tfoot>
+          <tr class="border-t-2 border-border font-semibold bg-surface-alt/60">
+            <td class="px-4 py-2 text-right text-sm text-text-muted" colspan="5">Total</td>
+            <td class="px-3 py-2 text-center text-sm text-text-primary font-bold">{{ totalBoardFeet }}</td>
+            <td colspan="2"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
     </div>
@@ -185,7 +196,16 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useProjectStore } from '@/stores/project'
 import { parseFraction } from '@/utils/fractions'
 const store = useProjectStore()
+
+const totalBoardFeet = computed(() => {
+  const total = store.stock.reduce((sum, b) => {
+    const val = parseFraction(b.lengthStr) * parseFraction(b.widthStr) * parseFraction(b.thicknessStr) * (b.qty || 1) / 144
+    return sum + (isNaN(val) ? 0 : val)
+  }, 0)
+  return total > 0 ? total.toFixed(2) : '—'
+})
 </script>
