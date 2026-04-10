@@ -70,21 +70,21 @@ textarea {
   .print-break-before { page-break-before: always; }
   .print-no-break { page-break-inside: avoid; }
 
-  /* Print footer — fixed to bottom of every printed page */
-  .print-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 8pt;
-    color: #888;
-    border-top: 1px solid #ddd;
-    padding-top: 4pt;
+  /* Page margin boxes for footer on every page */
+  @page {
+    margin-bottom: 36pt;
+    @bottom-center {
+      content: 'www.althoffwoodshop.com';
+      font-size: 8pt;
+      color: #888;
+      border-top: 1px solid #ddd;
+      padding-top: 4pt;
+      font-family: system-ui, sans-serif;
+    }
   }
 
-  /* Ensure content doesn't run under the fixed footer */
-  body { padding-bottom: 24pt; }
+  /* Hide the in-flow footer element — @page handles it now */
+  .print-footer { display: none !important; }
 }
 
 .print-only { display: none; }
