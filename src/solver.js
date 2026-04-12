@@ -143,10 +143,8 @@ export function solve(input) {
         usableLength: s.length,
         usableWidth: s.width - allow.width,
         usableThickness: s.thickness - allow.thickness,
-        // Remaining space (updated greedily)
-        remainingLength: s.length,
-        remainingWidth: s.width - allow.width,
-        remainingThickness: s.thickness - allow.thickness,
+        // Free rectangles for 2D guillotine bin packing
+        freeRects: [{ x: 0, y: 0, w: s.length, h: (s.width - allow.width) }],
         cuts: [],
         offcuts: [],
         // Resaw metadata (set when this piece is a virtual slab from expandStockWithResaw)
@@ -177,47 +175,73 @@ export function solve(input) {
     let placed = false;
 
     for (const sp of stockPieces) {
-      const thicknessFits = part.thickness <= sp.remainingThickness + 0.001;
-      const widthFits     = part.width     <= sp.remainingWidth     + 0.001;
-      const lengthFits    = part.length    <= sp.remainingLength    + 0.001;
+      const thicknessFits = part.thickness <= sp.usableThickness + 0.001;
+      if (!thicknessFits) continue;
 
-      if (thicknessFits && widthFits && lengthFits) {
-        const cut = {
-          partId: part.instanceId,
-          partLabel: part.label,
-          partIndex: part.instanceIndex,
-          stockPieceId: sp.id,
-          stockLabel: sp.label,
-          // Operations required
-          needsResaw:    part.thickness < sp.remainingThickness - 0.01,
-          needsRip:      part.width     < sp.remainingWidth     - 0.01,
-          needsCrosscut: part.length    < sp.remainingLength    - 0.01,
-          // Final dimensions
-          cutThickness: part.thickness,
-          cutWidth:     part.width,
-          cutLength:    part.length,
-          // Waste dimensions
-          wasteWidth:  sp.remainingWidth  - part.width  - (part.width  < sp.remainingWidth  - 0.01 ? settings.kerf : 0),
-          wasteLength: sp.remainingLength - part.length - (part.length < sp.remainingLength - 0.01 ? settings.kerf : 0),
-          // Position along board (for SVG diagram)
-          xOffset: sp.usableLength - sp.remainingLength,
-          yOffset: sp.usableWidth  - sp.remainingWidth,
-        };
-
-        assignments.push(cut);
-        sp.cuts.push(cut);
-
-        // Update remaining space (strip-based greedy)
-        if (cut.needsRip) {
-          sp.remainingWidth -= (part.width + settings.kerf);
+      // Find first free rect that fits this part
+      let bestRectIdx = -1;
+      for (let ri = 0; ri < sp.freeRects.length; ri++) {
+        const r = sp.freeRects[ri];
+        if (part.length <= r.w + 0.001 && part.width <= r.h + 0.001) {
+          bestRectIdx = ri;
+          break;
         }
-        if (cut.needsCrosscut && !cut.needsRip) {
-          sp.remainingLength -= (part.length + settings.kerf);
-        }
-
-        placed = true;
-        break;
       }
+
+      if (bestRectIdx === -1) continue;
+
+      const rect = sp.freeRects[bestRectIdx];
+
+      const cut = {
+        partId: part.instanceId,
+        partLabel: part.label,
+        partIndex: part.instanceIndex,
+        stockPieceId: sp.id,
+        stockLabel: sp.label,
+        needsResaw:    part.thickness < sp.usableThickness - 0.01,
+        needsRip:      part.width     < rect.h - 0.01,
+        needsCrosscut: part.length    < rect.w - 0.01,
+        cutThickness: part.thickness,
+        cutWidth:     part.width,
+        cutLength:    part.length,
+        wasteWidth:  rect.h - part.width  - (part.width  < rect.h - 0.01 ? settings.kerf : 0),
+        wasteLength: rect.w - part.length - (part.length < rect.w - 0.01 ? settings.kerf : 0),
+        xOffset: rect.x,
+        yOffset: rect.y,
+      };
+
+      assignments.push(cut);
+      sp.cuts.push(cut);
+
+      // Guillotine split — remove used rect, add up to 2 remainders
+      sp.freeRects.splice(bestRectIdx, 1);
+
+      // Right remainder (same height strip, to the right of the part)
+      const rightW = rect.w - part.length - settings.kerf;
+      const rightH = part.width;
+      if (rightW > 0.1 && rightH > 0.1) {
+        sp.freeRects.push({
+          x: rect.x + part.length + settings.kerf,
+          y: rect.y,
+          w: rightW,
+          h: rightH,
+        });
+      }
+
+      // Below remainder (full remaining width, below the part)
+      const belowW = rect.w;
+      const belowH = rect.h - part.width - settings.kerf;
+      if (belowW > 0.1 && belowH > 0.1) {
+        sp.freeRects.push({
+          x: rect.x,
+          y: rect.y + part.width + settings.kerf,
+          w: belowW,
+          h: belowH,
+        });
+      }
+
+      placed = true;
+      break;
     }
 
     if (!placed) unresolved.push(part);
