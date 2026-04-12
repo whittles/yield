@@ -210,7 +210,19 @@ export function solve(input) {
   for (const part of partsList) {
     let placed = false;
 
-    for (const sp of stockPieces) {
+    // For each part, try stock pieces in a preferred order:
+    // resawn slabs that exactly match part thickness go first,
+    // then remaining stock pieces in their normal order.
+    // This ensures thin parts land on resaw slabs rather than full-thickness boards.
+    const exactSlabs = stockPieces.filter(sp =>
+      sp.resawnFrom && Math.abs(sp.usableThickness - part.thickness) <= 0.001
+    );
+    const otherPieces = stockPieces.filter(sp =>
+      !(sp.resawnFrom && Math.abs(sp.usableThickness - part.thickness) <= 0.001)
+    );
+    const orderedPieces = [...exactSlabs, ...otherPieces];
+
+    for (const sp of orderedPieces) {
       const thicknessFits = part.thickness <= sp.usableThickness + 0.001;
       if (!thicknessFits) continue;
 
