@@ -77,23 +77,24 @@ textarea {
   @page {
     margin-bottom: 36pt;
     @bottom-left {
-      content: '';
+      content: 'Page ' counter(page) ' of ' counter(pages);
+      font-size: 8pt;
+      color: #888;
       border-top: 1px solid #ddd;
-      width: 100%;
+      padding-top: 4pt;
+      font-family: system-ui, sans-serif;
     }
     @bottom-center {
       content: 'www.althoffwoodshop.com';
       font-size: 8pt;
       color: #888;
+      border-top: 1px solid #ddd;
       padding-top: 4pt;
       font-family: system-ui, sans-serif;
     }
     @bottom-right {
-      content: 'Page ' counter(page) ' of ' counter(pages);
-      font-size: 8pt;
-      color: #888;
-      padding-top: 4pt;
-      font-family: system-ui, sans-serif;
+      content: '';
+      border-top: 1px solid #ddd;
     }
   }
 
