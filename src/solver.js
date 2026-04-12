@@ -344,16 +344,22 @@ export function solve(input) {
 export function solveOptimized(input) {
   const { stock, parts, settings } = input;
 
-  // Generate resaw-expanded stock if allowed
-  const resawStock = expandStockWithResaw(stock, parts, settings);
-  const hasResaw = resawStock !== stock && resawStock.length !== stock.length;
-
-  // Candidate orderings for base stock
+  // Generate candidate orderings of the ORIGINAL board list,
+  // then expand each into slabs AFTER ordering — this keeps slab pairs together.
   const baseCandidates = generateCandidateOrderings(stock);
-  // Candidate orderings for resaw-expanded stock (if different)
-  const resawCandidates = hasResaw ? generateCandidateOrderings(resawStock) : [];
 
-  const allCandidates = [...baseCandidates, ...resawCandidates];
+  // For each base candidate, also produce a resaw-expanded version
+  // (slabs derived from that specific board order, so pairs stay adjacent)
+  const allCandidates = [];
+  for (const orderedBase of baseCandidates) {
+    allCandidates.push(orderedBase); // non-resaw candidate
+    if (settings.allowResaw) {
+      const expanded = expandStockWithResaw(orderedBase, parts, settings);
+      if (expanded.length !== orderedBase.length) {
+        allCandidates.push(expanded); // resaw-expanded candidate
+      }
+    }
+  }
 
   let best = null;
   let bestScore = Infinity;
