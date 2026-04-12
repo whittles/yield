@@ -433,7 +433,10 @@ function scoreResult(result) {
     : 100;
   // Tertiary: number of boards opened
   const boardsOpened = result.summary.stockUsed * 100;
-  return unresolved + avgWaste + boardsOpened;
+  // Quaternary: penalise part-level resaws (needsResaw on a cut) — these should
+  // come from pre-resawn slabs when allowResaw is enabled, not from thick boards
+  const partLevelResaws = result.assignments.filter(c => c.needsResaw).length * 500;
+  return unresolved + avgWaste + boardsOpened + partLevelResaws;
 }
 
 function permutations(arr) {
