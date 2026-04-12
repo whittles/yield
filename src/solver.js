@@ -193,9 +193,15 @@ export function solve(input) {
       partsList.push({ ...p, instanceId: `${p.id}-${i}`, instanceIndex: i });
     }
   }
-  partsList.sort(
-    (a, b) => b.length * b.width * b.thickness - a.length * a.width * a.thickness
-  );
+  // Sort: thick parts first (so they claim full-thickness boards),
+  // then within same thickness bucket sort by volume descending (FFD).
+  // This ensures thin parts are placed last and naturally fall to resaw slabs.
+  partsList.sort((a, b) => {
+    if (Math.abs(a.thickness - b.thickness) > 0.01) {
+      return b.thickness - a.thickness; // thicker first
+    }
+    return b.length * b.width * b.thickness - a.length * a.width * a.thickness;
+  });
 
   // ─── Step 3: First Fit Decreasing assignment ──────────────────────────────
   const assignments = [];
