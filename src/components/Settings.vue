@@ -41,6 +41,42 @@
         </div>
       </div>
 
+      <!-- Thickness / Resaw -->
+      <div>
+        <h3 class="text-xs font-medium text-text-muted uppercase tracking-wide mb-2">
+          Thickness / Resaw
+        </h3>
+        <div class="grid grid-cols-2 gap-6 sm:grid-cols-4">
+          <div>
+            <label class="block text-xs font-medium text-text-muted mb-1 uppercase tracking-wide">
+              Allow Thickness Resawing
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer mt-1">
+              <input
+                v-model="store.settings.allowResaw"
+                type="checkbox"
+                class="rounded border-border accent-accent"
+              />
+              <span class="text-sm text-text-primary">{{ store.settings.allowResaw ? 'Enabled' : 'Disabled' }}</span>
+            </label>
+            <p class="mt-1 text-xs text-text-light">Resaw thick boards into multiple slabs</p>
+          </div>
+          <div v-if="store.settings.allowResaw">
+            <label class="block text-xs font-medium text-text-muted mb-1 uppercase tracking-wide">
+              Resaw Face Allowance (in)
+            </label>
+            <input
+              v-model="resawFaceStr"
+              type="text"
+              class="w-full border border-border rounded px-3 py-1.5 text-sm
+                     focus:border-accent focus:outline-none bg-surface"
+              placeholder="1/16"
+            />
+            <p class="mt-1 text-xs text-text-light">Cleanup planing per resawn face</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Condition allowances -->
       <div>
         <h3 class="text-xs font-medium text-text-muted uppercase tracking-wide mb-2">
@@ -108,6 +144,11 @@ const kerfStr = computed({
 const planingStr = computed({
   get: () => formatFraction(store.settings.planingAllowance),
   set: (v) => { store.settings.planingAllowance = parseFraction(v) },
+})
+
+const resawFaceStr = computed({
+  get: () => formatFraction(store.settings.resawFaceAllowance),
+  set: (v) => { store.settings.resawFaceAllowance = parseFraction(v) },
 })
 
 function formatConditionName(key) {

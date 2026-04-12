@@ -9,6 +9,8 @@ export const useProjectStore = defineStore('project', () => {
   const settings = ref({
     kerf: 0.125,
     planingAllowance: 0.0625,
+    allowResaw: true,
+    resawFaceAllowance: 0.0625,
     conditionAllowances: {
       'rough':       { thickness: 0.25,   width: 0.25  },
       'skip-planed': { thickness: 0.125,  width: 0.25  },

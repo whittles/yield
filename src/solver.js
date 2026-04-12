@@ -1,5 +1,106 @@
 import { formatFraction } from '@/utils/fractions';
 
+// ─── Resaw Expansion ─────────────────────────────────────────────────────────
+
+/**
+ * Expands thick stock boards into virtual resawn slabs where beneficial.
+ * Each slab is tagged with metadata so the UI can generate resaw instructions.
+ *
+ * @param {Array} stock - Raw stock array
+ * @param {Array} parts - Parsed parts array
+ * @param {Object} settings - Solver settings
+ * @returns {Array} - Expanded stock array (may be same reference if no resaw)
+ */
+export function expandStockWithResaw(stock, parts, settings) {
+  if (!settings.allowResaw) return stock;
+
+  const kerf = settings.kerf;
+  const faceAllowance = settings.resawFaceAllowance ?? 0.0625;
+  const minUsableThickness = 0.5;
+
+  // Collect all unique part thicknesses needed
+  const partThicknesses = [...new Set(parts.map(p => p.thickness))];
+
+  const expanded = [];
+
+  for (const s of stock) {
+    const allow = (settings.conditionAllowances?.[s.condition]) ??
+                  { thickness: 0, width: 0 };
+    const usableThickness = s.thickness - allow.thickness;
+
+    // Find the best part thickness to resaw for (maximise slab count)
+    let bestT = null;
+    let bestSlabs = 1;
+
+    for (const T of partThicknesses) {
+      const slabFenceAt = T + faceAllowance;
+      const slabs = Math.floor(usableThickness / (slabFenceAt + kerf));
+      if (slabs >= 2 && slabs > bestSlabs) {
+        bestSlabs = slabs;
+        bestT = T;
+      }
+    }
+
+    if (bestT === null) {
+      // No resaw opportunity — use as-is
+      expanded.push(s);
+      continue;
+    }
+
+    // Generate virtual slabs by slicing
+    // thickness = bestT (the usable part thickness, after face planing)
+    // resawFenceAt = bestT + faceAllowance (the actual bandsaw fence setting)
+    const fenceAt = bestT + faceAllowance;
+    let remaining = usableThickness;
+    let slabIndex = 0;
+    const slabs = [];
+
+    while (remaining >= fenceAt + kerf) {
+      slabs.push({
+        ...s,
+        qty: 1,
+        id: `${s.id}-resaw-${slabIndex}`,
+        label: `${s.label} (Slab ${slabIndex + 1})`,
+        thickness: bestT,
+        thicknessStr: bestT.toFixed(4),
+        condition: 's4s', // resawn+planed face accounted for — usable thickness = bestT
+        resawnFrom: s.id,
+        resawnFromLabel: s.label,
+        resawFenceAt: fenceAt,
+        resawSlabIndex: slabIndex,
+        resawTotalSlabs: 0, // filled in after loop
+      });
+      remaining -= fenceAt + kerf;
+      slabIndex++;
+    }
+
+    // Check if remainder slab is usable
+    if (remaining >= minUsableThickness) {
+      slabs.push({
+        ...s,
+        qty: 1,
+        id: `${s.id}-resaw-${slabIndex}`,
+        label: `${s.label} (Slab ${slabIndex + 1} — remainder)`,
+        thickness: remaining,
+        thicknessStr: remaining.toFixed(4),
+        condition: 'rough', // remainder face is unsawn — still rough
+        resawnFrom: s.id,
+        resawnFromLabel: s.label,
+        resawFenceAt: fenceAt,
+        resawSlabIndex: slabIndex,
+        resawTotalSlabs: 0,
+      });
+    }
+
+    // Fill in total slab count
+    for (const sl of slabs) sl.resawTotalSlabs = slabs.length;
+
+    expanded.push(...slabs);
+  }
+
+  return expanded;
+}
+
 /**
  * Default condition allowances (can be overridden by user settings).
  * These represent material lost to milling per condition.
@@ -47,6 +148,11 @@ export function solve(input) {
         remainingThickness: s.thickness - allow.thickness,
         cuts: [],
         offcuts: [],
+        // Resaw metadata (set when this piece is a virtual slab from expandStockWithResaw)
+        resawnFrom:      s.resawnFrom      ?? null,
+        resawnFromLabel: s.resawnFromLabel ?? null,
+        resawFenceAt:    s.resawFenceAt    ?? null,
+        resawTotalSlabs: s.resawTotalSlabs ?? null,
       });
     }
   }
@@ -142,6 +248,16 @@ export function solve(input) {
   for (const res of results) {
     for (const cut of res.cuts) {
       const steps = [];
+      // For the first cut on a resawn slab, prepend a board-level resaw step
+      if (res.stockPiece.resawnFrom && cut === res.cuts[0]) {
+        const faceAllow = input.settings.resawFaceAllowance ?? 0.0625;
+        steps.push(
+          `RESAW first: Set bandsaw fence to ${formatFraction(res.stockPiece.resawFenceAt)}" ` +
+          `(${formatFraction(res.stockPiece.resawFenceAt - faceAllow)}" part + ` +
+          `${formatFraction(faceAllow)}" face allowance). ` +
+          `Plane resawn face to clean up. Yields ${res.stockPiece.resawTotalSlabs} slabs from ${res.stockPiece.resawnFromLabel}.`
+        );
+      }
       if (cut.needsResaw) {
         const resawTarget = formatFraction(cut.cutThickness + settings.planingAllowance * 2);
         const finalThick  = formatFraction(cut.cutThickness);
@@ -184,6 +300,9 @@ export function solve(input) {
       stockUsed:       usedBoards.length,
       stockUnused:     results.filter(r => r.cuts.length === 0).length,
       overallWaste,
+      resawCount: [...new Set(
+        results.filter(r => r.stockPiece.resawnFrom).map(r => r.stockPiece.resawnFrom)
+      )].length,
     },
   };
 }
@@ -198,15 +317,24 @@ export function solve(input) {
  * @returns {Object} - Same shape as solve(), with extra .optimized and .orderingsTried
  */
 export function solveOptimized(input) {
-  const { stock } = input;
+  const { stock, parts, settings } = input;
 
-  const candidates = generateCandidateOrderings(stock);
+  // Generate resaw-expanded stock if allowed
+  const resawStock = expandStockWithResaw(stock, parts, settings);
+  const hasResaw = resawStock !== stock && resawStock.length !== stock.length;
+
+  // Candidate orderings for base stock
+  const baseCandidates = generateCandidateOrderings(stock);
+  // Candidate orderings for resaw-expanded stock (if different)
+  const resawCandidates = hasResaw ? generateCandidateOrderings(resawStock) : [];
+
+  const allCandidates = [...baseCandidates, ...resawCandidates];
 
   let best = null;
   let bestScore = Infinity;
   let orderingsTried = 0;
 
-  for (const orderedStock of candidates) {
+  for (const orderedStock of allCandidates) {
     const result = solve({ ...input, stock: orderedStock });
     const score = scoreResult(result);
     orderingsTried++;
