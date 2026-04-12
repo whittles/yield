@@ -68,7 +68,7 @@ textarea {
 
   /* Page break helpers */
   .print-break-before { page-break-before: always; }
-  .print-no-break { page-break-inside: avoid; }
+  .print-no-break { page-break-inside: avoid; break-inside: avoid; }
 
   /* Page margin boxes for footer on every page */
   @page {

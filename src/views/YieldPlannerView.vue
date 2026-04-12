@@ -116,6 +116,10 @@
             </tr>
           </tbody>
         </table>
+        <!-- Print disclaimer -->
+        <div style="font-size:8pt; color:#888; font-style:italic; margin-top:6pt;">
+          ⚠ Beta: This cut plan is algorithmically generated. Verify all dimensions before cutting.
+        </div>
       </div>
 
       <!-- Screen results anchor -->
@@ -123,6 +127,11 @@
 
         <!-- Summary bar -->
         <ResultsSummary :summary="store.results.summary" />
+
+        <!-- Beta disclaimer banner (screen only) -->
+        <div class="no-print bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
+          ⚠️ <strong>Beta feature</strong> — This cut plan is generated algorithmically and may not be optimal. Always verify dimensions and board assignments before cutting. Use your own judgement at the saw.
+        </div>
 
         <!-- Unresolved warning -->
         <div
@@ -141,12 +150,12 @@
 
         <!-- Per-board results -->
         <div
-          v-for="result in usedResults"
+          v-for="(result, i) in usedResults"
           :key="result.stockPiece.id"
-          class="bg-surface border border-border rounded-lg overflow-hidden"
+          :class="['bg-surface border border-border rounded-lg overflow-hidden', i > 0 ? 'print-break-before' : '']"
         >
           <!-- Print-only board heading -->
-          <div class="print-only" style="font-size:11pt; font-weight:700; padding:6pt 0 4pt 0; border-bottom:1px solid #ccc; margin-bottom:4pt;">
+          <div class="print-only print-no-break" style="font-size:11pt; font-weight:700; padding:6pt 0 4pt 0; border-bottom:1px solid #ccc; margin-bottom:4pt;">
             Board: {{ result.stockPiece.label }} — {{ fmt(result.stockPiece.usableLength) }}" × {{ fmt(result.stockPiece.usableWidth) }}" × {{ fmt(result.stockPiece.usableThickness) }}" usable
           </div>
 
