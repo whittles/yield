@@ -37,19 +37,20 @@
                    focus:border-accent focus:outline-none bg-surface"
             placeholder="1/16"
           />
-          <p class="mt-1 text-xs text-text-light">Per face, after resawing</p>
+          <p class="mt-1 text-xs text-text-light">Per face removed when conditioning rough stock</p>
         </div>
       </div>
 
-      <!-- Thickness / Resaw -->
+      <!-- Resaw optimization -->
       <div>
         <h3 class="text-xs font-medium text-text-muted uppercase tracking-wide mb-2">
-          Thickness / Resaw
+          Resaw Optimization
+          <span class="ml-2 font-normal normal-case">— split thick boards into multiple slabs to improve yield</span>
         </h3>
         <div class="grid grid-cols-2 gap-6 sm:grid-cols-4">
           <div>
             <label class="block text-xs font-medium text-text-muted mb-1 uppercase tracking-wide">
-              Allow Thickness Resawing
+              Auto-Resaw
             </label>
             <label class="flex items-center gap-2 cursor-pointer mt-1">
               <input
@@ -59,20 +60,21 @@
               />
               <span class="text-sm text-text-primary">{{ store.settings.allowResaw ? 'Enabled' : 'Disabled' }}</span>
             </label>
-            <p class="mt-1 text-xs text-text-light">Resaw thick boards into multiple slabs</p>
+            <p class="mt-1 text-xs text-text-light">When enabled, the solver will suggest resawing boards that are significantly thicker than the parts needed</p>
           </div>
           <div v-if="store.settings.allowResaw">
             <label class="block text-xs font-medium text-text-muted mb-1 uppercase tracking-wide">
-              Resaw Face Allowance (in)
+              Face Cleanup Allow. (in)
             </label>
             <input
-              v-model="resawFaceStr"
+              :value="resawFaceStr"
+              @change="resawFaceStr = $event.target.value"
               type="text"
               class="w-full border border-border rounded px-3 py-1.5 text-sm
                      focus:border-accent focus:outline-none bg-surface"
               placeholder="1/16"
             />
-            <p class="mt-1 text-xs text-text-light">Cleanup planing per resawn face</p>
+            <p class="mt-1 text-xs text-text-light">Material removed from each resawn face (default 1/16" — increase for rough cuts or worn blades)</p>
           </div>
         </div>
       </div>
