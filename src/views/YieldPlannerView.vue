@@ -131,7 +131,7 @@
       </div>
 
       <!-- Screen results anchor -->
-      <div ref="resultsAnchor" class="border-t border-border pt-6 space-y-6">
+      <div ref="resultsAnchor" class="no-print-border border-t border-border pt-6 space-y-6">
 
         <!-- Summary bar (screen only — print header has the summary table) -->
         <div class="no-print">
