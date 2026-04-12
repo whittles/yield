@@ -21,6 +21,29 @@ export function expandStockWithResaw(stock, parts, settings) {
   // Collect all unique part thicknesses needed
   const partThicknesses = [...new Set(parts.map(p => p.thickness))];
 
+  // Determine which thicknesses are "thin" — achievable by resawing a board into >= 2 slabs
+  const thinThicknesses = new Set(
+    partThicknesses.filter(T => {
+      const fenceAt = T + faceAllowance;
+      return stock.some(s => Math.floor(s.thickness / (fenceAt + kerf)) >= 2);
+    })
+  );
+
+  // Only resaw a board if ALL parts that need this board's thickness are thin.
+  // If thick parts also need full-thickness boards, keep boards intact for them.
+  const thickPartsExist = parts.some(p => !thinThicknesses.has(p.thickness));
+
+  // Count how many stock units (boards) are needed intact for thick parts
+  const totalStockUnits = stock.reduce((sum, s) => sum + (s.qty || 1), 0);
+  const thinPartsOnly = parts.filter(p => thinThicknesses.has(p.thickness));
+
+  // Boards to keep intact: enough to cover thick parts
+  // Heuristic: thin parts need ~1 board per 2 thin parts (since resawing yields 2 slabs per board)
+  // The rest can be resawn
+  const thinBoardsNeeded = Math.ceil(thinPartsOnly.reduce((s,p)=>s+p.qty,0) / 2);
+  const intactBoardsNeeded = Math.max(0, totalStockUnits - thinBoardsNeeded);
+
+  let keptIntactCount = 0;
   const expanded = [];
 
   for (const s of stock) {
@@ -45,6 +68,13 @@ export function expandStockWithResaw(stock, parts, settings) {
     if (bestT === null) {
       // No resaw opportunity — use as-is
       expanded.push(s);
+      continue;
+    }
+
+    // If thick parts exist and we still need intact boards for them, keep this one intact
+    if (thickPartsExist && keptIntactCount < intactBoardsNeeded) {
+      expanded.push(s);
+      keptIntactCount += (s.qty || 1);
       continue;
     }
 
