@@ -24,9 +24,10 @@ export function expandStockWithResaw(stock, parts, settings) {
   const expanded = [];
 
   for (const s of stock) {
-    const allow = (settings.conditionAllowances?.[s.condition]) ??
-                  { thickness: 0, width: 0 };
-    const usableThickness = s.thickness - allow.thickness;
+    // Resaw is done against NOMINAL thickness — you resaw the board before
+    // conditioning the faces, so condition allowance is not subtracted here.
+    // Each resulting slab gets face-planed independently (handled via faceAllowance).
+    const nominalThickness = s.thickness;
 
     // Find the best part thickness to resaw for (maximise slab count)
     let bestT = null;
@@ -34,7 +35,7 @@ export function expandStockWithResaw(stock, parts, settings) {
 
     for (const T of partThicknesses) {
       const slabFenceAt = T + faceAllowance;
-      const slabs = Math.floor(usableThickness / (slabFenceAt + kerf));
+      const slabs = Math.floor(nominalThickness / (slabFenceAt + kerf));
       if (slabs >= 2 && slabs > bestSlabs) {
         bestSlabs = slabs;
         bestT = T;
@@ -51,7 +52,7 @@ export function expandStockWithResaw(stock, parts, settings) {
     // thickness = bestT (the usable part thickness, after face planing)
     // resawFenceAt = bestT + faceAllowance (the actual bandsaw fence setting)
     const fenceAt = bestT + faceAllowance;
-    let remaining = usableThickness;
+    let remaining = nominalThickness; // resaw against nominal — board hasn't been conditioned yet
     let slabIndex = 0;
     const slabs = [];
 
