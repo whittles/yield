@@ -97,7 +97,7 @@ export const useProjectStore = defineStore('project', () => {
   function loadProject(data) {
     if (data.stock)    stock.value    = data.stock
     if (data.parts)    parts.value    = data.parts
-    if (data.settings) settings.value = data.settings
+    if (data.settings) settings.value = { ...settings.value, ...data.settings }
     if (data.resawStock)    resawStock.value    = data.resawStock
     if (data.resawSettings) resawSettings.value = data.resawSettings
     if (data.resawSkus)     resawSkus.value     = data.resawSkus
