@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { solve, solveOptimized } from '@/solver'
 import { parseFraction } from '@/utils/fractions'
 import { solveResaw } from '@/resawSolver'
@@ -93,7 +93,7 @@ export const useProjectStore = defineStore('project', () => {
     results.value = solveOptimized({ stock: parsedStock, parts: parsedParts, settings: settings.value })
   }
 
-  // ─── Import / Export ────────────────────────────────────────────────────────
+  // ─── Import / Export / Persistence ─────────────────────────────────────────
   function loadProject(data) {
     if (data.stock)    stock.value    = data.stock
     if (data.parts)    parts.value    = data.parts
@@ -110,7 +110,112 @@ export const useProjectStore = defineStore('project', () => {
     }
     results.value      = null
     resawResults.value = null
+    resawError.value   = null
   }
+
+  // ─── Persistence (localStorage) ────────────────────────────────────────────
+  const STORAGE_KEY = 'yieldProjectState'
+
+  function saveToLocalStorage() {
+    const state = {
+      settings: settings.value,
+      stock: stock.value,
+      parts: parts.value,
+      resawStock: resawStock.value,
+      resawSettings: resawSettings.value,
+      crosscutSettings: crosscutSettings.value,
+      resawSkus: resawSkus.value,
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  }
+
+  function loadFromLocalStorage() {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (!saved) return false
+
+    try {
+      const data = JSON.parse(saved)
+      loadProject(data)
+      return true
+    } catch (e) {
+      console.error('Failed to load from localStorage', e)
+      return false
+    }
+  }
+
+  function resetToDefaults() {
+    if (!confirm('Reset all inputs to defaults? This cannot be undone.')) return
+
+    settings.value = {
+      kerf: 0.125,
+      planingAllowance: 0.0625,
+      allowResaw: true,
+      resawFaceAllowance: 0.0625,
+      conditionAllowances: {
+        'rough':       { thickness: 0.25,   width: 0.25  },
+        'skip-planed': { thickness: 0.125,  width: 0.25  },
+        's3s':         { thickness: 0.0625, width: 0.125 },
+        's4s':         { thickness: 0,      width: 0     },
+      },
+    }
+
+    stock.value = [{
+      id: 's1',
+      label: 'Board 1',
+      lengthStr: '96',
+      widthStr: '8',
+      thicknessStr: '1 1/2',
+      qty: 1,
+      condition: 'skip-planed',
+    }]
+
+    parts.value = [
+      { id: 'p1', label: 'Leg',  lengthStr: '28', widthStr: '1 3/4', thicknessStr: '1 1/2', qty: 4 },
+      { id: 'p2', label: 'Rail', lengthStr: '36', widthStr: '3',     thicknessStr: '3/4',   qty: 2 },
+    ]
+
+    resawStock.value = {
+      qty: 5,
+      thicknessStr: '1 15/16',
+      widthStr: '7',
+      lengthStr: '120',
+      condition: 'skip-planed',
+    }
+
+    resawSettings.value = {
+      kerfStr: '1/16',
+      panelTargetStr: '3/8',
+      slabAllowanceStr: '0.010',
+    }
+
+    crosscutSettings.value = {
+      blankLengths: ['36', '24'],
+      miterKerfStr: '1/8',
+      snipeBufferStr: '2',
+    }
+
+    resawSkus.value = [...defaultSkus]
+
+    results.value = null
+    resawResults.value = null
+    resawError.value = null
+    nextId.value = 10
+
+    localStorage.removeItem(STORAGE_KEY)
+  }
+
+  // Watch for changes and debounce save (300ms)
+  let saveTimeout = null
+  const debouncedSave = () => {
+    if (saveTimeout) clearTimeout(saveTimeout)
+    saveTimeout = setTimeout(saveToLocalStorage, 300)
+  }
+
+  // Watch all reactive state (deep)
+  watch([settings, stock, parts, resawStock, resawSettings, crosscutSettings, resawSkus], debouncedSave, { deep: true })
+
+  // Hydrate on store creation (runs once)
+  loadFromLocalStorage()
 
   // ─── Resaw Planner ─────────────────────────────────────────────────────────
   const resawStock = ref({
@@ -134,10 +239,10 @@ export const useProjectStore = defineStore('project', () => {
   })
 
   const defaultSkus = [
-    { id: 'sku1', name: 'Standard 12"', roughWidthStr: '0.150', planeAllowance: 0.010, sanderAllowance: 0.010, finalWidthStr: '0.130', length: 12, tableKerfStr: '1/8', panelDepthStr: '3/8' },
-    { id: 'sku2', name: 'Wide 12"',     roughWidthStr: '0.150', planeAllowance: 0.010, sanderAllowance: 0.010, finalWidthStr: '0.130', length: 12, tableKerfStr: '1/8', panelDepthStr: '3/4' },
-    { id: 'sku3', name: 'Standard 24"', roughWidthStr: '0.150', planeAllowance: 0.010, sanderAllowance: 0.010, finalWidthStr: '0.130', length: 24, tableKerfStr: '1/8', panelDepthStr: '3/8' },
-    { id: 'sku4', name: 'Wide 24"',     roughWidthStr: '0.150', planeAllowance: 0.010, sanderAllowance: 0.010, finalWidthStr: '0.130', length: 24, tableKerfStr: '1/8', panelDepthStr: '3/4' },
+    { id: 'sku1', name: 'Standard 12\"', roughWidthStr: '0.150', planeAllowance: 0.010, sanderAllowance: 0.010, finalWidthStr: '0.130', length: 12, tableKerfStr: '1/8', panelDepthStr: '3/8' },
+    { id: 'sku2', name: 'Wide 12\"',     roughWidthStr: '0.150', planeAllowance: 0.010, sanderAllowance: 0.010, finalWidthStr: '0.130', length: 12, tableKerfStr: '1/8', panelDepthStr: '3/4' },
+    { id: 'sku3', name: 'Standard 24\"', roughWidthStr: '0.150', planeAllowance: 0.010, sanderAllowance: 0.010, finalWidthStr: '0.130', length: 24, tableKerfStr: '1/8', panelDepthStr: '3/8' },
+    { id: 'sku4', name: 'Wide 24\"',     roughWidthStr: '0.150', planeAllowance: 0.010, sanderAllowance: 0.010, finalWidthStr: '0.130', length: 24, tableKerfStr: '1/8', panelDepthStr: '3/4' },
   ]
 
   const resawSkus = ref([...defaultSkus])
@@ -169,7 +274,7 @@ export const useProjectStore = defineStore('project', () => {
       const rough = parseFraction(s.roughWidthStr)
       const final = parseFraction(s.finalWidthStr)
       if (final >= rough) {
-        resawError.value = `SKU "${s.name}": Final face (${final}") must be less than rough rip face (${rough}"). Check plane and sander allowances.`
+        resawError.value = `SKU \"${s.name}\": Final face (${final}\") must be less than rough rip face (${rough}\"). Check plane and sander allowances.`
         resawResults.value = null
         return
       }
@@ -213,13 +318,10 @@ export const useProjectStore = defineStore('project', () => {
     }
   }
 
-  function addBlankLength() { crosscutSettings.value.blankLengths.push('12') }
-  function removeBlankLength(i) { if (crosscutSettings.value.blankLengths.length > 1) crosscutSettings.value.blankLengths.splice(i, 1) }
-
   return {
     settings, stock, parts, results,
     addStock, removeStock, addPart, removePart,
-    calculate, loadProject,
+    calculate, loadProject, resetToDefaults,
     // Resaw Planner
     resawStock, resawSettings, crosscutSettings, resawSkus, resawResults, resawError,
     addBlankLength, removeBlankLength,
