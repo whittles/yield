@@ -132,7 +132,7 @@ const version = __APP_VERSION__
 
 // Derive active tab from URL — survives page refresh
 const activeTab = computed(() => {
-  if (route.path === '/home') return 'home'
+  if (route.path === '/' || route.path === '/home') return 'home'
   if (route.path === '/resaw') return 'resaw'
   if (route.path === '/bin') return 'bin'
   return 'yield'

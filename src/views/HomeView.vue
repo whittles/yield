@@ -16,7 +16,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
 
       <!-- Board Yield Planner -->
-      <button @click="$router.push('/')"
+      <button @click="$router.push('/yield')"
         class="text-left bg-surface border border-border rounded-xl p-5 hover:border-accent/50 hover:bg-surface/80 transition-all group">
         <div class="text-2xl mb-3">📐</div>
         <h2 class="text-base font-semibold text-text-primary mb-1 group-hover:text-accent transition-colors">Board Yield Planner</h2>

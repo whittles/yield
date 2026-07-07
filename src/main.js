@@ -2,13 +2,13 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import App from './App.vue'
-import YieldPlannerView from './views/YieldPlannerView.vue'
 import './style.css'
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: '/', component: YieldPlannerView },
+    { path: '/', component: () => import('@/views/HomeView.vue') },
+    { path: '/yield', component: () => import('@/views/YieldPlannerView.vue') },
     { path: '/resaw',   component: () => import('@/views/ResawView.vue') },
     { path: '/toolbox', component: () => import('@/views/ToolboxView.vue') },
     { path: '/bin',     component: () => import('@/views/BinView.vue') },
