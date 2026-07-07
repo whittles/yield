@@ -10,7 +10,6 @@ const router = createRouter({
   routes: [
     { path: '/', component: YieldPlannerView },
     { path: '/resaw',   component: () => import('@/views/ResawView.vue') },
-    { path: '/toolbox', component: () => import('@/views/ToolboxView.vue') },
     { path: '/bin',     component: () => import('@/views/BinView.vue') },
     { path: '/home',    component: () => import('@/views/HomeView.vue') },
   ],
