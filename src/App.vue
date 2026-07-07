@@ -35,6 +35,14 @@
             <span class="hidden sm:inline">Import</span>
             <span class="sm:hidden">⬇</span>
           </button>
+          <button
+            @click="store.resetToDefaults()"
+            class="text-xs sm:text-sm px-2 sm:px-3 py-1.5 border border-red-400/40 text-red-300 rounded hover:bg-red-500/20 transition-colors"
+            title="Reset all inputs to defaults"
+          >
+            <span class="hidden sm:inline">Reset</span>
+            <span class="sm:hidden">↺</span>
+          </button>
         </div>
       </div>
 
