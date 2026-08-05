@@ -36,11 +36,11 @@
         <div class="flex rounded overflow-hidden border border-border text-sm">
           <button
             @click="mode = 'inner'"
-            :class="['px-4 py-1.5 transition-colors', mode === 'inner' ? 'bg-accent text-white' : 'bg-bg text-text-muted hover:text-text-primary']"
+            :class="['px-4 min-h-[44px] transition-colors', mode === 'inner' ? 'bg-accent text-white' : 'bg-bg text-text-muted hover:text-text-primary']"
           >Inner</button>
           <button
             @click="mode = 'outer'"
-            :class="['px-4 py-1.5 transition-colors', mode === 'outer' ? 'bg-accent text-white' : 'bg-bg text-text-muted hover:text-text-primary']"
+            :class="['px-4 min-h-[44px] transition-colors', mode === 'outer' ? 'bg-accent text-white' : 'bg-bg text-text-muted hover:text-text-primary']"
           >Outer</button>
         </div>
         <span class="text-xs text-text-muted">{{ mode === 'inner' ? 'Interior usable space' : 'Outside box footprint' }}</span>
@@ -49,28 +49,28 @@
       <!-- Main dimensions -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div>
-          <label class="block text-xs text-text-muted mb-1">Width (left-to-right)</label>
-          <input type="text" v-model="widthStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-width" class="block text-xs text-text-muted mb-1">Width (left-to-right)</label>
+          <input type="text" id="bin-width" v-model="widthStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='12' />
           <p class="text-xs text-text-muted mt-1">e.g. "12" or "11 1/2"</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Depth (front-to-back)</label>
-          <input type="text" v-model="depthStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-depth" class="block text-xs text-text-muted mb-1">Depth (front-to-back)</label>
+          <input type="text" id="bin-depth" v-model="depthStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='8' />
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Height</label>
-          <input type="text" v-model="heightStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-height" class="block text-xs text-text-muted mb-1">Height</label>
+          <input type="text" id="bin-height" v-model="heightStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='6' />
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Qty (number of bins)</label>
-          <input type="number" v-model.number="qty" min="1"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-qty" class="block text-xs text-text-muted mb-1">Qty (number of bins)</label>
+          <input type="number" id="bin-qty" v-model.number="qty" min="1"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='1' />
         </div>
       </div>
@@ -78,23 +78,23 @@
       <!-- Material & dado -->
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div>
-          <label class="block text-xs text-text-muted mb-1">Material thickness</label>
-          <input type="text" v-model="matThicknessStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-mat" class="block text-xs text-text-muted mb-1">Material thickness</label>
+          <input type="text" id="bin-mat" v-model="matThicknessStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='15/32' />
           <p class="text-xs text-text-muted mt-1">Measure your actual sheet — nominal ½" is typically 15/32" (0.469")</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Dado depth</label>
-          <input type="text" v-model="dadoDepthStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-dado" class="block text-xs text-text-muted mb-1">Dado depth</label>
+          <input type="text" id="bin-dado" v-model="dadoDepthStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='1/4' />
           <p class="text-xs text-text-muted mt-1">Groove depth for bottom panel</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Saw kerf</label>
-          <input type="text" v-model="kerfStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-kerf" class="block text-xs text-text-muted mb-1">Saw kerf</label>
+          <input type="text" id="bin-kerf" v-model="kerfStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='1/8' />
           <p class="text-xs text-text-muted mt-1">Width lost per cut</p>
         </div>
@@ -105,28 +105,29 @@
         <label class="block text-xs text-text-muted mb-1">Available plywood sheets</label>
         <div class="space-y-1">
           <div v-for="(sheet, i) in availableSheets" :key="i" class="flex items-center gap-1">
-            <input type="text" v-model="sheet.w"
-              class="w-16 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+            <input type="text" v-model="sheet.w" :aria-label="`Sheet ${i + 1} width in inches`"
+              class="w-20 min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
               placeholder='48' />
             <span class="text-text-muted text-xs">×</span>
-            <input type="text" v-model="sheet.h"
-              class="w-16 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+            <input type="text" v-model="sheet.h" :aria-label="`Sheet ${i + 1} height in inches`"
+              class="w-20 min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
               placeholder='96' />
             <span class="text-xs text-text-muted">in</span>
             <button v-if="availableSheets.length > 1" @click="availableSheets.splice(i,1)"
-              class="text-text-muted hover:text-danger text-sm px-1">×</button>
+              :aria-label="`Remove sheet ${sheet.w} by ${sheet.h} inches`"
+              class="inline-flex items-center justify-center w-11 h-11 rounded text-text-muted hover:text-danger hover:bg-danger-bg/50 transition-colors"><Icon name="close" size="1em" /></button>
           </div>
           <button @click="availableSheets.push({w:'48',h:'96'})"
-            class="text-xs text-accent hover:opacity-80">
-            + Add sheet
+            class="inline-flex items-center gap-1.5 min-h-[44px] px-2 -mx-2 text-sm text-text-primary font-medium hover:underline">
+            <Icon name="plus" size="1em" /> Add sheet
           </button>
         </div>
         <p class="text-xs text-text-muted mt-1">Partial sheets welcome — solver tries each in order</p>
       </div>
 
       <!-- Error -->
-      <div v-if="inputError" class="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2">
-        ⚠ {{ inputError }}
+      <div v-if="inputError" class="text-sm text-danger bg-danger-bg border border-danger/30 rounded px-3 py-2">
+        <Icon name="alert" size="1em" class="inline align-text-bottom" /> {{ inputError }}
       </div>
 
       <!-- Calculate button -->
@@ -144,8 +145,8 @@
     <template v-if="result">
 
       <!-- Beta disclaimer -->
-      <div class="no-print bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
-        ⚠️ <strong>Beta feature</strong> — This cut plan is generated algorithmically and may not be optimal. Always verify dimensions before cutting. Use your own judgement at the saw.
+      <div class="no-print bg-warning-bg border border-warning/30 rounded-lg px-4 py-3 text-sm text-warning">
+        <Icon name="alert" size="1.05em" class="inline align-text-bottom" /> <strong>Beta</strong> — This cut plan is generated algorithmically and may not be optimal. Always verify dimensions before cutting. Use your own judgement at the saw.
       </div>
 
       <!-- Summary -->
@@ -183,11 +184,11 @@
           <table class="w-full text-sm">
             <thead>
               <tr class="text-left text-xs text-text-muted border-b border-border">
-                <th class="pb-2 pr-4">Part</th>
-                <th class="pb-2 pr-4">Qty</th>
-                <th class="pb-2 pr-4">Length</th>
-                <th class="pb-2 pr-4">Width</th>
-                <th class="pb-2">Notes</th>
+                <th scope="col" class="pb-2 pr-4">Part</th>
+                <th scope="col" class="pb-2 pr-4">Qty</th>
+                <th scope="col" class="pb-2 pr-4">Length</th>
+                <th scope="col" class="pb-2 pr-4">Width</th>
+                <th scope="col" class="pb-2">Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -224,6 +225,8 @@
           </div>
         </div>
         <svg
+          role="img"
+          aria-label="Minimum plywood sheet with each box piece placed on it"
           :viewBox="`0 0 ${Math.round(minSheet.w * (SVG_DISPLAY_W / minSheet.w))} ${Math.round(minSheet.h * (SVG_DISPLAY_W / minSheet.w))}`"
           class="w-full"
           style="max-width: 100%; font-family: monospace;"
@@ -289,10 +292,10 @@
             <table class="w-full text-sm">
               <thead>
                 <tr class="text-left text-xs text-text-muted border-b border-border">
-                  <th class="px-4 py-2">Part</th>
-                  <th class="px-4 py-2">Crosscut length</th>
-                  <th class="px-4 py-2">Qty</th>
-                  <th class="px-4 py-2">Total from strip</th>
+                  <th scope="col" class="px-4 py-2">Part</th>
+                  <th scope="col" class="px-4 py-2">Crosscut length</th>
+                  <th scope="col" class="px-4 py-2">Qty</th>
+                  <th scope="col" class="px-4 py-2">Total from strip</th>
                 </tr>
               </thead>
               <tbody>
@@ -330,6 +333,8 @@
             </div>
             <!-- SVG for this strip -->
             <svg
+              role="img"
+              :aria-label="`Strip ${si + 1}: ${strip.totalCrosscuts} crosscuts along a ${fmtIn(strip.ripWidth)} inch wide strip`"
               :viewBox="`0 0 480 ${Math.max(30, Math.round(strip.ripWidth * stripSvgScale()))}`"
               class="w-full"
               style="font-family: monospace; display: block;"
@@ -399,7 +404,9 @@
         class="no-print fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent hover:bg-indigo-600 text-white font-semibold px-5 py-3 rounded-full shadow-lg transition-all text-sm"
         aria-label="Print bin sheet"
       >
-        🖨 <span class="hidden sm:inline">Print Sheet</span>
+        <Icon name="printer" size="1.15em" />
+        <span class="hidden sm:inline">Print sheet</span>
+        <span class="sr-only sm:hidden">Print sheet</span>
       </button>
     </Teleport>
 
@@ -407,6 +414,7 @@
 </template>
 
 <script setup>
+import Icon from '@/components/Icon.vue'
 import { ref, computed } from 'vue'
 import { parseFraction, validateDimension, validateQty } from '@/utils/fractions'
 import { calculateBin, formatIn, stripCutPlan } from '@/binSolver'

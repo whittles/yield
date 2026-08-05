@@ -164,7 +164,8 @@ function handleImport() {
   text-decoration: underline;
   text-underline-offset: 2px;
   text-decoration-color: rgb(0 0 0 / 0.25);
-  padding: 0.25rem 0;
+  padding: 0.6rem 0.25rem;
+  display: inline-block;
 }
 .footer-link:hover { color: var(--text-primary, #121212); }
 </style>

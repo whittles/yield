@@ -13,50 +13,50 @@
       <p class="text-xs text-text-muted mb-4">Your rough lumber before any milling</p>
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <div>
-          <label class="block text-xs text-text-muted mb-1">Qty (boards)</label>
-          <input
+          <label for="rs-qty-boards" class="block text-xs text-text-muted mb-1">Qty (boards)</label>
+          <input id="rs-qty-boards"
             type="number"
             v-model.number="store.resawStock.qty"
             min="1"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
           />
           <p class="text-xs text-text-muted mt-1">Number of boards in this batch</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Nominal thickness</label>
-          <input
+          <label for="rs-nominal-thickness" class="block text-xs text-text-muted mb-1">Nominal thickness</label>
+          <input id="rs-nominal-thickness"
             type="text"
             v-model="store.resawStock.thicknessStr"
             placeholder='e.g. "2" or "1 3/4"'
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
           />
           <p class="text-xs text-text-muted mt-1">As-purchased dimension (e.g. "2" for 8/4 lumber)</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Width (in)</label>
-          <input
+          <label for="rs-width-in" class="block text-xs text-text-muted mb-1">Width (in)</label>
+          <input id="rs-width-in"
             type="text"
             v-model="store.resawStock.widthStr"
             placeholder='e.g. "7"'
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
           />
           <p class="text-xs text-text-muted mt-1">Actual board width — usable for ripping</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Length (in)</label>
-          <input
+          <label for="rs-length-in" class="block text-xs text-text-muted mb-1">Length (in)</label>
+          <input id="rs-length-in"
             type="text"
             v-model="store.resawStock.lengthStr"
             placeholder='e.g. "12"'
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
           />
           <p class="text-xs text-text-muted mt-1">Board length — affects how many strip lengths you get</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Condition</label>
-          <select
+          <label for="rs-condition" class="block text-xs text-text-muted mb-1">Condition</label>
+          <select id="rs-condition"
             v-model="store.resawStock.condition"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
           >
             <option value="rough">Rough</option>
             <option value="skip-planed">Skip Planed</option>
@@ -78,28 +78,36 @@
           <div class="space-y-1">
             <div v-for="(len, i) in store.crosscutSettings.blankLengths" :key="i" class="flex items-center gap-2">
               <input type="text" v-model="store.crosscutSettings.blankLengths[i]"
-                     class="w-20 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                     :aria-label="`Acceptable blank length ${i + 1}, in inches`"
+                     class="w-20 min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
                      placeholder='36' />
-              <span class="text-xs text-text-muted">"</span>
+              <span class="text-xs text-text-muted" aria-hidden="true">"</span>
               <button v-if="store.crosscutSettings.blankLengths.length > 1"
                       @click="store.removeBlankLength(i)"
-                      class="text-text-muted hover:text-danger text-sm leading-none">×</button>
+                      :aria-label="`Remove blank length ${len} inches`"
+                      class="inline-flex items-center justify-center w-11 h-11 rounded text-text-muted hover:text-danger hover:bg-danger-bg/50 transition-colors">
+                <Icon name="close" size="1em" />
+              </button>
             </div>
-            <button @click="store.addBlankLength()" class="text-xs text-accent hover:opacity-80 mt-1">+ Add length</button>
+            <button @click="store.addBlankLength()"
+                    class="inline-flex items-center gap-1.5 min-h-[44px] px-2 -mx-2 text-sm text-text-primary font-medium hover:underline">
+              <Icon name="plus" size="1em" />
+              Add length
+            </button>
           </div>
           <p class="text-xs text-text-muted mt-1">Solver finds the mix that minimizes waste (e.g. 36" + 24")</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Snipe buffer per blank (in)</label>
-          <input type="text" v-model="store.crosscutSettings.snipeBufferStr"
+          <label for="rs-snipe-buffer-per-blank-in" class="block text-xs text-text-muted mb-1">Snipe buffer per blank (in)</label>
+          <input id="rs-snipe-buffer-per-blank-in" type="text" v-model="store.crosscutSettings.snipeBufferStr"
                  placeholder='e.g. "2"'
-                 class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary" />
+                 class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary" />
           <p class="text-xs text-text-muted mt-1">Extra length added to each blank for planer snipe. 0" = light passes, 2" = moderate, 6" = aggressive. Trimmed off at the finish crosscut.</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Miter saw kerf</label>
-          <select v-model="store.crosscutSettings.miterKerfStr"
-                  class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary">
+          <label for="rs-miter-saw-kerf" class="block text-xs text-text-muted mb-1">Miter saw kerf</label>
+          <select id="rs-miter-saw-kerf" v-model="store.crosscutSettings.miterKerfStr"
+                  class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary">
             <option value="1/8">1/8" (standard)</option>
             <option value="3/32">3/32"</option>
             <option value="1/16">1/16"</option>
@@ -122,10 +130,10 @@
       <p class="text-xs text-text-muted mb-4">How you'll cut the stock into thin panels</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
-          <label class="block text-xs text-text-muted mb-1">Resaw tool / kerf</label>
-          <select
+          <label for="rs-resaw-tool-kerf" class="block text-xs text-text-muted mb-1">Resaw tool / kerf</label>
+          <select id="rs-resaw-tool-kerf"
             v-model="store.resawSettings.kerfStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
           >
             <option value="1/16">Bandsaw — 1/16" kerf</option>
             <option value="3/32">Bandsaw — 3/32" kerf</option>
@@ -134,22 +142,22 @@
           <p class="text-xs text-text-muted mt-1">Blade thickness lost at each cut</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Panel target depth (strip depth in frame)</label>
-          <input
+          <label for="rs-panel-target-depth-strip-depth-in-" class="block text-xs text-text-muted mb-1">Panel target depth (strip depth in frame)</label>
+          <input id="rs-panel-target-depth-strip-depth-in-"
             type="text"
             v-model="store.resawSettings.panelTargetStr"
             placeholder='e.g. "3/8"'
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
           />
           <p class="text-xs text-text-muted mt-1">Finished panel thickness after drum sanding (e.g. "3/8")</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Drum sanding allowance</label>
-          <input
+          <label for="rs-drum-sanding-allowance" class="block text-xs text-text-muted mb-1">Drum sanding allowance</label>
+          <input id="rs-drum-sanding-allowance"
             type="text"
             v-model="store.resawSettings.slabAllowanceStr"
             placeholder='e.g. "0.010"'
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
           />
           <p class="text-xs text-text-muted mt-1">Typically 0.010" — just enough to clean up resaw marks without long passes</p>
         </div>
@@ -178,44 +186,66 @@
       <div class="sm:hidden space-y-3">
         <div v-for="sku in store.resawSkus" :key="sku.id"
              class="border border-border rounded-lg p-3 bg-surface space-y-2">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between gap-2">
             <input v-model="sku.name" type="text"
-                   class="flex-1 border border-border rounded px-2 py-1.5 text-sm bg-transparent text-text-primary font-medium"
+                   :aria-label="`Name for ${sku.name || 'this SKU'}`"
+                   class="flex-1 min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary font-medium"
                    placeholder="SKU name" />
             <button @click="store.removeResawSku(sku.id)"
-                    class="ml-2 text-text-muted hover:text-danger px-1">×</button>
+                    :aria-label="`Remove ${sku.name || 'this SKU'}`"
+                    class="shrink-0 inline-flex items-center justify-center w-11 h-11 rounded text-text-muted hover:text-danger hover:bg-danger-bg/50 transition-colors">
+              <Icon name="close" size="1.1em" />
+            </button>
           </div>
           <div class="grid grid-cols-2 gap-2 text-sm">
             <div>
-              <label class="block text-xs text-text-muted mb-1">Rough rip face"</label>
-              <input v-model="sku.roughWidthStr" type="text"
-                     class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
+              <label :for="`m-${sku.id}-rough`" class="block text-xs text-text-muted mb-1">Rough rip face"</label>
+              <input :id="`m-${sku.id}-rough`" v-model="sku.roughWidthStr"
+                  :aria-label="`Rough rip face, in inches for ${sku.name || 'this SKU'}`" type="text"
+                     class="w-full min-h-[40px] border border-border rounded px-2 bg-surface text-text-primary" />
             </div>
             <div>
-              <label class="block text-xs text-text-muted mb-1">Final face"</label>
-              <input v-model="sku.finalWidthStr" type="text"
-                     class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
+              <label :for="`m-${sku.id}-final`" class="block text-xs text-text-muted mb-1">Final face"</label>
+              <input :id="`m-${sku.id}-final`" v-model="sku.finalWidthStr"
+                  :aria-label="`Final face, in inches for ${sku.name || 'this SKU'}`" type="text"
+                     class="w-full min-h-[40px] border border-border rounded px-2 bg-surface text-text-primary" />
             </div>
             <div>
-              <label class="block text-xs text-text-muted mb-1">Plane allowance"</label>
-              <input v-model.number="sku.planeAllowance" type="number" step="0.001"
-                     class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
+              <label :for="`m-${sku.id}-plane`" class="block text-xs text-text-muted mb-1">Plane allowance"</label>
+              <input :id="`m-${sku.id}-plane`" v-model.number="sku.planeAllowance"
+                  :aria-label="`Hand plane allowance, in inches for ${sku.name || 'this SKU'}`" type="number" step="0.001"
+                     class="w-full min-h-[40px] border border-border rounded px-2 bg-surface text-text-primary" />
             </div>
             <div>
-              <label class="block text-xs text-text-muted mb-1">Sander allowance"</label>
-              <input v-model.number="sku.sanderAllowance" type="number" step="0.001"
-                     class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
+              <label :for="`m-${sku.id}-sander`" class="block text-xs text-text-muted mb-1">Sander allowance"</label>
+              <input :id="`m-${sku.id}-sander`" v-model.number="sku.sanderAllowance"
+                  :aria-label="`Drum sander allowance, in inches for ${sku.name || 'this SKU'}`" type="number" step="0.001"
+                     class="w-full min-h-[40px] border border-border rounded px-2 bg-surface text-text-primary" />
             </div>
             <div>
-              <label class="block text-xs text-text-muted mb-1">Length (in)</label>
-              <input v-model.number="sku.length" type="number"
-                     class="w-full border border-border rounded px-2 py-1 bg-transparent text-text-primary" />
+              <label :for="`m-${sku.id}-len`" class="block text-xs text-text-muted mb-1">Length (in)</label>
+              <input :id="`m-${sku.id}-len`" v-model.number="sku.length"
+                  :aria-label="`Strip length, in inches for ${sku.name || 'this SKU'}`" type="number"
+                     class="w-full min-h-[40px] border border-border rounded px-2 bg-surface text-text-primary" />
+            </div>
+            <!-- The desktop table has this; the mobile card silently dropped
+                 it, so table-saw kerf could not be set from a phone at all. -->
+            <div>
+              <label :for="`m-${sku.id}-kerf`" class="block text-xs text-text-muted mb-1">Rip kerf"</label>
+              <select :id="`m-${sku.id}-kerf`" v-model="sku.tableKerfStr"
+                  :aria-label="`Table saw rip kerf for ${sku.name || 'this SKU'}`"
+                      class="w-full min-h-[40px] border border-border rounded px-2 bg-surface text-text-primary">
+                <option value="1/16">1/16"</option>
+                <option value="3/32">3/32"</option>
+                <option value="1/8">1/8"</option>
+              </select>
             </div>
           </div>
         </div>
         <button @click="store.addResawSku()"
-                class="w-full border border-dashed border-border rounded-lg py-2 text-sm text-text-muted hover:text-text-primary hover:border-accent/50 transition-colors">
-          + Add SKU
+                class="w-full inline-flex items-center justify-center gap-2 min-h-[44px] border border-dashed border-border rounded-lg text-sm text-text-secondary hover:text-text-primary hover:border-text-muted transition-colors">
+          <Icon name="plus" size="1em" />
+          Add SKU
         </button>
       </div>
 
@@ -223,14 +253,14 @@
         <table class="w-full text-sm">
           <thead>
             <tr class="text-left text-xs text-text-muted border-b border-border">
-              <th class="pb-2 pr-3" title="Product name for this strip size">SKU Name</th>
-              <th class="pb-2 pr-3" title="Face dimension to rip on the table saw — includes material for hand planing and drum sanding">Rough Rip Face"</th>
-              <th class="pb-2 pr-3" title="Face dimension removed by hand plane (Step 7)">Hand Plane Loss"</th>
-              <th class="pb-2 pr-3" title="Face dimension removed by drum sander — thin side (Step 8)">Drum Sand Loss"</th>
-              <th class="pb-2 pr-3" title="Finished strip face dimension — what you sell">Final Face"</th>
-              <th class="pb-2 pr-3" title="Strip length in inches">Length"</th>
-              <th class="pb-2 pr-3" title="Table saw blade thickness">Rip Kerf</th>
-              <th class="pb-2"></th>
+              <th scope="col" class="pb-2 pr-3" title="Product name for this strip size">SKU Name</th>
+              <th scope="col" class="pb-2 pr-3" title="Face dimension to rip on the table saw — includes material for hand planing and drum sanding">Rough Rip Face"</th>
+              <th scope="col" class="pb-2 pr-3" title="Face dimension removed by hand plane (Step 7)">Hand Plane Loss"</th>
+              <th scope="col" class="pb-2 pr-3" title="Face dimension removed by drum sander — thin side (Step 8)">Drum Sand Loss"</th>
+              <th scope="col" class="pb-2 pr-3" title="Finished strip face dimension — what you sell">Final Face"</th>
+              <th scope="col" class="pb-2 pr-3" title="Strip length in inches">Length"</th>
+              <th scope="col" class="pb-2 pr-3" title="Table saw blade thickness">Rip Kerf</th>
+              <th scope="col" class="pb-2"></th>
             </tr>
           </thead>
           <tbody>
@@ -243,13 +273,15 @@
                 <input
                   type="text"
                   v-model="sku.name"
-                  class="w-full border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                  :aria-label="`Name for ${sku.name || 'this SKU'}`"
+                  class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
                 />
               </td>
               <td class="py-1.5 pr-3">
                 <input
                   type="text"
                   v-model="sku.roughWidthStr"
+                  :aria-label="`Rough rip face, in inches for ${sku.name || 'this SKU'}`"
                   class="w-24 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
                 />
               </td>
@@ -257,6 +289,7 @@
                 <input
                   type="number"
                   v-model.number="sku.planeAllowance"
+                  :aria-label="`Hand plane allowance, in inches for ${sku.name || 'this SKU'}`"
                   step="0.001"
                   class="w-20 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
                 />
@@ -265,6 +298,7 @@
                 <input
                   type="number"
                   v-model.number="sku.sanderAllowance"
+                  :aria-label="`Drum sander allowance, in inches for ${sku.name || 'this SKU'}`"
                   step="0.001"
                   class="w-20 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
                 />
@@ -273,6 +307,7 @@
                 <input
                   type="text"
                   v-model="sku.finalWidthStr"
+                  :aria-label="`Final face, in inches for ${sku.name || 'this SKU'}`"
                   class="w-24 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
                 />
               </td>
@@ -280,12 +315,14 @@
                 <input
                   type="number"
                   v-model.number="sku.length"
-                  class="w-16 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+                  :aria-label="`Strip length, in inches for ${sku.name || 'this SKU'}`"
+                  class="w-20 min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
                 />
               </td>
               <td class="py-1.5 pr-3">
                 <select
                   v-model="sku.tableKerfStr"
+                  :aria-label="`Table saw rip kerf for ${sku.name || 'this SKU'}`"
                   class="border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
                 >
                   <option value="1/16">1/16"</option>
@@ -296,11 +333,9 @@
               <td class="py-1.5">
                 <button
                   @click="store.removeResawSku(sku.id)"
-                  class="text-red-500 hover:text-red-700 text-xs px-2 py-1"
+                  class="inline-flex items-center justify-center w-11 h-11 rounded text-text-muted hover:text-danger hover:bg-danger-bg/50 transition-colors"
                   title="Remove SKU"
-                >
-                  ✕
-                </button>
+                ><Icon name="close" size="1em" /></button>
               </td>
             </tr>
           </tbody>
@@ -311,7 +346,7 @@
     <!-- How it works -->
     <details class="bg-surface border border-border rounded-lg no-print">
       <summary class="px-5 py-3 text-sm font-semibold text-text-primary cursor-pointer hover:bg-bg/50 transition-colors select-none">
-        ℹ️ How this calculator works
+        How this calculator works
       </summary>
       <div class="px-5 pb-5 pt-2 text-sm text-text-muted space-y-2 border-t border-border">
         <p>Enter your stock dimensions and condition, set your resaw parameters, define your strip SKUs, then hit Calculate.</p>
@@ -329,33 +364,38 @@
       </div>
     </details>
 
-    <!-- ── Calculate Button ────────────────────────────────────────── -->
-    <div class="no-print flex justify-center">
-      <button
-        @click="store.calculateResaw()"
-        :disabled="!store.resawSkus.length"
-        :class="[
-          'px-8 py-3 font-semibold rounded-lg transition-opacity text-base',
-          store.resawSkus.length
-            ? 'bg-header text-white hover:opacity-90 cursor-pointer'
-            : 'bg-header/40 text-white/40 cursor-not-allowed'
-        ]"
-      >
-        Calculate Yield
-      </button>
+    <!-- ── Calculate ───────────────────────────────────────────────── -->
+    <!-- This form runs to ~6,000px on a phone. Sticking the primary action to
+         the bottom means it's always one thumb-reach away instead of fifteen
+         flicks down the page. -->
+    <div class="no-print sticky bottom-0 z-30 -mx-4 px-4 py-3 bg-bg/95 backdrop-blur-sm border-t border-border sm:static sm:mx-0 sm:px-0 sm:bg-transparent sm:border-0 sm:backdrop-blur-none">
+      <div class="flex flex-col items-center gap-1.5">
+        <button
+          @click="store.calculateResaw()"
+          :disabled="!store.resawSkus.length"
+          class="w-full sm:w-auto min-h-[48px] px-8 font-semibold rounded-lg text-base
+                 bg-header text-white hover:opacity-90
+                 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+        >
+          Calculate Yield
+        </button>
+        <p v-if="!store.resawSkus.length" class="m-0 text-sm text-text-secondary">
+          Add at least one strip SKU to calculate.
+        </p>
+      </div>
     </div>
 
     <!-- ── Error state ────────────────────────────────────────────── -->
-    <div v-if="store.resawError" class="bg-red-500/10 border border-red-500/40 rounded-lg p-4 text-sm text-red-400">
-      ⚠ Calculation error: {{ store.resawError }}
+    <div v-if="store.resawError" class="bg-danger-bg border border-danger/40 rounded-lg p-4 text-sm text-danger">
+      <Icon name="alert" size="1em" class="inline align-text-bottom" /> Calculation error: {{ store.resawError }}
     </div>
 
     <!-- ── Results ─────────────────────────────────────────────────── -->
     <template v-if="r">
 
       <!-- Beta disclaimer -->
-      <div class="no-print bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
-        ⚠️ <strong>Beta feature</strong> — This yield plan is generated algorithmically and may not be optimal. Always verify dimensions before cutting. Use your own judgement at the saw.
+      <div class="no-print bg-warning-bg border border-warning/30 rounded-lg px-4 py-3 text-sm text-warning">
+        <Icon name="alert" size="1.05em" class="inline align-text-bottom" /> <strong>Beta</strong> — This yield plan is generated algorithmically and may not be optimal. Always verify dimensions before cutting. Use your own judgement at the saw.
       </div>
 
       <!-- ── Print header (full batch summary) ─────────────────────── -->
@@ -377,13 +417,13 @@
         <table style="width:100%; border-collapse:collapse; font-size:10pt; margin-bottom:8pt;">
           <thead>
             <tr style="background:#f0f0f0;">
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Condition</th>
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Dimensions</th>
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Boards</th>
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Resaw Fence</th>
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Panel Depth</th>
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Blanks</th>
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Slabs/Blank</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Condition</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Dimensions</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Boards</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Resaw Fence</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Panel Depth</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Blanks</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Slabs/Blank</th>
             </tr>
           </thead>
           <tbody>
@@ -403,11 +443,11 @@
         <table style="width:100%; border-collapse:collapse; font-size:10pt; margin-bottom:4pt;">
           <thead>
             <tr style="background:#f0f0f0;">
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">SKU</th>
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Final Dims (Face × Depth × Length)</th>
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Rip Fence</th>
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Strips/Panel</th>
-              <th style="border:1px solid #ccc; padding:4pt 6pt; text-align:right; font-weight:bold;">TOTAL STRIPS</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">SKU</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Final Dims (Face × Depth × Length)</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Rip Fence</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:left;">Strips/Panel</th>
+              <th scope="col" style="border:1px solid #ccc; padding:4pt 6pt; text-align:right; font-weight:bold;">TOTAL STRIPS</th>
             </tr>
           </thead>
           <tbody>
@@ -484,9 +524,9 @@
             <div class="text-sm font-bold text-accent leading-snug">
               {{ r.mixedOptimization.mix.map(m => m.qty + '\u00d7 ' + m.sku.name).join(', ') }}
             </div>
-            <div class="text-xs mt-1" :class="r.mixedOptimization.wastePct < r.stripResults[0]?.widthWastePct ? 'text-green-400' : 'text-text-muted'">
+            <div class="text-xs mt-1" :class="r.mixedOptimization.wastePct < r.stripResults[0]?.widthWastePct ? 'text-success' : 'text-text-muted'">
               {{ r.mixedOptimization.wastePct }}% waste
-              <span v-if="r.mixedOptimization.wastePct < r.stripResults[0]?.widthWastePct" class="text-green-400">
+              <span v-if="r.mixedOptimization.wastePct < r.stripResults[0]?.widthWastePct" class="text-success">
                 &#8595; {{ r.stripResults[0]?.widthWastePct - r.mixedOptimization.wastePct }}% better
               </span>
             </div>
@@ -518,7 +558,8 @@
           <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-yellow-600 opacity-80"></span> Blank</span>
           <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-gray-400 opacity-80"></span> Kerf / waste</span>
         </div>
-        <svg viewBox="0 0 560 80" class="w-full max-w-2xl mx-auto" style="font-family: monospace;">
+        <svg viewBox="0 0 560 80" class="w-full max-w-2xl mx-auto" style="font-family: monospace;"
+             role="img" aria-label="Board length divided into crosscut blanks, with the offcut at the end">
           <rect x="20" y="15" width="520" height="50" fill="#e8d5b0" stroke="#8B6914" stroke-width="1.5"/>
           <g v-for="(zone, i) in roughCutZones" :key="'rz-' + i">
             <rect :x="zone.x" y="15" :width="zone.w" height="50"
@@ -534,7 +575,7 @@
       <!-- Warning if multiple resaw groups -->
       <div v-if="r.resawGroups && r.resawGroups.length > 1"
            class="bg-warning/10 border border-warning/40 rounded-lg px-4 py-3 text-sm text-warning no-print">
-        ⚠ Multiple panel depths detected — these are <strong>separate resaw runs</strong>.
+        <Icon name="alert" size="1em" class="inline align-text-bottom" /> Multiple panel depths detected — these are <strong>separate resaw runs</strong>.
         Each run uses a different fence setting and produces different slab thicknesses.
       </div>
 
@@ -552,13 +593,19 @@
 
       <!-- Cross-section SVG (board end view) -->
       <div class="bg-surface border border-border rounded-lg p-5 print-no-break">
-        <h3 class="text-sm font-semibold text-text-primary mb-3">Board Cross-Section (end grain view)</h3>
+        <!-- Rendered once per resaw group, so it says which run it belongs to
+             rather than repeating the same heading verbatim. -->
+        <h3 class="text-sm font-semibold text-text-primary mb-3">
+          Board cross-section — end grain<template v-if="r.resawGroups && r.resawGroups.length > 1"> (Run {{ gi + 1 }})</template>
+        </h3>
         <div class="flex flex-wrap gap-4 text-xs text-text-muted mb-3">
           <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-yellow-600 opacity-80"></span> Slab (usable panel)</span>
           <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-gray-400 opacity-80"></span> Kerf / waste</span>
           <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-gray-300 opacity-60"></span> Condition loss</span>
         </div>
         <svg
+          role="img"
+          aria-label="Board cross-section through the thickness, showing each slab, the kerf between them, and material lost to conditioning"
           viewBox="0 0 460 220"
           class="w-full max-w-2xl mx-auto"
           style="font-family: monospace;"
@@ -566,7 +613,9 @@
           <!-- Board rectangle: map usableThickness to 160px height, usableWidth to 350px wide -->
           <!-- Board sits at x=70, y=20, width=350, height=160 -->
           <defs>
-            <pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+            <!-- Unique per group: with more than one run, a shared id made
+                 every later SVG reference the first one's pattern. -->
+            <pattern :id="`hatch-${gi}`" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
               <line x1="0" y1="0" x2="0" y2="6" stroke="#888" stroke-width="1" opacity="0.3"/>
             </pattern>
           </defs>
@@ -657,7 +706,7 @@
 
           <!-- Yield label -->
           <text x="245" y="14" text-anchor="middle" font-size="9" fill="#555">
-            {{ r.summary.thicknessYield }}% thickness yield · {{ r.slabs.slabsPerBoard }} slabs/board
+            {{ r.summary.thicknessYield }}% thickness yield · {{ group.slabsPerBlank ?? r.slabs.slabsPerBoard }} slabs/board
           </text>
         </svg>
       </div>
@@ -674,7 +723,8 @@
         <p class="text-xs text-text-muted mb-3">
           Table saw rip: {{ fmtIn(r.stripResults[0]?.roughWidth) }}" fence · {{ r.stripResults[0]?.stripsPerPanel }} strips per panel · Panel width = {{ fmtIn(r.stock.usableWidth) }}"
         </p>
-        <svg viewBox="0 0 460 120" class="w-full max-w-2xl mx-auto" style="font-family: monospace;">
+        <svg viewBox="0 0 460 120" class="w-full max-w-2xl mx-auto" style="font-family: monospace;"
+             role="img" aria-label="Panel width divided into rip strips, with kerf between each">
           <rect x="20" y="20" width="420" height="80" fill="#e8d5b0" stroke="#8B6914" stroke-width="1.5"/>
           <g v-for="(strip, i) in getStripZones(r.stripResults[0])" :key="'strip-' + i">
             <rect v-if="i > 0" :x="strip.x - getStripKerfW(r.stripResults[0])" y="20" :width="getStripKerfW(r.stripResults[0])" height="80" fill="#555" opacity="0.5"/>
@@ -730,7 +780,7 @@
               <div v-if="r.resawGroups && r.resawGroups.length > 1" class="font-medium text-text-primary mb-0.5">Run {{ gi + 1 }} — {{ fmtIn(g.panelDepth) }}" depth panels:</div>
               Fence setting: {{ (g.slabThickness ?? r.slabs.slabThickness).toFixed(4) }}" — jointed face against fence<br/>
               <span v-if="(g.extraPerSlab ?? 0) > 0.001" class="text-success">
-                ✓ Offcut redistributed: +{{ (g.extraPerSlab ?? 0).toFixed(4) }}" per slab (nominal {{ (g.nominalSlabThickness ?? g.slabThickness ?? 0).toFixed(4) }}", extra absorbed by drum sander)
+                <Icon name="check" size="1em" class="inline align-text-bottom" /> Offcut redistributed: +{{ (g.extraPerSlab ?? 0).toFixed(4) }}" per slab (nominal {{ (g.nominalSlabThickness ?? g.slabThickness ?? 0).toFixed(4) }}", extra absorbed by drum sander)
               </span><br/>
               Kerf: {{ fmtIn(r.input.resawSettings.kerf) }}" per cut<br/>
               <div v-for="seq in (g.resawSequence ?? r.resawSequence)" :key="seq.cutNumber" class="mt-0.5">
@@ -778,8 +828,8 @@
               <div v-for="sr in r.stripResults" :key="sr.id" class="mt-0.5">
                 {{ sr.name }}: fence {{ fmtIn(sr.roughWidth) }}" rough face · {{ sr.stripsPerPanel }} strips/panel · {{ sr.stripsPerBoard }}/board · {{ sr.totalStrips }} total
               </div>
-              <div v-if="r.mixedOptimization && r.mixedOptimization.mix.length > 1" class="mt-2 text-yellow-400 text-xs">
-                ★ Mixed panel: rip all strips of one width before changing fence.
+              <div v-if="r.mixedOptimization && r.mixedOptimization.mix.length > 1" class="mt-2 text-warning text-xs">
+                <Icon name="info" size="1em" class="inline align-text-bottom" /> Mixed panel: rip all strips of one width before changing fence.
                 <div v-for="m in r.mixedOptimization.mix" :key="m.sku.id" class="ml-2">
                   {{ m.qty }}&times; {{ m.sku.name }}: fence {{ fmtIn(m.sku.roughWidth) }}"
                 </div>
@@ -818,13 +868,13 @@
           <table class="w-full text-sm">
             <thead>
               <tr class="text-left text-xs text-text-muted border-b border-border">
-                <th class="pb-2 pr-4">SKU</th>
-                <th class="pb-2 pr-4">Final Dims (Face × Depth × Length)</th>
-                <th class="pb-2 pr-4">Strips/Panel</th>
-                <th class="pb-2 pr-4">Pieces/Blank</th>
-                <th class="pb-2 pr-4">Panels (slabs)</th>
-                <th class="pb-2 pr-4 font-bold">Total Strips</th>
-                <th class="pb-2">Width Waste</th>
+                <th scope="col" class="pb-2 pr-4">SKU</th>
+                <th scope="col" class="pb-2 pr-4">Final Dims (Face × Depth × Length)</th>
+                <th scope="col" class="pb-2 pr-4">Strips/Panel</th>
+                <th scope="col" class="pb-2 pr-4">Pieces/Blank</th>
+                <th scope="col" class="pb-2 pr-4">Panels (slabs)</th>
+                <th scope="col" class="pb-2 pr-4 font-bold">Total Strips</th>
+                <th scope="col" class="pb-2">Width Waste</th>
               </tr>
             </thead>
             <tbody>
@@ -874,13 +924,16 @@
                text-sm"
         aria-label="Print milling sheet"
       >
-        🖨 <span class="hidden sm:inline">Print Sheet</span>
+        <Icon name="printer" size="1.15em" />
+        <span class="hidden sm:inline">Print sheet</span>
+        <span class="sr-only sm:hidden">Print sheet</span>
       </button>
     </Teleport>
   </div>
 </template>
 
 <script setup>
+import Icon from '@/components/Icon.vue'
 import { computed } from 'vue'
 import { useProjectStore } from '@/stores/project'
 import { parseFraction, formatFraction } from '@/utils/fractions'

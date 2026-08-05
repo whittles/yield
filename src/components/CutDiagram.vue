@@ -51,19 +51,6 @@
           <!-- Board face -->
           <rect x="0" :y="RULER_H" :width="SVG_W" :height="boardH" fill="#f0e5cd" />
 
-          <!-- Grain. The solver already refuses to rotate parts in order to
-               keep grain consistent; until now the UI never showed which way
-               it runs, which is the first thing you check against real stock. -->
-          <g :aria-hidden="true" stroke="#d8c39a" fill="none" stroke-linecap="round">
-            <path
-              v-for="(d, i) in grainLines"
-              :key="`g${i}`"
-              :d="d"
-              :stroke-width="i % 3 === 0 ? 1.1 : 0.6"
-              :stroke-opacity="i % 3 === 0 ? 0.85 : 0.55"
-            />
-          </g>
-
           <!-- Waste regions -->
           <g>
             <rect
@@ -92,12 +79,30 @@
               stroke="#6f6350"
               stroke-width="0.75"
             />
+          </g>
+
+          <!-- Grain, drawn over the whole face. The solver already refuses to
+               rotate parts so grain stays consistent, but the UI never showed
+               which way it runs — the first thing you check against real
+               stock. It continues through the parts because the wood does. -->
+          <g :aria-hidden="true" stroke="#8a6f3d" fill="none" stroke-linecap="round">
+            <path
+              v-for="(d, i) in grainLines"
+              :key="`g${i}`"
+              :d="d"
+              :stroke-width="i % 3 === 0 ? 1 : 0.6"
+              :stroke-opacity="i % 3 === 0 ? 0.3 : 0.17"
+            />
+          </g>
+
+          <!-- Cut numbers sit above the grain so they stay legible. -->
+          <g v-for="sc in scaledCuts" :key="`n${sc.key}`">
             <text
               v-if="sc.w > 22 && sc.h > 14"
               :x="sc.x + sc.w / 2" :y="sc.y + sc.h / 2"
               text-anchor="middle" dominant-baseline="middle"
               font-size="9.5" font-family="Assistant, sans-serif"
-              fill="#241f16" font-weight="600"
+              fill="#241f16" font-weight="700"
             >{{ sc.number }}</text>
           </g>
         </g>
