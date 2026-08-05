@@ -24,20 +24,35 @@ export const useProjectStore = defineStore('project', () => {
   })
 
   // ─── Stock (sample data pre-filled) ────────────────────────────────────────
-  const stock = ref([
-    {
-      id: 's1',
-      label: 'Board 1',
-      lengthStr: '96',
-      widthStr: '8',
-      // 8/4 stock. Anything thinner cannot yield the 1 1/2" legs below once
-      // conditioning allowances come off, so the shipped example would open on
-      // an impossible plan.
-      thicknessStr: '2',
-      qty: 1,
-      condition: 'skip-planed',
-    },
-  ])
+  // The shipped example used to be a single 1 1/2" board against 1 1/2" legs,
+  // which cannot work once conditioning comes off the thickness — so a new
+  // user's first click returned 2 of 6 parts placed and 84% waste in red. This
+  // is the stock you'd actually buy for the parts below: 8/4 for the legs,
+  // 4/4 for the rails, both sized close to the job.
+  function defaultStock() {
+    return [
+      {
+        id: 's1',
+        label: '8/4 leg stock',
+        lengthStr: '60',
+        widthStr: '4',
+        thicknessStr: '2',
+        qty: 1,
+        condition: 'skip-planed',
+      },
+      {
+        id: 's2',
+        label: '4/4 rail stock',
+        lengthStr: '76',
+        widthStr: '4',
+        thicknessStr: '1',
+        qty: 1,
+        condition: 'skip-planed',
+      },
+    ]
+  }
+
+  const stock = ref(defaultStock())
 
   // ─── Parts (sample data pre-filled) ────────────────────────────────────────
   const parts = ref([
@@ -262,18 +277,7 @@ export const useProjectStore = defineStore('project', () => {
       },
     }
 
-    stock.value = [{
-      id: 's1',
-      label: 'Board 1',
-      lengthStr: '96',
-      widthStr: '8',
-      // 8/4 stock. Anything thinner cannot yield the 1 1/2" legs below once
-      // conditioning allowances come off, so the shipped example would open on
-      // an impossible plan.
-      thicknessStr: '2',
-      qty: 1,
-      condition: 'skip-planed',
-    }]
+    stock.value = defaultStock()
 
     parts.value = [
       { id: 'p1', label: 'Leg',  lengthStr: '28', widthStr: '1 3/4', thicknessStr: '1 1/2', qty: 4 },
