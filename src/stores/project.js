@@ -211,12 +211,6 @@ export const useProjectStore = defineStore('project', () => {
     saveTimeout = setTimeout(saveToLocalStorage, 300)
   }
 
-  // Watch all reactive state (deep)
-  watch([settings, stock, parts, resawStock, resawSettings, crosscutSettings, resawSkus], debouncedSave, { deep: true })
-
-  // Hydrate on store creation (runs once)
-  loadFromLocalStorage()
-
   // ─── Resaw Planner ─────────────────────────────────────────────────────────
   const resawStock = ref({
     qty: 5,
@@ -248,6 +242,21 @@ export const useProjectStore = defineStore('project', () => {
   const resawSkus = ref([...defaultSkus])
   const resawResults = ref(null)
   const resawError = ref(null)
+
+  // Watch all reactive state (deep). Must come after every ref above is
+  // declared — a watch registered earlier reads them in the temporal dead zone.
+  watch([settings, stock, parts, resawStock, resawSettings, crosscutSettings, resawSkus], debouncedSave, { deep: true })
+
+  // Hydrate on store creation (runs once)
+  loadFromLocalStorage()
+
+  function addBlankLength() {
+    crosscutSettings.value.blankLengths.push('24')
+  }
+
+  function removeBlankLength(index) {
+    crosscutSettings.value.blankLengths.splice(index, 1)
+  }
 
   function addResawSku() {
     resawSkus.value.push({
