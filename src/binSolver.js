@@ -3,18 +3,9 @@
  * Dado bottom joint — bottom panel sits in dado grooves in all four walls.
  */
 
-function formatIn(val) {
-  if (!val && val !== 0) return '?'
-  if (val < 0.5 && val > 0) return val.toFixed(3)
-  const whole = Math.floor(val)
-  const rem = val - whole
-  const num = Math.round(rem * 16)
-  if (num === 0) return `${whole}"`
-  const gcd = (a, b) => b === 0 ? a : gcd(b, a % b)
-  const g = gcd(num, 16)
-  const frac = `${num/g}/${16/g}`
-  return whole > 0 ? `${whole} ${frac}"` : `${frac}"`
-}
+// Formatting lives in one place now. Re-exported under the old name so call
+// sites keep working; the inch mark belongs to whoever renders the value.
+import { formatInches as formatIn } from '@/utils/fractions'
 export { formatIn }
 
 /**
@@ -78,7 +69,7 @@ export function calculateBin(input) {
       qty,
       length: frontBackLength,
       width: frontBackWidth,
-      notes: `Outer face. Dado ${dadoDepth}" deep × ${matThickness}" wide on inside bottom edge (for bottom panel).`,
+      notes: `Outer face. Dado ${formatIn(dadoDepth)}" deep × ${formatIn(matThickness)}" wide on inside bottom edge (for bottom panel).`,
     },
     {
       id: 'back',
@@ -94,7 +85,7 @@ export function calculateBin(input) {
       qty: qty * 2,
       length: sideLength,
       width: sideWidth,
-      notes: `Fits between front and back. Dado ${dadoDepth}" deep on inside bottom edge (for bottom panel).`,
+      notes: `Fits between front and back. Dado ${formatIn(dadoDepth)}" deep on inside bottom edge (for bottom panel).`,
     },
     {
       id: 'bottom',

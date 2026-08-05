@@ -1,10 +1,14 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { solve, solveOptimized } from '@/solver'
-import { parseFraction } from '@/utils/fractions'
+import { parseFraction, validateDimension, validateQty } from '@/utils/fractions'
 import { solveResaw } from '@/resawSolver'
 
 export const useProjectStore = defineStore('project', () => {
+  // What the user is building. Printed on the cut sheet and used to name the
+  // export file, so a plan taped to the wall says what it's for.
+  const projectName = ref('')
+
   // ─── Settings ──────────────────────────────────────────────────────────────
   const settings = ref({
     kerf: 0.125,
@@ -26,7 +30,10 @@ export const useProjectStore = defineStore('project', () => {
       label: 'Board 1',
       lengthStr: '96',
       widthStr: '8',
-      thicknessStr: '1 1/2',
+      // 8/4 stock. Anything thinner cannot yield the 1 1/2" legs below once
+      // conditioning allowances come off, so the shipped example would open on
+      // an impossible plan.
+      thicknessStr: '2',
       qty: 1,
       condition: 'skip-planed',
     },
@@ -40,6 +47,45 @@ export const useProjectStore = defineStore('project', () => {
 
   const results = ref(null)
   const nextId  = ref(10)
+
+  // True once an input changes after a solve, so the view can say the plan on
+  // screen no longer matches the numbers above it.
+  const resultsStale = ref(false)
+
+  // ─── Validation ────────────────────────────────────────────────────────────
+  // Every dimension field is checked here rather than at solve time. Invalid
+  // values used to parse to 0 and drop the row from both the plan and the
+  // "parts placed" denominator, so the summary reported success on a cut list
+  // that had silently lost work.
+  const DIMENSION_FIELDS = [
+    { key: 'lengthStr',    label: 'Length' },
+    { key: 'widthStr',     label: 'Width' },
+    { key: 'thicknessStr', label: 'Thickness' },
+  ]
+
+  function issuesForRows(rows, kind) {
+    const found = []
+    rows.forEach((row, index) => {
+      const name = String(row.label || '').trim() || `${kind} ${index + 1}`
+      for (const field of DIMENSION_FIELDS) {
+        const check = validateDimension(row[field.key], { label: field.label })
+        if (!check.ok) found.push({ id: row.id, field: field.key, name, message: check.error })
+      }
+      const qtyCheck = validateQty(row.qty)
+      if (!qtyCheck.ok) found.push({ id: row.id, field: 'qty', name, message: qtyCheck.error })
+    })
+    return found
+  }
+
+  const stockIssues = computed(() => issuesForRows(stock.value, 'Board'))
+  const partIssues  = computed(() => issuesForRows(parts.value, 'Part'))
+  const allIssues   = computed(() => [...stockIssues.value, ...partIssues.value])
+  const isValid     = computed(() => allIssues.value.length === 0)
+
+  /** Look up the message for one field, for inline display. */
+  function issueFor(id, field) {
+    return allIssues.value.find(i => i.id === id && i.field === field)?.message ?? null
+  }
 
   // ─── Stock management ──────────────────────────────────────────────────────
   function addStock() {
@@ -76,6 +122,13 @@ export const useProjectStore = defineStore('project', () => {
 
   // ─── Calculate ─────────────────────────────────────────────────────────────
   function calculate() {
+    // Refuse rather than silently drop rows. The view surfaces allIssues.
+    if (!isValid.value) {
+      results.value = null
+      resultsStale.value = false
+      return false
+    }
+
     const parsedStock = stock.value.map(s => ({
       ...s,
       length:    parseFraction(s.lengthStr),
@@ -91,26 +144,59 @@ export const useProjectStore = defineStore('project', () => {
     }))
 
     results.value = solveOptimized({ stock: parsedStock, parts: parsedParts, settings: settings.value })
+    resultsStale.value = false
+    return true
   }
 
   // ─── Import / Export / Persistence ─────────────────────────────────────────
+  // A file can be valid JSON and still be the wrong shape — an older export, a
+  // hand-edited file, or another app's data. Assigning those straight into the
+  // refs used to crash the render, and the save watcher then persisted the
+  // broken state, so the next load was broken too. Everything below is checked
+  // before it is assigned, and anything unrecognised is skipped.
+  const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
+
+  /** Keep only array entries that are objects; drop the rest. */
+  const objectRows = (v) => (Array.isArray(v) ? v.filter(isPlainObject) : null)
+
   function loadProject(data) {
-    if (data.stock)    stock.value    = data.stock
-    if (data.parts)    parts.value    = data.parts
-    if (data.settings) settings.value = { ...settings.value, ...data.settings }
-    if (data.resawStock)    resawStock.value    = data.resawStock
-    if (data.resawSettings) resawSettings.value = data.resawSettings
-    if (data.resawSkus)     resawSkus.value     = data.resawSkus
-    if (data.crosscutSettings) {
+    if (!isPlainObject(data)) {
+      throw new Error("That file doesn't look like a Yield project.")
+    }
+
+    if (typeof data.projectName === 'string') projectName.value = data.projectName
+
+    const importedStock = objectRows(data.stock)
+    const importedParts = objectRows(data.parts)
+    const importedSkus  = objectRows(data.resawSkus)
+
+    if (importedStock) stock.value = importedStock
+    if (importedParts) parts.value = importedParts
+    if (isPlainObject(data.settings)) {
+      settings.value = { ...settings.value, ...data.settings }
+    }
+    if (isPlainObject(data.resawStock)) {
+      resawStock.value = { ...resawStock.value, ...data.resawStock }
+    }
+    if (isPlainObject(data.resawSettings)) {
+      resawSettings.value = { ...resawSettings.value, ...data.resawSettings }
+    }
+    if (importedSkus) resawSkus.value = importedSkus
+    if (isPlainObject(data.binSettings)) {
+      binSettings.value = { ...binSettings.value, ...data.binSettings }
+    }
+    if (isPlainObject(data.crosscutSettings)) {
+      const lengths = data.crosscutSettings.blankLengths
       crosscutSettings.value = {
-        blankLengths:   data.crosscutSettings.blankLengths   ?? ['36'],
-        miterKerfStr:   data.crosscutSettings.miterKerfStr   ?? '1/8',
-        snipeBufferStr: data.crosscutSettings.snipeBufferStr ?? '0',
+        blankLengths:   Array.isArray(lengths) ? lengths.map(String) : ['36'],
+        miterKerfStr:   String(data.crosscutSettings.miterKerfStr   ?? '1/8'),
+        snipeBufferStr: String(data.crosscutSettings.snipeBufferStr ?? '0'),
       }
     }
     results.value      = null
     resawResults.value = null
     resawError.value   = null
+    binResults.value   = null
   }
 
   // ─── Persistence (localStorage) ────────────────────────────────────────────
@@ -118,6 +204,7 @@ export const useProjectStore = defineStore('project', () => {
 
   function saveToLocalStorage() {
     const state = {
+      projectName: projectName.value,
       settings: settings.value,
       stock: stock.value,
       parts: parts.value,
@@ -125,26 +212,42 @@ export const useProjectStore = defineStore('project', () => {
       resawSettings: resawSettings.value,
       crosscutSettings: crosscutSettings.value,
       resawSkus: resawSkus.value,
+      binSettings: binSettings.value,
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+    } catch (e) {
+      // Private browsing or a full quota — losing autosave is survivable,
+      // taking the app down with it is not.
+      console.warn('Could not save project locally', e)
+    }
   }
 
   function loadFromLocalStorage() {
-    const saved = localStorage.getItem(STORAGE_KEY)
+    let saved = null
+    try {
+      saved = localStorage.getItem(STORAGE_KEY)
+    } catch {
+      return false
+    }
     if (!saved) return false
 
     try {
-      const data = JSON.parse(saved)
-      loadProject(data)
+      loadProject(JSON.parse(saved))
       return true
     } catch (e) {
-      console.error('Failed to load from localStorage', e)
+      // The saved state is unusable. Drop it so the next load starts clean
+      // instead of rehydrating the same broken data forever.
+      console.error('Discarding unreadable saved project', e)
+      try { localStorage.removeItem(STORAGE_KEY) } catch { /* nothing to do */ }
       return false
     }
   }
 
   function resetToDefaults() {
     if (!confirm('Reset all inputs to defaults? This cannot be undone.')) return
+
+    projectName.value = ''
 
     settings.value = {
       kerf: 0.125,
@@ -164,7 +267,10 @@ export const useProjectStore = defineStore('project', () => {
       label: 'Board 1',
       lengthStr: '96',
       widthStr: '8',
-      thicknessStr: '1 1/2',
+      // 8/4 stock. Anything thinner cannot yield the 1 1/2" legs below once
+      // conditioning allowances come off, so the shipped example would open on
+      // an impossible plan.
+      thicknessStr: '2',
       qty: 1,
       condition: 'skip-planed',
     }]
@@ -195,8 +301,11 @@ export const useProjectStore = defineStore('project', () => {
     }
 
     resawSkus.value = [...defaultSkus]
+    binSettings.value = defaultBinSettings()
+    binResults.value = null
 
     results.value = null
+    resultsStale.value = false
     resawResults.value = null
     resawError.value = null
     nextId.value = 10
@@ -243,9 +352,39 @@ export const useProjectStore = defineStore('project', () => {
   const resawResults = ref(null)
   const resawError = ref(null)
 
+  // ─── Box Planner ───────────────────────────────────────────────────────────
+  // Lives in the store so it inherits persistence, Export, and Reset like the
+  // other two tools. As component-local refs it was silently disposable.
+  function defaultBinSettings() {
+    return {
+      mode: 'inner',
+      widthStr: '12',
+      depthStr: '8',
+      heightStr: '6',
+      qty: 1,
+      matThicknessStr: '15/32',
+      dadoDepthStr: '1/4',
+      kerfStr: '1/8',
+      availableSheets: [{ w: '48', h: '96' }],
+    }
+  }
+
+  const binSettings = ref(defaultBinSettings())
+  const binResults = ref(null)
+
   // Watch all reactive state (deep). Must come after every ref above is
   // declared — a watch registered earlier reads them in the temporal dead zone.
-  watch([settings, stock, parts, resawStock, resawSettings, crosscutSettings, resawSkus], debouncedSave, { deep: true })
+  watch(
+    [projectName, settings, stock, parts, resawStock, resawSettings, crosscutSettings, resawSkus, binSettings],
+    debouncedSave,
+    { deep: true },
+  )
+
+  // A plan on screen that no longer matches the inputs above it is worse than
+  // no plan, because it still looks authoritative. Mark it rather than clear it.
+  watch([settings, stock, parts], () => {
+    if (results.value) resultsStale.value = true
+  }, { deep: true })
 
   // Hydrate on store creation (runs once)
   loadFromLocalStorage()
@@ -328,12 +467,17 @@ export const useProjectStore = defineStore('project', () => {
   }
 
   return {
-    settings, stock, parts, results,
+    projectName,
+    settings, stock, parts, results, resultsStale,
     addStock, removeStock, addPart, removePart,
     calculate, loadProject, resetToDefaults,
+    // Validation
+    stockIssues, partIssues, allIssues, isValid, issueFor,
     // Resaw Planner
     resawStock, resawSettings, crosscutSettings, resawSkus, resawResults, resawError,
     addBlankLength, removeBlankLength,
     addResawSku, removeResawSku, calculateResaw,
+    // Box Planner
+    binSettings, binResults,
   }
 })

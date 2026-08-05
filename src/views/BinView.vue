@@ -395,7 +395,7 @@
     <Teleport to="body">
       <button
         v-if="result"
-        @click="window.print()"
+        @click="printSheet"
         class="no-print fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent hover:bg-indigo-600 text-white font-semibold px-5 py-3 rounded-full shadow-lg transition-all text-sm"
         aria-label="Print bin sheet"
       >
@@ -408,36 +408,50 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { parseFraction } from '@/utils/fractions'
+import { parseFraction, validateDimension, validateQty } from '@/utils/fractions'
 import { calculateBin, formatIn, stripCutPlan } from '@/binSolver'
-import { packMultipleSheets, minimumSheet } from '@/toolboxSolver'
+import { minimumSheet } from '@/toolboxSolver'
+import { useProjectStore } from '@/stores/project'
 
 const version = __APP_VERSION__
+const store = useProjectStore()
 
 // ── Inputs ───────────────────────────────────────────────────────────
-const mode = ref('inner')
-const widthStr = ref('12')
-const depthStr = ref('8')
-const heightStr = ref('6')
-const qty = ref(1)
-const matThicknessStr = ref('15/32')
-const dadoDepthStr = ref('1/4')
-const kerfStr = ref('1/8')
-const availableSheets = ref([{ w: '48', h: '96' }])
+// Backed by the store so they survive a reload and take part in Export and
+// Reset. As component-local refs this whole tool's state was thrown away the
+// moment the tab was closed.
+function bound(key) {
+  return computed({
+    get: () => store.binSettings[key],
+    set: (v) => { store.binSettings[key] = v },
+  })
+}
 
-// ── State ────────────────────────────────────────────────────────────
-const result = ref(null)
-const sheets = ref([])
-const minSheet = ref(null)
-const stripPlan = ref(null)
+const mode             = bound('mode')
+const widthStr         = bound('widthStr')
+const depthStr         = bound('depthStr')
+const heightStr        = bound('heightStr')
+const qty              = bound('qty')
+const matThicknessStr  = bound('matThicknessStr')
+const dadoDepthStr     = bound('dadoDepthStr')
+const kerfStr          = bound('kerfStr')
+const availableSheets  = bound('availableSheets')
+
+// ── Results ──────────────────────────────────────────────────────────
+const result    = computed(() => store.binResults?.result ?? null)
+const minSheet  = computed(() => store.binResults?.minSheet ?? null)
+const stripPlan = computed(() => store.binResults?.stripPlan ?? null)
 const inputError = ref('')
 
 // ── Piece colors ─────────────────────────────────────────────────────
+// Timber tones rather than the saturated indigo/green/amber this used before,
+// which made the Box Planner the loudest screen in the app and disagreed with
+// the cut diagrams everywhere else.
 const PIECE_COLORS = {
-  front:  '#6366f1',  // indigo
-  back:   '#6366f1',
-  side:   '#22c55e',  // green
-  bottom: '#f59e0b',  // amber
+  front:  '#d4a84b',  // edge
+  back:   '#e0bd77',
+  side:   '#e8d5b0',  // face
+  bottom: '#b98f3e',
 }
 
 const SVG_DISPLAY_W = 480
@@ -492,54 +506,71 @@ function fmtIn(val) {
   return formatIn(val)
 }
 
-function sheetUtilization(sheet, sheetIndex) {
-  const s = availableSheets.value[sheetIndex] ?? availableSheets.value[availableSheets.value.length - 1]
-  const sheetW = parseFraction(s?.w) || 48
-  const sheetH = parseFraction(s?.h) || 96
-  const total = sheetW * sheetH
-  const used = sheet.placed.reduce((sum, p) => sum + p.placedW * p.placedH, 0)
-  return Math.round((used / total) * 100)
-}
+// ── Validation ───────────────────────────────────────────────────────
+const DIMENSION_FIELDS = [
+  { ref: widthStr,        label: 'Width' },
+  { ref: depthStr,        label: 'Depth' },
+  { ref: heightStr,       label: 'Height' },
+  { ref: matThicknessStr, label: 'Material thickness' },
+  { ref: dadoDepthStr,    label: 'Dado depth' },
+  { ref: kerfStr,         label: 'Saw kerf' },
+]
+
+const fieldErrors = computed(() => {
+  const out = {}
+  for (const f of DIMENSION_FIELDS) {
+    const check = validateDimension(f.ref.value, { label: f.label })
+    if (!check.ok) out[f.label] = check.error
+  }
+  const q = validateQty(qty.value, { label: 'Quantity' })
+  if (!q.ok) out.Quantity = q.error
+  return out
+})
+
+const errorFor = (label) => fieldErrors.value[label] ?? null
+const isValid = computed(() => Object.keys(fieldErrors.value).length === 0)
 
 // ── Calculate ────────────────────────────────────────────────────────
 function calculate() {
   inputError.value = ''
-  try {
-    const width = parseFraction(widthStr.value)
-    const depth = parseFraction(depthStr.value)
-    const height = parseFraction(heightStr.value)
-    const mat = parseFraction(matThicknessStr.value) || 0.469
-    const dado = parseFraction(dadoDepthStr.value) || 0.25
-    const kerf = parseFraction(kerfStr.value) || 0.125
-    const binQty = Math.max(1, qty.value || 1)
 
-    if (!width || !depth || !height) {
-      inputError.value = 'Please enter valid width, depth, and height dimensions.'
-      return
-    }
+  if (!isValid.value) {
+    const messages = Object.values(fieldErrors.value)
+    inputError.value = messages.length === 1
+      ? messages[0]
+      : `Fix ${messages.length} fields before calculating.`
+    store.binResults = null
+    return
+  }
+
+  try {
+    const kerf = parseFraction(kerfStr.value)
 
     const r = calculateBin({
       mode: mode.value,
-      width,
-      depth,
-      height,
-      matThickness: mat,
-      dadoDepth: dado,
-      qty: binQty,
+      width:  parseFraction(widthStr.value),
+      depth:  parseFraction(depthStr.value),
+      height: parseFraction(heightStr.value),
+      matThickness: parseFraction(matThicknessStr.value),
+      dadoDepth:    parseFraction(dadoDepthStr.value),
+      qty: Number(qty.value),
     })
 
-    result.value = r
-    stripPlan.value = stripCutPlan(r.pieces, 48, kerf)
-
-    const allSheetsSizes = availableSheets.value.map(s => ({
-      w: parseFraction(s.w) || 48,
-      h: parseFraction(s.h) || 96,
-    }))
-
-    sheets.value = packMultipleSheets(r.pieces, allSheetsSizes, kerf, false)  // no rotation — keep grain direction consistent
-    minSheet.value = minimumSheet(r.pieces, kerf, false)  // no rotation — keep grain consistent
+    store.binResults = {
+      result: r,
+      stripPlan: stripCutPlan(r.pieces, 48, kerf),
+      // no rotation — keep grain direction consistent
+      minSheet: minimumSheet(r.pieces, kerf, false),
+    }
   } catch (e) {
-    inputError.value = `Calculation error: ${e.message}`
+    inputError.value = `Couldn't build a plan: ${e.message}`
+    store.binResults = null
   }
+}
+
+// `window` is not exposed on a template's render context, so the old
+// `@click="window.print()"` compiled to `_ctx.window.print()` and threw.
+function printSheet() {
+  window.print()
 }
 </script>

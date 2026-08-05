@@ -20,6 +20,44 @@ textarea {
   font-family: inherit;
 }
 
+/* ── Focus ────────────────────────────────────────────────
+   One visible ring for the whole app. Several inputs used
+   `focus:outline-none` and relied on a 1px border-color swap, which is
+   easy to lose against a table row. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid #121212;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  color: #121212;
+  font-weight: 600;
+  border: 2px solid #121212;
+  border-radius: 0 0 0.25rem 0;
+}
+.skip-link:focus {
+  left: 0;
+}
+
+/* ── Motion ───────────────────────────────────────────────
+   Transitions here are color and opacity only, but the preference should
+   still be honoured rather than ignored. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ── Print styles ─────────────────────────────────────────── */
 @media print {
   /* Hide all interactive/nav chrome */
@@ -73,33 +111,48 @@ textarea {
   /* Remove outer card border on each board sheet */
   .print-break-before { border: none !important; border-radius: 0 !important; box-shadow: none !important; }
 
-  /* Page margin boxes for footer on every page */
-  @page {
-    margin-bottom: 48pt;
-    @bottom-left {
-      content: 'Page ' counter(page) ' of ' counter(pages);
-      font-size: 8pt;
-      color: #888;
-      border-top: 1px solid #ddd;
-      padding-top: 4pt;
-      font-family: system-ui, sans-serif;
-    }
-    @bottom-center {
-      content: 'www.althoffwoodshop.com';
-      font-size: 8pt;
-      color: #888;
-      border-top: 1px solid #ddd;
-      padding-top: 4pt;
-      font-family: system-ui, sans-serif;
-    }
-    @bottom-right {
-      content: '';
-      border-top: 1px solid #ddd;
-    }
+  /* Running footer.
+     Blink implements neither `@bottom-left` margin boxes nor
+     `counter(pages)`, so the previous page-number footer printed nothing at
+     all and the in-flow fallback was hidden on top of that. A fixed element
+     repeats on every sheet in Chrome, which is what actually gets used in
+     the shop. `counter(page)` alone does work, so the page number is real;
+     the total is not available and is deliberately not faked. */
+  @page { margin: 12mm 12mm 18mm; }
+
+  .print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #ddd;
+    padding-top: 4pt;
+    font-size: 8pt;
+    color: #666;
+    font-family: system-ui, sans-serif;
+  }
+  .print-footer .print-page-number::after {
+    content: 'Page ' counter(page);
   }
 
-  /* Hide the in-flow footer element — @page handles it now */
-  .print-footer { display: none !important; }
+  /* A printed cut sheet is a working document: leave room to mark off
+     each cut as it's made. */
+  .print-tick {
+    display: inline-block;
+    width: 11pt;
+    height: 11pt;
+    border: 1px solid #555;
+    vertical-align: middle;
+  }
+
+  /* The dimension you actually cut to must be the most legible thing on the
+     page, not the faintest. */
+  .print-dimension {
+    font-weight: 700 !important;
+    color: #1a1a1a !important;
+    font-size: 11pt !important;
+  }
 
   /* Remove screen-only divider lines */
   .no-print-border { border: none !important; padding-top: 0 !important; }

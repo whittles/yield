@@ -3,20 +3,9 @@
  * Calculates piece dimensions and packs onto plywood sheets.
  */
 
-function formatIn(val) {
-  if (!val && val !== 0) return '?'
-  if (val < 0.5 && val > 0) return val.toFixed(3)
-  // Format as fraction (16ths)
-  const whole = Math.floor(val)
-  const rem = val - whole
-  const num = Math.round(rem * 16)
-  if (num === 0) return `${whole}"`
-  const gcd = (a, b) => b === 0 ? a : gcd(b, a % b)
-  const g = gcd(num, 16)
-  const frac = `${num / g}/${16 / g}`
-  return whole > 0 ? `${whole} ${frac}"` : `${frac}"`
-}
-
+// Shared formatter — see binSolver for the same note. The caller owns the
+// inch mark, so the strings below keep their explicit `"`.
+import { formatInches as formatIn } from '@/utils/fractions'
 export { formatIn }
 
 /**
@@ -70,7 +59,7 @@ export function calculatePieces(input) {
       length: oL,
       width: oH,
       grainDir: 'length',
-      notes: `Dado ${dadoDepth}" deep on inside bottom edge (for bottom panel). Dado ${dadoDepth}" deep on inside faces at each end (for end panels). No lid runner groove needed.`,
+      notes: `Dado ${formatIn(dadoDepth)}" deep on inside bottom edge (for bottom panel). Dado ${formatIn(dadoDepth)}" deep on inside faces at each end (for end panels). No lid runner groove needed.`,
     },
     {
       id: 'back',
@@ -88,7 +77,7 @@ export function calculatePieces(input) {
       length: oW,
       width: oH,
       grainDir: 'length',
-      notes: `Dado ${dadoDepth}" deep on inside bottom edge (for bottom). Fits in dado grooves in front and back.`,
+      notes: `Dado ${formatIn(dadoDepth)}" deep on inside bottom edge (for bottom). Fits in dado grooves in front and back.`,
     },
     {
       id: 'bottom',
@@ -106,7 +95,7 @@ export function calculatePieces(input) {
       length: iL - lidClearance * 2,
       width: iW - lidClearance * 2,
       grainDir: 'length',
-      notes: `Single sliding panel. Rests on top edges of front and back. Slides lengthwise under fixed battens. Lid clearance: ${lidClearance}" each side. Thickness: ${formatIn(lidThickness)}" (thinner than walls).`,
+      notes: `Single sliding panel. Rests on top edges of front and back. Slides lengthwise under fixed battens. Lid clearance: ${formatIn(lidClearance)}" each side. Thickness: ${formatIn(lidThickness)}" (thinner than walls).`,
     },
     {
       id: 'fixed-batten',
