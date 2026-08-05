@@ -337,9 +337,25 @@ Home tool cards, and a pill only on the floating print action, where the shape
 signals "this floats" rather than "this is a panel".
 
 Borders are the primary form-defining device and are always 1px. No coloured
-left-borders on callouts, no heavy outlines, no zero-blur block shadows. Status
-panels are identified by a tinted ground plus a 1px border in the status hue at
-low opacity, not by a bar down one edge.
+left-borders on callouts, no heavy outlines, no zero-blur block shadows.
+
+Status panels come in two weights, and the difference is deliberate:
+
+- **Advisory** — standing notices that are always present and always the same,
+  such as the beta disclaimer. Neutral card ground, 1px warm rule, and the
+  status hue carried *only* by the icon. A caveat that never changes should not
+  shout every time the page loads.
+- **Situational** — panels that appear because something is actually wrong right
+  now: invalid fields, unplaceable parts, a stale plan. Tinted status ground
+  plus a 1px border in the status hue at low opacity. These have earned the
+  colour, because their presence is itself the signal.
+
+### Named Rules
+
+**The Earned-Colour Rule.** A panel gets a tinted ground only if its appearance
+means something changed. A notice that is always on screen gets a neutral ground
+and a coloured icon. Applied the other way round, the permanent warnings train
+the eye to ignore exactly the colour the urgent ones depend on.
 
 Diagrams are the exception to the restraint and follow drawing conventions
 rather than UI conventions: square corners, 0.75–1.25px strokes, hatch fills for

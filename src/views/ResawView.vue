@@ -394,8 +394,13 @@
     <template v-if="r">
 
       <!-- Beta disclaimer -->
-      <div class="no-print bg-warning-bg border border-warning/30 rounded-lg px-4 py-3 text-sm text-warning">
-        <Icon name="alert" size="1.05em" class="inline align-text-bottom" /> <strong>Beta</strong> — This yield plan is generated algorithmically and may not be optimal. Always verify dimensions before cutting. Use your own judgement at the saw.
+      <div class="no-print flex items-start gap-2.5 px-4 py-3 bg-surface border border-border rounded-lg shadow-sheet">
+        <Icon name="alert" size="1.05em" class="mt-0.5 shrink-0 text-warning" />
+        <p class="m-0 text-sm leading-normal text-text-secondary">
+          <strong class="font-semibold text-text-primary">Beta</strong> — this yield plan is generated
+          algorithmically and may not be optimal. Always verify dimensions before cutting, and use
+          your own judgement at the saw.
+        </p>
       </div>
 
       <!-- ── Print header (full batch summary) ─────────────────────── -->

@@ -8,121 +8,313 @@
         "role": "neutral",
         "displayName": "Paper",
         "canonical": "#f5f4f0",
-        "tonalRamp": ["#26251f", "#3d3b33", "#575449", "#736f61", "#95917f", "#b8b4a3", "#d8d5c9", "#f5f4f0"]
+        "tonalRamp": [
+          "#26251f",
+          "#3d3b33",
+          "#575449",
+          "#736f61",
+          "#95917f",
+          "#b8b4a3",
+          "#d8d5c9",
+          "#f5f4f0"
+        ]
       },
       "surface": {
         "role": "neutral",
         "displayName": "Card",
         "canonical": "#ffffff",
-        "tonalRamp": ["#262626", "#404040", "#5c5c5c", "#7a7a7a", "#9c9c9c", "#c2c2c2", "#e3e3e3", "#ffffff"]
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#7a7a7a",
+          "#9c9c9c",
+          "#c2c2c2",
+          "#e3e3e3",
+          "#ffffff"
+        ]
       },
       "surface-alt": {
         "role": "neutral",
         "displayName": "Card Alt",
         "canonical": "#f3f3f3",
-        "tonalRamp": ["#242424", "#3d3d3d", "#585858", "#767676", "#989898", "#bfbfbf", "#e0e0e0", "#f3f3f3"]
+        "tonalRamp": [
+          "#242424",
+          "#3d3d3d",
+          "#585858",
+          "#767676",
+          "#989898",
+          "#bfbfbf",
+          "#e0e0e0",
+          "#f3f3f3"
+        ]
       },
       "rule": {
         "role": "neutral",
         "displayName": "Rule",
         "canonical": "#e5e3de",
-        "tonalRamp": ["#232220", "#3a3834", "#534f49", "#6f6b62", "#918c80", "#b4afa2", "#d2cfc6", "#e5e3de"]
+        "tonalRamp": [
+          "#232220",
+          "#3a3834",
+          "#534f49",
+          "#6f6b62",
+          "#918c80",
+          "#b4afa2",
+          "#d2cfc6",
+          "#e5e3de"
+        ]
       },
       "ink": {
         "role": "primary",
         "displayName": "Ink",
         "canonical": "#121212",
-        "tonalRamp": ["#121212", "#2d2d2d", "#474747", "#666666", "#8a8a8a", "#b0b0b0", "#d6d6d6", "#f2f2f2"]
+        "tonalRamp": [
+          "#121212",
+          "#2d2d2d",
+          "#474747",
+          "#666666",
+          "#8a8a8a",
+          "#b0b0b0",
+          "#d6d6d6",
+          "#f2f2f2"
+        ]
       },
       "ink-secondary": {
         "role": "neutral",
         "displayName": "Ink Secondary",
         "canonical": "#4b5563",
-        "tonalRamp": ["#161a1f", "#242a33", "#343c47", "#4b5563", "#6b7686", "#939cab", "#bec4cd", "#e3e6ea"]
+        "tonalRamp": [
+          "#161a1f",
+          "#242a33",
+          "#343c47",
+          "#4b5563",
+          "#6b7686",
+          "#939cab",
+          "#bec4cd",
+          "#e3e6ea"
+        ]
       },
       "ink-muted": {
         "role": "neutral",
         "displayName": "Ink Muted",
         "canonical": "#656c78",
-        "tonalRamp": ["#1a1c20", "#2b2e34", "#3f434b", "#565b65", "#656c78", "#8f96a1", "#bcc1c9", "#e4e7ea"]
+        "tonalRamp": [
+          "#1a1c20",
+          "#2b2e34",
+          "#3f434b",
+          "#565b65",
+          "#656c78",
+          "#8f96a1",
+          "#bcc1c9",
+          "#e4e7ea"
+        ]
       },
       "header-ground": {
         "role": "secondary",
         "displayName": "Slate Ground",
         "canonical": "#242833",
-        "tonalRamp": ["#0c0e12", "#16181f", "#242833", "#363c4b", "#4c5468", "#6b748b", "#9aa2b4", "#ccd1da"]
+        "tonalRamp": [
+          "#0c0e12",
+          "#16181f",
+          "#242833",
+          "#363c4b",
+          "#4c5468",
+          "#6b748b",
+          "#9aa2b4",
+          "#ccd1da"
+        ]
       },
       "header-ink-muted": {
         "role": "secondary",
         "displayName": "Header Muted",
         "canonical": "#a3abb8",
-        "tonalRamp": ["#1a1d23", "#2c3038", "#414753", "#5a6270", "#78808f", "#a3abb8", "#c8ced7", "#e9ecf0"]
+        "tonalRamp": [
+          "#1a1d23",
+          "#2c3038",
+          "#414753",
+          "#5a6270",
+          "#78808f",
+          "#a3abb8",
+          "#c8ced7",
+          "#e9ecf0"
+        ]
       },
       "accent": {
         "role": "primary",
         "displayName": "Ink (accent)",
         "canonical": "#121212",
-        "tonalRamp": ["#121212", "#2d2d2d", "#474747", "#666666", "#8a8a8a", "#b0b0b0", "#d6d6d6", "#f2f2f2"]
+        "tonalRamp": [
+          "#121212",
+          "#2d2d2d",
+          "#474747",
+          "#666666",
+          "#8a8a8a",
+          "#b0b0b0",
+          "#d6d6d6",
+          "#f2f2f2"
+        ]
       },
       "accent-hover": {
         "role": "primary",
         "displayName": "Ink Hover",
         "canonical": "#2d2d2d",
-        "tonalRamp": ["#121212", "#2d2d2d", "#474747", "#666666", "#8a8a8a", "#b0b0b0", "#d6d6d6", "#f2f2f2"]
+        "tonalRamp": [
+          "#121212",
+          "#2d2d2d",
+          "#474747",
+          "#666666",
+          "#8a8a8a",
+          "#b0b0b0",
+          "#d6d6d6",
+          "#f2f2f2"
+        ]
       },
       "success": {
         "role": "tertiary",
         "displayName": "Success Green",
         "canonical": "#166534",
-        "tonalRamp": ["#052e16", "#0a3d1f", "#14532d", "#166534", "#22a34a", "#4ade80", "#a7f3c0", "#dcfce7"]
+        "tonalRamp": [
+          "#052e16",
+          "#0a3d1f",
+          "#14532d",
+          "#166534",
+          "#22a34a",
+          "#4ade80",
+          "#a7f3c0",
+          "#dcfce7"
+        ]
       },
-      "success-ground": { "role": "tertiary", "displayName": "Success Ground", "canonical": "#dcfce7" },
+      "success-ground": {
+        "role": "tertiary",
+        "displayName": "Success Ground",
+        "canonical": "#dcfce7"
+      },
       "warning": {
         "role": "tertiary",
         "displayName": "Warning Amber",
         "canonical": "#92400e",
-        "tonalRamp": ["#3b1a05", "#5c2a08", "#7c380b", "#92400e", "#c96a1c", "#eda54a", "#f8d49a", "#fef3c7"]
+        "tonalRamp": [
+          "#3b1a05",
+          "#5c2a08",
+          "#7c380b",
+          "#92400e",
+          "#c96a1c",
+          "#eda54a",
+          "#f8d49a",
+          "#fef3c7"
+        ]
       },
-      "warning-ground": { "role": "tertiary", "displayName": "Warning Ground", "canonical": "#fef3c7" },
+      "warning-ground": {
+        "role": "tertiary",
+        "displayName": "Warning Ground",
+        "canonical": "#fef3c7"
+      },
       "danger": {
         "role": "tertiary",
         "displayName": "Danger Red",
         "canonical": "#991b1b",
-        "tonalRamp": ["#3f0a0a", "#611010", "#7f1515", "#991b1b", "#c73535", "#e56a6a", "#f3a8a8", "#fee2e2"]
+        "tonalRamp": [
+          "#3f0a0a",
+          "#611010",
+          "#7f1515",
+          "#991b1b",
+          "#c73535",
+          "#e56a6a",
+          "#f3a8a8",
+          "#fee2e2"
+        ]
       },
-      "danger-ground": { "role": "tertiary", "displayName": "Danger Ground", "canonical": "#fee2e2" },
+      "danger-ground": {
+        "role": "tertiary",
+        "displayName": "Danger Ground",
+        "canonical": "#fee2e2"
+      },
       "timber-face": {
         "role": "tertiary",
         "displayName": "Timber Face",
         "canonical": "#e8d5b0",
-        "tonalRamp": ["#3a2f18", "#574726", "#756136", "#957e49", "#b59e66", "#d0bc8d", "#e8d5b0", "#f6ecd8"]
+        "tonalRamp": [
+          "#3a2f18",
+          "#574726",
+          "#756136",
+          "#957e49",
+          "#b59e66",
+          "#d0bc8d",
+          "#e8d5b0",
+          "#f6ecd8"
+        ]
       },
       "timber-edge": {
         "role": "tertiary",
         "displayName": "Timber Edge",
         "canonical": "#d4a84b",
-        "tonalRamp": ["#382a0c", "#553f13", "#74561b", "#957024", "#b78b2f", "#d4a84b", "#e5c483", "#f3e2bd"]
+        "tonalRamp": [
+          "#382a0c",
+          "#553f13",
+          "#74561b",
+          "#957024",
+          "#b78b2f",
+          "#d4a84b",
+          "#e5c483",
+          "#f3e2bd"
+        ]
       },
       "timber-core": {
         "role": "tertiary",
         "displayName": "Timber Core",
         "canonical": "#8b6914",
-        "tonalRamp": ["#2c2005", "#43310a", "#5c430e", "#755412", "#8b6914", "#b48b2c", "#d6b46a", "#eddcb2"]
+        "tonalRamp": [
+          "#2c2005",
+          "#43310a",
+          "#5c430e",
+          "#755412",
+          "#8b6914",
+          "#b48b2c",
+          "#d6b46a",
+          "#eddcb2"
+        ]
       },
       "timber-waste": {
         "role": "tertiary",
         "displayName": "Timber Waste",
         "canonical": "#cfcabc",
-        "tonalRamp": ["#211f1a", "#37342c", "#4f4b40", "#6b6658", "#8b8676", "#adaa9b", "#cfcabc", "#eae7de"]
+        "tonalRamp": [
+          "#211f1a",
+          "#37342c",
+          "#4f4b40",
+          "#6b6658",
+          "#8b8676",
+          "#adaa9b",
+          "#cfcabc",
+          "#eae7de"
+        ]
       }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "Home page title only." },
-      "headline": { "displayName": "Headline", "purpose": "One per tool view — the view's h1." },
-      "title": { "displayName": "Title", "purpose": "Card and section headings." },
-      "body": { "displayName": "Body", "purpose": "Running text and table cells." },
-      "label": { "displayName": "Label", "purpose": "Column headers and field labels. The only uppercase role." },
-      "measure": { "displayName": "Measure", "purpose": "Every dimension, fence setting, fraction and board-foot figure. Monospace so digits align in columns." }
+      "display": {
+        "displayName": "Display",
+        "purpose": "Home page title only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "One per tool view — the view's h1."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card and section headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text and table cells."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Column headers and field labels. The only uppercase role."
+      },
+      "measure": {
+        "displayName": "Measure",
+        "purpose": "Every dimension, fence setting, fraction and board-foot figure. Monospace so digits align in columns."
+      }
     },
     "shadows": [
       {
@@ -149,8 +341,14 @@
       }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "lg", "value": "1024px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
     ]
   },
   "components": [
@@ -289,6 +487,11 @@
         "name": "The Flat-On-Paper Rule",
         "body": "All shadow is suppressed in print. Paper has its own depth; a printed drop shadow is toner spent on nothing.",
         "section": "elevation"
+      },
+      {
+        "name": "The Earned-Colour Rule",
+        "body": "A panel gets a tinted ground only if its appearance means something changed. A notice that is always on screen gets a neutral ground and a coloured icon. Applied the other way round, the permanent warnings train the eye to ignore exactly the colour the urgent ones depend on.",
+        "section": "shapes"
       }
     ],
     "dos": [
