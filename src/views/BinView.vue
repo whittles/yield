@@ -28,7 +28,7 @@
     </div>
 
     <!-- ── Input card ──────────────────────────────────────────────── -->
-    <div class="bg-surface border border-border rounded-lg p-5 no-print space-y-5">
+    <div class="bg-surface border border-border rounded-lg p-5 no-print space-y-5 shadow-sheet">
 
       <!-- Dimension mode toggle -->
       <div class="flex items-center gap-3">
@@ -36,11 +36,11 @@
         <div class="flex rounded overflow-hidden border border-border text-sm">
           <button
             @click="mode = 'inner'"
-            :class="['px-4 py-1.5 transition-colors', mode === 'inner' ? 'bg-accent text-white' : 'bg-bg text-text-muted hover:text-text-primary']"
+            :class="['px-4 min-h-[44px] transition-colors', mode === 'inner' ? 'bg-accent text-white' : 'bg-bg text-text-muted hover:text-text-primary']"
           >Inner</button>
           <button
             @click="mode = 'outer'"
-            :class="['px-4 py-1.5 transition-colors', mode === 'outer' ? 'bg-accent text-white' : 'bg-bg text-text-muted hover:text-text-primary']"
+            :class="['px-4 min-h-[44px] transition-colors', mode === 'outer' ? 'bg-accent text-white' : 'bg-bg text-text-muted hover:text-text-primary']"
           >Outer</button>
         </div>
         <span class="text-xs text-text-muted">{{ mode === 'inner' ? 'Interior usable space' : 'Outside box footprint' }}</span>
@@ -49,28 +49,28 @@
       <!-- Main dimensions -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div>
-          <label class="block text-xs text-text-muted mb-1">Width (left-to-right)</label>
-          <input type="text" v-model="widthStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-width" class="block text-xs text-text-muted mb-1">Width (left-to-right)</label>
+          <input type="text" id="bin-width" v-model="widthStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='12' />
           <p class="text-xs text-text-muted mt-1">e.g. "12" or "11 1/2"</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Depth (front-to-back)</label>
-          <input type="text" v-model="depthStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-depth" class="block text-xs text-text-muted mb-1">Depth (front-to-back)</label>
+          <input type="text" id="bin-depth" v-model="depthStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='8' />
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Height</label>
-          <input type="text" v-model="heightStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-height" class="block text-xs text-text-muted mb-1">Height</label>
+          <input type="text" id="bin-height" v-model="heightStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='6' />
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Qty (number of bins)</label>
-          <input type="number" v-model.number="qty" min="1"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-qty" class="block text-xs text-text-muted mb-1">Qty (number of bins)</label>
+          <input type="number" id="bin-qty" v-model.number="qty" min="1"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='1' />
         </div>
       </div>
@@ -78,23 +78,23 @@
       <!-- Material & dado -->
       <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <div>
-          <label class="block text-xs text-text-muted mb-1">Material thickness</label>
-          <input type="text" v-model="matThicknessStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-mat" class="block text-xs text-text-muted mb-1">Material thickness</label>
+          <input type="text" id="bin-mat" v-model="matThicknessStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='15/32' />
           <p class="text-xs text-text-muted mt-1">Measure your actual sheet — nominal ½" is typically 15/32" (0.469")</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Dado depth</label>
-          <input type="text" v-model="dadoDepthStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-dado" class="block text-xs text-text-muted mb-1">Dado depth</label>
+          <input type="text" id="bin-dado" v-model="dadoDepthStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='1/4' />
           <p class="text-xs text-text-muted mt-1">Groove depth for bottom panel</p>
         </div>
         <div>
-          <label class="block text-xs text-text-muted mb-1">Saw kerf</label>
-          <input type="text" v-model="kerfStr"
-            class="w-full border border-border rounded px-2 py-1.5 text-sm bg-bg text-text-primary"
+          <label for="bin-kerf" class="block text-xs text-text-muted mb-1">Saw kerf</label>
+          <input type="text" id="bin-kerf" v-model="kerfStr"
+            class="w-full min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
             placeholder='1/8' />
           <p class="text-xs text-text-muted mt-1">Width lost per cut</p>
         </div>
@@ -105,28 +105,29 @@
         <label class="block text-xs text-text-muted mb-1">Available plywood sheets</label>
         <div class="space-y-1">
           <div v-for="(sheet, i) in availableSheets" :key="i" class="flex items-center gap-1">
-            <input type="text" v-model="sheet.w"
-              class="w-16 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+            <input type="text" v-model="sheet.w" :aria-label="`Sheet ${i + 1} width in inches`"
+              class="w-20 min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
               placeholder='48' />
             <span class="text-text-muted text-xs">×</span>
-            <input type="text" v-model="sheet.h"
-              class="w-16 border border-border rounded px-2 py-1 text-sm bg-bg text-text-primary"
+            <input type="text" v-model="sheet.h" :aria-label="`Sheet ${i + 1} height in inches`"
+              class="w-20 min-h-[40px] border border-border rounded px-2 text-sm bg-surface text-text-primary"
               placeholder='96' />
             <span class="text-xs text-text-muted">in</span>
             <button v-if="availableSheets.length > 1" @click="availableSheets.splice(i,1)"
-              class="text-text-muted hover:text-danger text-sm px-1">×</button>
+              :aria-label="`Remove sheet ${sheet.w} by ${sheet.h} inches`"
+              class="inline-flex items-center justify-center w-11 h-11 rounded text-text-muted hover:text-danger hover:bg-danger-bg/50 transition-colors"><Icon name="close" size="1em" /></button>
           </div>
           <button @click="availableSheets.push({w:'48',h:'96'})"
-            class="text-xs text-accent hover:opacity-80">
-            + Add sheet
+            class="inline-flex items-center gap-1.5 min-h-[44px] px-2 -mx-2 text-sm text-text-primary font-medium hover:underline">
+            <Icon name="plus" size="1em" /> Add sheet
           </button>
         </div>
         <p class="text-xs text-text-muted mt-1">Partial sheets welcome — solver tries each in order</p>
       </div>
 
       <!-- Error -->
-      <div v-if="inputError" class="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded px-3 py-2">
-        ⚠ {{ inputError }}
+      <div v-if="inputError" class="text-sm text-danger bg-danger-bg border border-danger/30 rounded px-3 py-2">
+        <Icon name="alert" size="1em" class="inline align-text-bottom" /> {{ inputError }}
       </div>
 
       <!-- Calculate button -->
@@ -144,12 +145,17 @@
     <template v-if="result">
 
       <!-- Beta disclaimer -->
-      <div class="no-print bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
-        ⚠️ <strong>Beta feature</strong> — This cut plan is generated algorithmically and may not be optimal. Always verify dimensions before cutting. Use your own judgement at the saw.
+      <div class="no-print flex items-start gap-2.5 px-4 py-3 bg-surface border border-border rounded-lg shadow-sheet">
+        <Icon name="alert" size="1.05em" class="mt-0.5 shrink-0 text-warning" />
+        <p class="m-0 text-sm leading-normal text-text-secondary">
+          <strong class="font-semibold text-text-primary">Beta</strong> — this cut plan is generated
+          algorithmically and may not be optimal. Always verify dimensions before cutting, and use
+          your own judgement at the saw.
+        </p>
       </div>
 
       <!-- Summary -->
-      <div class="bg-surface border border-border rounded-lg p-5">
+      <div class="bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h2 class="text-base font-semibold text-text-primary mb-3">Box Summary</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
           <div class="bg-bg border border-border rounded p-3">
@@ -177,17 +183,17 @@
       </div>
 
       <!-- Cut list table -->
-      <div class="bg-surface border border-border rounded-lg p-5">
+      <div class="bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h2 class="text-base font-semibold text-text-primary mb-3">Cut List</h2>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
             <thead>
               <tr class="text-left text-xs text-text-muted border-b border-border">
-                <th class="pb-2 pr-4">Part</th>
-                <th class="pb-2 pr-4">Qty</th>
-                <th class="pb-2 pr-4">Length</th>
-                <th class="pb-2 pr-4">Width</th>
-                <th class="pb-2">Notes</th>
+                <th scope="col" class="pb-2 pr-4">Part</th>
+                <th scope="col" class="pb-2 pr-4">Qty</th>
+                <th scope="col" class="pb-2 pr-4">Length</th>
+                <th scope="col" class="pb-2 pr-4">Width</th>
+                <th scope="col" class="pb-2">Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -224,6 +230,8 @@
           </div>
         </div>
         <svg
+          role="img"
+          aria-label="Minimum plywood sheet with each box piece placed on it"
           :viewBox="`0 0 ${Math.round(minSheet.w * (SVG_DISPLAY_W / minSheet.w))} ${Math.round(minSheet.h * (SVG_DISPLAY_W / minSheet.w))}`"
           class="w-full"
           style="max-width: 100%; font-family: monospace;"
@@ -259,7 +267,7 @@
       </div>
 
       <!-- Strip Cut Layout -->
-      <div v-if="stripPlan && stripPlan.length" class="bg-surface border border-border rounded-lg p-5">
+      <div v-if="stripPlan && stripPlan.length" class="bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h2 class="text-base font-semibold text-text-primary mb-1">Strip Cut Layout</h2>
         <p class="text-xs text-text-muted mb-4">
           How to cut this efficiently at the table saw — rip strips first, then crosscut each strip.
@@ -289,10 +297,10 @@
             <table class="w-full text-sm">
               <thead>
                 <tr class="text-left text-xs text-text-muted border-b border-border">
-                  <th class="px-4 py-2">Part</th>
-                  <th class="px-4 py-2">Crosscut length</th>
-                  <th class="px-4 py-2">Qty</th>
-                  <th class="px-4 py-2">Total from strip</th>
+                  <th scope="col" class="px-4 py-2">Part</th>
+                  <th scope="col" class="px-4 py-2">Crosscut length</th>
+                  <th scope="col" class="px-4 py-2">Qty</th>
+                  <th scope="col" class="px-4 py-2">Total from strip</th>
                 </tr>
               </thead>
               <tbody>
@@ -316,7 +324,7 @@
       </div>
 
       <!-- Strip-based sheet layout SVG — visualises the actual cut sequence -->
-      <div v-if="stripPlan && stripPlan.length" class="bg-surface border border-border rounded-lg p-5">
+      <div v-if="stripPlan && stripPlan.length" class="bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h2 class="text-base font-semibold text-text-primary mb-1">Sheet Layout</h2>
         <p class="text-xs text-text-muted mb-4">Strip-based layout — matches your actual cut sequence. Each row = one rip pass.</p>
 
@@ -330,6 +338,8 @@
             </div>
             <!-- SVG for this strip -->
             <svg
+              role="img"
+              :aria-label="`Strip ${si + 1}: ${strip.totalCrosscuts} crosscuts along a ${fmtIn(strip.ripWidth)} inch wide strip`"
               :viewBox="`0 0 480 ${Math.max(30, Math.round(strip.ripWidth * stripSvgScale()))}`"
               class="w-full"
               style="font-family: monospace; display: block;"
@@ -369,7 +379,7 @@
       </div>
 
       <!-- Assembly notes -->
-      <div class="bg-surface border border-border rounded-lg p-5">
+      <div class="bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h2 class="text-base font-semibold text-text-primary mb-3">Assembly Notes</h2>
 
         <!-- Key dimensions callout -->
@@ -395,11 +405,13 @@
     <Teleport to="body">
       <button
         v-if="result"
-        @click="window.print()"
-        class="no-print fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent hover:bg-indigo-600 text-white font-semibold px-5 py-3 rounded-full shadow-lg transition-all text-sm"
+        @click="printSheet"
+        class="no-print fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent hover:bg-indigo-600 text-white font-semibold px-5 py-3 rounded-full shadow-lifted transition-all text-sm"
         aria-label="Print bin sheet"
       >
-        🖨 <span class="hidden sm:inline">Print Sheet</span>
+        <Icon name="printer" size="1.15em" />
+        <span class="hidden sm:inline">Print sheet</span>
+        <span class="sr-only sm:hidden">Print sheet</span>
       </button>
     </Teleport>
 
@@ -407,37 +419,52 @@
 </template>
 
 <script setup>
+import Icon from '@/components/Icon.vue'
 import { ref, computed } from 'vue'
-import { parseFraction } from '@/utils/fractions'
+import { parseFraction, validateDimension, validateQty } from '@/utils/fractions'
 import { calculateBin, formatIn, stripCutPlan } from '@/binSolver'
-import { packMultipleSheets, minimumSheet } from '@/toolboxSolver'
+import { minimumSheet } from '@/toolboxSolver'
+import { useProjectStore } from '@/stores/project'
 
 const version = __APP_VERSION__
+const store = useProjectStore()
 
 // ── Inputs ───────────────────────────────────────────────────────────
-const mode = ref('inner')
-const widthStr = ref('12')
-const depthStr = ref('8')
-const heightStr = ref('6')
-const qty = ref(1)
-const matThicknessStr = ref('15/32')
-const dadoDepthStr = ref('1/4')
-const kerfStr = ref('1/8')
-const availableSheets = ref([{ w: '48', h: '96' }])
+// Backed by the store so they survive a reload and take part in Export and
+// Reset. As component-local refs this whole tool's state was thrown away the
+// moment the tab was closed.
+function bound(key) {
+  return computed({
+    get: () => store.binSettings[key],
+    set: (v) => { store.binSettings[key] = v },
+  })
+}
 
-// ── State ────────────────────────────────────────────────────────────
-const result = ref(null)
-const sheets = ref([])
-const minSheet = ref(null)
-const stripPlan = ref(null)
+const mode             = bound('mode')
+const widthStr         = bound('widthStr')
+const depthStr         = bound('depthStr')
+const heightStr        = bound('heightStr')
+const qty              = bound('qty')
+const matThicknessStr  = bound('matThicknessStr')
+const dadoDepthStr     = bound('dadoDepthStr')
+const kerfStr          = bound('kerfStr')
+const availableSheets  = bound('availableSheets')
+
+// ── Results ──────────────────────────────────────────────────────────
+const result    = computed(() => store.binResults?.result ?? null)
+const minSheet  = computed(() => store.binResults?.minSheet ?? null)
+const stripPlan = computed(() => store.binResults?.stripPlan ?? null)
 const inputError = ref('')
 
 // ── Piece colors ─────────────────────────────────────────────────────
+// Timber tones rather than the saturated indigo/green/amber this used before,
+// which made the Box Planner the loudest screen in the app and disagreed with
+// the cut diagrams everywhere else.
 const PIECE_COLORS = {
-  front:  '#6366f1',  // indigo
-  back:   '#6366f1',
-  side:   '#22c55e',  // green
-  bottom: '#f59e0b',  // amber
+  front:  '#d4a84b',  // edge
+  back:   '#e0bd77',
+  side:   '#e8d5b0',  // face
+  bottom: '#b98f3e',
 }
 
 const SVG_DISPLAY_W = 480
@@ -492,54 +519,71 @@ function fmtIn(val) {
   return formatIn(val)
 }
 
-function sheetUtilization(sheet, sheetIndex) {
-  const s = availableSheets.value[sheetIndex] ?? availableSheets.value[availableSheets.value.length - 1]
-  const sheetW = parseFraction(s?.w) || 48
-  const sheetH = parseFraction(s?.h) || 96
-  const total = sheetW * sheetH
-  const used = sheet.placed.reduce((sum, p) => sum + p.placedW * p.placedH, 0)
-  return Math.round((used / total) * 100)
-}
+// ── Validation ───────────────────────────────────────────────────────
+const DIMENSION_FIELDS = [
+  { ref: widthStr,        label: 'Width' },
+  { ref: depthStr,        label: 'Depth' },
+  { ref: heightStr,       label: 'Height' },
+  { ref: matThicknessStr, label: 'Material thickness' },
+  { ref: dadoDepthStr,    label: 'Dado depth' },
+  { ref: kerfStr,         label: 'Saw kerf' },
+]
+
+const fieldErrors = computed(() => {
+  const out = {}
+  for (const f of DIMENSION_FIELDS) {
+    const check = validateDimension(f.ref.value, { label: f.label })
+    if (!check.ok) out[f.label] = check.error
+  }
+  const q = validateQty(qty.value, { label: 'Quantity' })
+  if (!q.ok) out.Quantity = q.error
+  return out
+})
+
+const errorFor = (label) => fieldErrors.value[label] ?? null
+const isValid = computed(() => Object.keys(fieldErrors.value).length === 0)
 
 // ── Calculate ────────────────────────────────────────────────────────
 function calculate() {
   inputError.value = ''
-  try {
-    const width = parseFraction(widthStr.value)
-    const depth = parseFraction(depthStr.value)
-    const height = parseFraction(heightStr.value)
-    const mat = parseFraction(matThicknessStr.value) || 0.469
-    const dado = parseFraction(dadoDepthStr.value) || 0.25
-    const kerf = parseFraction(kerfStr.value) || 0.125
-    const binQty = Math.max(1, qty.value || 1)
 
-    if (!width || !depth || !height) {
-      inputError.value = 'Please enter valid width, depth, and height dimensions.'
-      return
-    }
+  if (!isValid.value) {
+    const messages = Object.values(fieldErrors.value)
+    inputError.value = messages.length === 1
+      ? messages[0]
+      : `Fix ${messages.length} fields before calculating.`
+    store.binResults = null
+    return
+  }
+
+  try {
+    const kerf = parseFraction(kerfStr.value)
 
     const r = calculateBin({
       mode: mode.value,
-      width,
-      depth,
-      height,
-      matThickness: mat,
-      dadoDepth: dado,
-      qty: binQty,
+      width:  parseFraction(widthStr.value),
+      depth:  parseFraction(depthStr.value),
+      height: parseFraction(heightStr.value),
+      matThickness: parseFraction(matThicknessStr.value),
+      dadoDepth:    parseFraction(dadoDepthStr.value),
+      qty: Number(qty.value),
     })
 
-    result.value = r
-    stripPlan.value = stripCutPlan(r.pieces, 48, kerf)
-
-    const allSheetsSizes = availableSheets.value.map(s => ({
-      w: parseFraction(s.w) || 48,
-      h: parseFraction(s.h) || 96,
-    }))
-
-    sheets.value = packMultipleSheets(r.pieces, allSheetsSizes, kerf, false)  // no rotation — keep grain direction consistent
-    minSheet.value = minimumSheet(r.pieces, kerf, false)  // no rotation — keep grain consistent
+    store.binResults = {
+      result: r,
+      stripPlan: stripCutPlan(r.pieces, 48, kerf),
+      // no rotation — keep grain direction consistent
+      minSheet: minimumSheet(r.pieces, kerf, false),
+    }
   } catch (e) {
-    inputError.value = `Calculation error: ${e.message}`
+    inputError.value = `Couldn't build a plan: ${e.message}`
+    store.binResults = null
   }
+}
+
+// `window` is not exposed on a template's render context, so the old
+// `@click="window.print()"` compiled to `_ctx.window.print()` and threw.
+function printSheet() {
+  window.print()
 }
 </script>

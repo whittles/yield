@@ -1,3 +1,9 @@
 node_modules/
 dist/
 .DS_Store
+
+# Impeccable live mode: config.json is durable project setup and is tracked.
+# Everything else here is per-machine session state — absolute paths, helper
+# ports, session tokens, and append-only journals.
+.impeccable/live/*
+!.impeccable/live/config.json

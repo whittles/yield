@@ -1,0 +1,519 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-05T00:00:00Z",
+  "title": "Design System: Althoff Woodshop Calculators",
+  "extensions": {
+    "colorMeta": {
+      "page": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#f5f4f0",
+        "tonalRamp": [
+          "#26251f",
+          "#3d3b33",
+          "#575449",
+          "#736f61",
+          "#95917f",
+          "#b8b4a3",
+          "#d8d5c9",
+          "#f5f4f0"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Card",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#5c5c5c",
+          "#7a7a7a",
+          "#9c9c9c",
+          "#c2c2c2",
+          "#e3e3e3",
+          "#ffffff"
+        ]
+      },
+      "surface-alt": {
+        "role": "neutral",
+        "displayName": "Card Alt",
+        "canonical": "#f3f3f3",
+        "tonalRamp": [
+          "#242424",
+          "#3d3d3d",
+          "#585858",
+          "#767676",
+          "#989898",
+          "#bfbfbf",
+          "#e0e0e0",
+          "#f3f3f3"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#e5e3de",
+        "tonalRamp": [
+          "#232220",
+          "#3a3834",
+          "#534f49",
+          "#6f6b62",
+          "#918c80",
+          "#b4afa2",
+          "#d2cfc6",
+          "#e5e3de"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Ink",
+        "canonical": "#121212",
+        "tonalRamp": [
+          "#121212",
+          "#2d2d2d",
+          "#474747",
+          "#666666",
+          "#8a8a8a",
+          "#b0b0b0",
+          "#d6d6d6",
+          "#f2f2f2"
+        ]
+      },
+      "ink-secondary": {
+        "role": "neutral",
+        "displayName": "Ink Secondary",
+        "canonical": "#4b5563",
+        "tonalRamp": [
+          "#161a1f",
+          "#242a33",
+          "#343c47",
+          "#4b5563",
+          "#6b7686",
+          "#939cab",
+          "#bec4cd",
+          "#e3e6ea"
+        ]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Ink Muted",
+        "canonical": "#656c78",
+        "tonalRamp": [
+          "#1a1c20",
+          "#2b2e34",
+          "#3f434b",
+          "#565b65",
+          "#656c78",
+          "#8f96a1",
+          "#bcc1c9",
+          "#e4e7ea"
+        ]
+      },
+      "header-ground": {
+        "role": "secondary",
+        "displayName": "Slate Ground",
+        "canonical": "#242833",
+        "tonalRamp": [
+          "#0c0e12",
+          "#16181f",
+          "#242833",
+          "#363c4b",
+          "#4c5468",
+          "#6b748b",
+          "#9aa2b4",
+          "#ccd1da"
+        ]
+      },
+      "header-ink-muted": {
+        "role": "secondary",
+        "displayName": "Header Muted",
+        "canonical": "#a3abb8",
+        "tonalRamp": [
+          "#1a1d23",
+          "#2c3038",
+          "#414753",
+          "#5a6270",
+          "#78808f",
+          "#a3abb8",
+          "#c8ced7",
+          "#e9ecf0"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Ink (accent)",
+        "canonical": "#121212",
+        "tonalRamp": [
+          "#121212",
+          "#2d2d2d",
+          "#474747",
+          "#666666",
+          "#8a8a8a",
+          "#b0b0b0",
+          "#d6d6d6",
+          "#f2f2f2"
+        ]
+      },
+      "accent-hover": {
+        "role": "primary",
+        "displayName": "Ink Hover",
+        "canonical": "#2d2d2d",
+        "tonalRamp": [
+          "#121212",
+          "#2d2d2d",
+          "#474747",
+          "#666666",
+          "#8a8a8a",
+          "#b0b0b0",
+          "#d6d6d6",
+          "#f2f2f2"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Success Green",
+        "canonical": "#166534",
+        "tonalRamp": [
+          "#052e16",
+          "#0a3d1f",
+          "#14532d",
+          "#166534",
+          "#22a34a",
+          "#4ade80",
+          "#a7f3c0",
+          "#dcfce7"
+        ]
+      },
+      "success-ground": {
+        "role": "tertiary",
+        "displayName": "Success Ground",
+        "canonical": "#dcfce7"
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Warning Amber",
+        "canonical": "#92400e",
+        "tonalRamp": [
+          "#3b1a05",
+          "#5c2a08",
+          "#7c380b",
+          "#92400e",
+          "#c96a1c",
+          "#eda54a",
+          "#f8d49a",
+          "#fef3c7"
+        ]
+      },
+      "warning-ground": {
+        "role": "tertiary",
+        "displayName": "Warning Ground",
+        "canonical": "#fef3c7"
+      },
+      "danger": {
+        "role": "tertiary",
+        "displayName": "Danger Red",
+        "canonical": "#991b1b",
+        "tonalRamp": [
+          "#3f0a0a",
+          "#611010",
+          "#7f1515",
+          "#991b1b",
+          "#c73535",
+          "#e56a6a",
+          "#f3a8a8",
+          "#fee2e2"
+        ]
+      },
+      "danger-ground": {
+        "role": "tertiary",
+        "displayName": "Danger Ground",
+        "canonical": "#fee2e2"
+      },
+      "timber-face": {
+        "role": "tertiary",
+        "displayName": "Timber Face",
+        "canonical": "#e8d5b0",
+        "tonalRamp": [
+          "#3a2f18",
+          "#574726",
+          "#756136",
+          "#957e49",
+          "#b59e66",
+          "#d0bc8d",
+          "#e8d5b0",
+          "#f6ecd8"
+        ]
+      },
+      "timber-edge": {
+        "role": "tertiary",
+        "displayName": "Timber Edge",
+        "canonical": "#d4a84b",
+        "tonalRamp": [
+          "#382a0c",
+          "#553f13",
+          "#74561b",
+          "#957024",
+          "#b78b2f",
+          "#d4a84b",
+          "#e5c483",
+          "#f3e2bd"
+        ]
+      },
+      "timber-core": {
+        "role": "tertiary",
+        "displayName": "Timber Core",
+        "canonical": "#8b6914",
+        "tonalRamp": [
+          "#2c2005",
+          "#43310a",
+          "#5c430e",
+          "#755412",
+          "#8b6914",
+          "#b48b2c",
+          "#d6b46a",
+          "#eddcb2"
+        ]
+      },
+      "timber-waste": {
+        "role": "tertiary",
+        "displayName": "Timber Waste",
+        "canonical": "#cfcabc",
+        "tonalRamp": [
+          "#211f1a",
+          "#37342c",
+          "#4f4b40",
+          "#6b6658",
+          "#8b8676",
+          "#adaa9b",
+          "#cfcabc",
+          "#eae7de"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Home page title only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "One per tool view — the view's h1."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card and section headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Running text and table cells."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Column headers and field labels. The only uppercase role."
+      },
+      "measure": {
+        "displayName": "Measure",
+        "purpose": "Every dimension, fence setting, fraction and board-foot figure. Monospace so digits align in columns."
+      }
+    },
+    "shadows": [
+      {
+        "name": "sheet",
+        "value": "0 1px 2px rgba(36, 40, 51, 0.04), 0 1px 1px rgba(36, 40, 51, 0.03)",
+        "purpose": "Resting cards and panels. Ambient lift off the warm ground; must not be the first thing you notice."
+      },
+      {
+        "name": "lifted",
+        "value": "0 6px 16px -4px rgba(36, 40, 51, 0.18), 0 2px 6px -2px rgba(36, 40, 51, 0.10)",
+        "purpose": "Elements that overlap page content — the floating print action and the sticky mobile action bar."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-standard",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Default easing for colour and opacity transitions."
+      },
+      {
+        "name": "duration-state",
+        "value": "150ms",
+        "purpose": "State transitions on controls. Colour and opacity only; no transforms on resting UI."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one action that produces a plan. Full width below 640px.",
+      "html": "<button class=\"ds-btn-primary\">Calculate Cut Plan</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:center; min-height:48px; padding:0 32px; background:#121212; color:#fff; font-family:Assistant,system-ui,sans-serif; font-size:1rem; font-weight:600; border:none; border-radius:4px; cursor:pointer; transition:background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-primary:hover { background:#2d2d2d; } .ds-btn-primary:focus-visible { outline:2px solid #121212; outline-offset:2px; } .ds-btn-primary:disabled { opacity:0.4; cursor:not-allowed; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Supporting actions such as Export. Carries an icon at 1.05em.",
+      "html": "<button class=\"ds-btn-secondary\"><svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 3v12\"/><path d=\"M7.5 10.5 12 15l4.5-4.5\"/><path d=\"M4 17.5v1.5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1.5\"/></svg>Export JSON</button>",
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 20px; background:#fff; color:#121212; font-family:Assistant,system-ui,sans-serif; font-size:0.875rem; font-weight:500; border:1px solid #e5e3de; border-radius:4px; cursor:pointer; transition:background-color 150ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-secondary:hover { background:#f3f3f3; } .ds-btn-secondary:focus-visible { outline:2px solid #121212; outline-offset:2px; }"
+    },
+    {
+      "name": "Destructive Icon Button",
+      "kind": "button",
+      "refersTo": "icon-button",
+      "description": "Row delete. 44×44 even in dense tables — the thumb-reach rule has no exception for destructive actions.",
+      "html": "<button class=\"ds-icon-btn\" aria-label=\"Remove Board 1\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6.5 6.5l11 11\"/><path d=\"M17.5 6.5l-11 11\"/></svg></button>",
+      "css": ".ds-icon-btn { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; background:transparent; color:#656c78; border:none; border-radius:4px; cursor:pointer; transition:color 150ms, background-color 150ms; } .ds-icon-btn:hover { color:#991b1b; background:rgba(254,226,226,0.5); } .ds-icon-btn:focus-visible { outline:2px solid #121212; outline-offset:2px; }"
+    },
+    {
+      "name": "Dimension Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "The workhorse. Always visibly a field; accepts fractions and echoes them back.",
+      "html": "<input class=\"ds-input\" type=\"text\" value=\"1 3/4\" aria-label=\"Width of Board 1, in inches\" />",
+      "css": ".ds-input { width:100%; min-height:40px; padding:0 8px; background:#fff; color:#121212; font-family:Assistant,system-ui,sans-serif; font-size:0.875rem; border:1px solid #e5e3de; border-radius:4px; transition:border-color 150ms; } .ds-input:hover { border-color:#656c78; } .ds-input:focus-visible { outline:2px solid #121212; outline-offset:2px; }"
+    },
+    {
+      "name": "Dimension Field (invalid)",
+      "kind": "input",
+      "refersTo": "input-field-invalid",
+      "description": "Names the problem and the fix, directly beneath the field it belongs to.",
+      "html": "<div><input class=\"ds-input ds-input--invalid\" type=\"text\" value=\"1/0\" aria-invalid=\"true\" aria-label=\"Length of Leg, in inches\" /><p class=\"ds-input-err\">Length has a fraction over zero — check the bottom number.</p></div>",
+      "css": ".ds-input { width:100%; min-height:40px; padding:0 8px; background:#fff; color:#121212; font-family:Assistant,system-ui,sans-serif; font-size:0.875rem; border:1px solid #e5e3de; border-radius:4px; } .ds-input--invalid { border-color:#991b1b; background:rgba(254,226,226,0.4); } .ds-input-err { margin:2px 0 0; font-family:Assistant,system-ui,sans-serif; font-size:0.75rem; line-height:1.3; color:#991b1b; }"
+    },
+    {
+      "name": "Section Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The standard container: alt-ground header strip with a title left and a clarifier right, content beneath.",
+      "html": "<section class=\"ds-card\"><div class=\"ds-card__head\"><h2 class=\"ds-card__title\">Stock boards</h2><span class=\"ds-card__note\">The lumber you have</span></div><div class=\"ds-card__body\">Content</div></section>",
+      "css": ".ds-card { background:#fff; border:1px solid #e5e3de; border-radius:8px; box-shadow:0 1px 2px rgba(36,40,51,0.04), 0 1px 1px rgba(36,40,51,0.03); overflow:hidden; font-family:Assistant,system-ui,sans-serif; } .ds-card__head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 20px; background:#f3f3f3; border-bottom:1px solid #e5e3de; } .ds-card__title { margin:0; font-size:1rem; font-weight:600; color:#121212; } .ds-card__note { font-size:0.75rem; color:#656c78; } .ds-card__body { padding:20px; font-size:0.875rem; color:#121212; }"
+    },
+    {
+      "name": "Tab Navigation",
+      "kind": "nav",
+      "refersTo": "tab-active",
+      "description": "Persistent slate band. Tabs are links, 44px tall, active carries aria-current and a 2px underline.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Calculators\"><ul class=\"ds-nav__list\"><li><a class=\"ds-nav__tab\" href=\"#\">Home</a></li><li><a class=\"ds-nav__tab ds-nav__tab--active\" href=\"#\" aria-current=\"page\">Yield Planner</a></li><li><a class=\"ds-nav__tab\" href=\"#\">Resaw Planner</a></li></ul></nav>",
+      "css": ".ds-nav { background:#242833; border-top:1px solid rgba(255,255,255,0.1); font-family:Assistant,system-ui,sans-serif; } .ds-nav__list { display:flex; gap:0; list-style:none; margin:0; padding:0 8px; overflow-x:auto; } .ds-nav__tab { display:flex; align-items:center; height:44px; padding:0 20px; font-size:0.875rem; font-weight:500; color:#a3abb8; text-decoration:none; white-space:nowrap; border-bottom:2px solid transparent; transition:color 150ms, border-color 150ms; } .ds-nav__tab:hover { color:#fff; border-bottom-color:rgba(255,255,255,0.4); } .ds-nav__tab--active { color:#fff; border-bottom-color:#fff; } .ds-nav__tab:focus-visible { outline:2px solid #fff; outline-offset:-2px; }"
+    },
+    {
+      "name": "Yield Badge",
+      "kind": "chip",
+      "refersTo": "card",
+      "description": "Status is never carried by colour alone — the band is named in words beside the figure.",
+      "html": "<span class=\"ds-measure\">67%</span> <span class=\"ds-badge ds-badge--fair\">Fair</span>",
+      "css": ".ds-measure { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:1.5rem; font-weight:700; color:#92400e; } .ds-badge { display:inline-block; padding:2px 6px; border-radius:4px; font-family:Assistant,system-ui,sans-serif; font-size:0.75rem; font-weight:500; } .ds-badge--fair { background:#fef3c7; color:#92400e; }"
+    },
+    {
+      "name": "Cut Row",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "The signature row. Numbered chip ties to the diagram; the finished dimension is the heaviest cell.",
+      "html": "<table class=\"ds-cuts\"><tbody><tr><td class=\"ds-cuts__tick\"><span class=\"ds-tick\"></span></td><td><span class=\"ds-chip\">1</span></td><td class=\"ds-cuts__part\">Leg</td><td class=\"ds-cuts__steps\">Rip to <strong>1 3/4\"</strong>, crosscut to <strong>28\"</strong></td><td class=\"ds-cuts__dim\">28\" × 1 3/4\" × 1 1/2\"</td></tr></tbody></table>",
+      "css": ".ds-cuts { width:100%; border-collapse:collapse; font-family:Assistant,system-ui,sans-serif; font-size:0.875rem; } .ds-cuts td { padding:8px 8px; vertical-align:top; border-bottom:1px solid rgba(229,227,222,0.4); } .ds-tick { display:inline-block; width:12px; height:12px; border:1px solid #656c78; border-radius:2px; } .ds-chip { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; background:#c9b183; border:1px solid #6f6350; border-radius:2px; font-size:10px; font-weight:600; color:#241f16; } .ds-cuts__part { font-weight:500; color:#121212; } .ds-cuts__steps { color:#4b5563; } .ds-cuts__dim { text-align:right; white-space:nowrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-weight:600; color:#121212; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Shop Drawing",
+    "overview": "A working technical drawing pinned above a bench. Measured, annotated, honest about scale, made to be read at arm's length by someone with sawdust on their hands. Warm paper rather than clinical white; real rules rather than decorative lines; a scale you can hold a tape measure against. Nothing on the page that a machinist would resent as ornament.\n\nThe system is quiet because the data is loud. Board dimensions, fence settings, and cut sequences are the content; the interface is the paper they are printed on. Where the eye should go is decided by the numbers, not by the chrome — which is why the finished dimension is the heaviest thing in a cut row and the surrounding table is nearly weightless. Colour is spent almost entirely on the material itself: the timber tones in the diagrams are the only saturated thing on most screens, and they carry meaning rather than decoration.\n\nTwo viewing conditions are equally real and the system serves both without forking: a screen at planning time, and a sheet of paper at cutting time. A decision that reads well on screen but prints badly is a failed decision. The printed sheet is not an export of the interface — it is the same drawing, set for paper.",
+    "keyCharacteristics": [
+      "Warm off-white ground (#f5f4f0), never pure white at page level",
+      "Near-black as the only accent; no brand hue competing with the material",
+      "Timber tones reserved for wood, waste, and offcuts — never for UI state",
+      "Measurements set in monospace at heavier weight than their own labels",
+      "1px warm rules and tonal steps carry structure; shadow is used sparingly",
+      "Every diagram is measurable: scale rules, grain direction, honest proportion",
+      "Print is a first-class render, not a stylesheet afterthought"
+    ],
+    "rules": [
+      {
+        "name": "The Material-Only Rule",
+        "body": "Timber tones describe wood. A button, a badge, a banner, or a state indicator may never borrow one. The moment a UI control turns timber-coloured, the diagrams stop reading as material.",
+        "section": "colors"
+      },
+      {
+        "name": "The Measured Contrast Rule",
+        "body": "Every text colour in this system is measured against the three grounds it can land on (#f5f4f0, #f3f3f3, #ffffff) and clears 4.5:1 on all three. #6b7280 was the previous muted token and measured 4.39:1 on Paper — close enough to look fine and still fail. Never introduce a grey without checking it against Paper specifically; it is the darkest ground and the one that fails first.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Colour-Alone Rule",
+        "body": "Yield severity, validation state, and every other status is carried by text or an icon in addition to colour. A red 16% and a green 84% must be distinguishable in greyscale and to a screen reader.",
+        "section": "colors"
+      },
+      {
+        "name": "The Dimension-Outweighs-Its-Label Rule",
+        "body": "A measurement is always set heavier and no smaller than the label naming it. The finished dimension in a cut row is the heaviest cell in that row, on screen (600 weight, ink) and on paper (700, 11pt, #1a1a1a). The failure this prevents is real and was shipped: the number you cut to used to be the faintest text on the page.",
+        "section": "typography"
+      },
+      {
+        "name": "The Fractions-As-Written Rule",
+        "body": "Measurements render as fractions to 32nds (1 3/4\", 15/32\"), never as decimals, unless the value does not resolve to a clean fraction. Decimals are an input convenience, not an output format.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Uppercase Role Rule",
+        "body": "Only Label is uppercase. Headings, buttons, and body copy are sentence case. Uppercase is a structural signal for \"this names a column or a field\", and loses that meaning if it spreads.",
+        "section": "typography"
+      },
+      {
+        "name": "The Thumb-Reach Rule",
+        "body": "Any control a user touches in the shop is at least 44×44px. Dense table inputs may relax to 40px tall because they are struck deliberately while planning, but every button, delete control, tab, and primary action holds 44.",
+        "section": "layout"
+      },
+      {
+        "name": "The No-Sideways-Page Rule",
+        "body": "document.scrollWidth never exceeds clientWidth at any viewport down to 320px. Inner scroll containers are fine; a page that pans is not.",
+        "section": "layout"
+      },
+      {
+        "name": "The Tinted-Shadow Rule",
+        "body": "Shadows are cast in the header's slate (rgba(36, 40, 51, …)), never in pure black. Neutral-black shadow on a warm ground reads as dirt.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Flat-On-Paper Rule",
+        "body": "All shadow is suppressed in print. Paper has its own depth; a printed drop shadow is toner spent on nothing.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Earned-Colour Rule",
+        "body": "A panel gets a tinted ground only if its appearance means something changed. A notice that is always on screen gets a neutral ground and a coloured icon. Applied the other way round, the permanent warnings train the eye to ignore exactly the colour the urgent ones depend on.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do check every new grey against Paper (#f5f4f0), not white. It is the darkest ground and the first to fail 4.5:1.",
+      "Do set measurements in the monospace face at 600 weight, heavier than the label naming them.",
+      "Do render fractions to 32nds and let the caller own the inch mark, so 12\" never becomes 12\"\".",
+      "Do give every diagram a <title> and a <desc> that names its content in order. The diagram is the product's primary output.",
+      "Do hold 44×44px on anything touched in the shop; 40px is the floor for dense planning-time table inputs only.",
+      "Do replace tables with cards below 640px, with the measurement as the card's headline.",
+      "Do state why a disabled control is disabled, in a sentence beneath it.",
+      "Do design the print sheet as its own layout: plan first, accounting last, repeating footer with a page number."
+    ],
+    "donts": [
+      "Don't use a timber tone on a control, badge, or banner. Those colours mean wood.",
+      "Don't introduce a second accent hue. Near-black plus the material is the whole story.",
+      "Don't carry state in colour alone — pair it with text or an icon.",
+      "Don't use emoji or Unicode glyphs as icons. Icons come from src/components/Icon.vue, drawn on a 24px grid at 1.5 stroke.",
+      "Don't style a field as transparent-until-hover. Editable things must look editable, and read-only figures must not.",
+      "Don't distort a diagram's aspect ratio to fit a container.",
+      "Don't put a coloured left-border on a callout, or a zero-blur block shadow on anything.",
+      "Don't let a shadow be the first thing you notice on a resting card.",
+      "Don't print a drop shadow."
+    ]
+  }
+}
