@@ -8,7 +8,7 @@
     </div>
 
     <!-- ── Section 1: Stock Input ──────────────────────────────────── -->
-    <div class="bg-surface border border-border rounded-lg p-5 no-print">
+    <div class="bg-surface border border-border rounded-lg p-5 no-print shadow-sheet">
       <h2 class="text-base font-semibold text-text-primary mb-1">Stock</h2>
       <p class="text-xs text-text-muted mb-4">Your rough lumber before any milling</p>
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
@@ -69,7 +69,7 @@
     </div>
 
     <!-- ── Section 1.5: Rough Crosscut ──────────────────────────────── -->
-    <div class="bg-surface border border-border rounded-lg p-5 no-print">
+    <div class="bg-surface border border-border rounded-lg p-5 no-print shadow-sheet">
       <h2 class="text-base font-semibold text-text-primary mb-1">Rough Crosscut</h2>
       <p class="text-xs text-text-muted mb-4">Cut long boards to manageable lengths at the miter station before resawing</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -125,7 +125,7 @@
     </div>
 
     <!-- ── Section 2: Resaw Settings ──────────────────────────────── -->
-    <div class="bg-surface border border-border rounded-lg p-5 no-print">
+    <div class="bg-surface border border-border rounded-lg p-5 no-print shadow-sheet">
       <h2 class="text-base font-semibold text-text-primary mb-1">Resaw Settings</h2>
       <p class="text-xs text-text-muted mb-4">How you'll cut the stock into thin panels</p>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -172,7 +172,7 @@
     </div>
 
     <!-- ── Section 3: Strip SKUs ───────────────────────────────────── -->
-    <div class="bg-surface border border-border rounded-lg p-5 no-print">
+    <div class="bg-surface border border-border rounded-lg p-5 no-print shadow-sheet">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-base font-semibold text-text-primary mb-1">Strip SKUs</h2>
         <p class="text-xs text-text-muted mb-4">The finished strips you're producing — one row per product</p>
@@ -344,7 +344,7 @@
     </div>
 
     <!-- How it works -->
-    <details class="bg-surface border border-border rounded-lg no-print">
+    <details class="bg-surface border border-border rounded-lg no-print shadow-sheet">
       <summary class="px-5 py-3 text-sm font-semibold text-text-primary cursor-pointer hover:bg-bg/50 transition-colors select-none">
         How this calculator works
       </summary>
@@ -368,7 +368,7 @@
     <!-- This form runs to ~6,000px on a phone. Sticking the primary action to
          the bottom means it's always one thumb-reach away instead of fifteen
          flicks down the page. -->
-    <div class="no-print sticky bottom-0 z-30 -mx-4 px-4 py-3 bg-bg/95 backdrop-blur-sm border-t border-border sm:static sm:mx-0 sm:px-0 sm:bg-transparent sm:border-0 sm:backdrop-blur-none">
+    <div class="no-print sticky bottom-0 z-30 -mx-4 px-4 py-3 bg-bg/95 backdrop-blur-sm border-t border-border shadow-lifted sm:static sm:mx-0 sm:px-0 sm:bg-transparent sm:border-0 sm:backdrop-blur-none">
       <div class="flex flex-col items-center gap-1.5">
         <button
           @click="store.calculateResaw()"
@@ -464,28 +464,28 @@
 
       <!-- Summary bar -->
       <div class="no-print grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <div class="bg-surface border border-border rounded-lg p-4 text-center">
+        <div class="bg-surface border border-border rounded-lg p-4 text-center shadow-sheet">
           <div class="text-2xl font-bold text-text-primary">{{ r.roughCrosscut.blanksPerBoard }}</div>
           <div class="text-xs text-text-muted mt-1">Blanks per board</div>
         </div>
-        <div class="bg-surface border border-border rounded-lg p-4 text-center">
+        <div class="bg-surface border border-border rounded-lg p-4 text-center shadow-sheet">
           <div class="text-2xl font-bold text-text-primary">{{ r.roughCrosscut.blanksTotal }}</div>
           <div class="text-xs text-text-muted mt-1">Total blanks</div>
         </div>
         <!-- Per-group slab counts when multiple runs -->
         <template v-if="r.resawGroups && r.resawGroups.length > 1">
           <div v-for="(g, gi) in r.resawGroups" :key="'sc-'+gi"
-               class="bg-surface border border-border rounded-lg p-4 text-center">
+               class="bg-surface border border-border rounded-lg p-4 text-center shadow-sheet">
             <div class="text-2xl font-bold text-text-primary">{{ g.slabsPerBlank }}</div>
             <div class="text-xs text-text-muted mt-1">Slabs/blank ({{ fmtIn(g.panelDepth) }}" run)</div>
           </div>
         </template>
         <template v-else>
-          <div class="bg-surface border border-border rounded-lg p-4 text-center">
+          <div class="bg-surface border border-border rounded-lg p-4 text-center shadow-sheet">
             <div class="text-2xl font-bold text-text-primary">{{ r.slabs.slabsPerBlank }}</div>
             <div class="text-xs text-text-muted mt-1">Slabs per blank</div>
           </div>
-          <div class="bg-surface border border-border rounded-lg p-4 text-center">
+          <div class="bg-surface border border-border rounded-lg p-4 text-center shadow-sheet">
             <div class="text-2xl font-bold text-text-primary">{{ r.summary.slabsTotal }}</div>
             <div class="text-xs text-text-muted mt-1">Total slabs</div>
           </div>
@@ -493,13 +493,13 @@
         <div
           v-for="sr in r.stripResults.slice(0, 2)"
           :key="sr.id"
-          class="bg-surface border border-border rounded-lg p-4 text-center"
+          class="bg-surface border border-border rounded-lg p-4 text-center shadow-sheet"
         >
           <div class="text-2xl font-bold text-text-primary">{{ sr.totalStrips }}</div>
           <div class="text-xs text-text-muted mt-1">{{ sr.name }}</div>
         </div>
         <div v-if="r.stripResults.length > 2"
-             class="bg-surface border border-border rounded-lg p-4 text-center">
+             class="bg-surface border border-border rounded-lg p-4 text-center shadow-sheet">
           <div class="text-lg font-bold text-text-muted">+{{ r.stripResults.length - 2 }}</div>
           <div class="text-xs text-text-muted mt-1">more SKUs</div>
         </div>
@@ -508,7 +508,7 @@
 
       <!-- Mixed Strip Optimization -->
       <div v-if="r.mixedOptimization && r.stripResults.length > 1"
-           class="no-print bg-surface border border-border rounded-lg p-5">
+           class="no-print bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h3 class="text-sm font-semibold text-text-primary mb-1">Mixed Strip Optimization</h3>
         <p class="text-xs text-text-muted mb-4">Best combination of SKUs per panel to minimize waste</p>
 
@@ -551,7 +551,7 @@
       </div>
 
       <!-- Step 1: Rough Crosscut SVG -->
-      <div class="bg-surface border border-border rounded-lg p-5 print-no-break">
+      <div class="bg-surface border border-border rounded-lg p-5 print-no-break shadow-sheet">
         <h3 class="text-sm font-semibold text-text-primary mb-1">Step 1 — Rough Crosscut Layout</h3>
         <p class="text-xs text-text-muted mb-2">{{ r.roughCrosscut.cuts.map(c => c.qty + '\u00d7' + fmtIn(c.length) + '"').join(' + ') }} from {{ fmtIn(r.input.stock.length) }}" board · {{ fmtIn(r.roughCrosscut.waste) }}" waste</p>
         <div class="flex flex-wrap gap-3 text-xs text-text-muted mb-3">
@@ -592,7 +592,7 @@
       </div>
 
       <!-- Cross-section SVG (board end view) -->
-      <div class="bg-surface border border-border rounded-lg p-5 print-no-break">
+      <div class="bg-surface border border-border rounded-lg p-5 print-no-break shadow-sheet">
         <!-- Rendered once per resaw group, so it says which run it belongs to
              rather than repeating the same heading verbatim. -->
         <h3 class="text-sm font-semibold text-text-primary mb-3">
@@ -714,7 +714,7 @@
       </template> <!-- end group loop -->
 
       <!-- Single strip layout SVG — rip is the same for all SKUs (always 0.150" face) -->
-      <div class="bg-surface border border-border rounded-lg p-5">
+      <div class="bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h3 class="text-sm font-semibold text-text-primary mb-1">Panel Strip Layout (face view — applies to all SKUs)</h3>
         <div class="flex flex-wrap gap-4 text-xs text-text-muted mb-3">
           <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded bg-yellow-600 opacity-80"></span> Strip (rough rip face)</span>
@@ -741,7 +741,7 @@
       </div>
 
       <!-- Step-by-step instructions -->
-      <div class="bg-surface border border-border rounded-lg p-5 print-break-before">
+      <div class="bg-surface border border-border rounded-lg p-5 print-break-before shadow-sheet">
         <div class="mb-4 no-print">
           <h3 class="text-sm font-semibold text-text-primary">Milling Instructions</h3>
         </div>
@@ -862,7 +862,7 @@
       </div>
 
       <!-- Yield report table -->
-      <div class="bg-surface border border-border rounded-lg p-5 no-print">
+      <div class="bg-surface border border-border rounded-lg p-5 no-print shadow-sheet">
         <h3 class="text-sm font-semibold text-text-primary mb-3">Yield Report</h3>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
@@ -919,7 +919,7 @@
                bg-accent hover:bg-indigo-600 active:bg-indigo-700
                text-white font-semibold
                px-5 py-3 rounded-full
-               shadow-lg
+               shadow-lifted
                transition-all duration-150
                text-sm"
         aria-label="Print milling sheet"

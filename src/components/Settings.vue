@@ -1,5 +1,5 @@
 <template>
-  <section class="bg-surface border border-border rounded-lg overflow-hidden">
+  <section class="bg-surface border border-border rounded-lg overflow-hidden shadow-sheet">
     <!-- Collapsible header -->
     <h2 class="m-0">
       <button

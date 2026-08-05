@@ -22,7 +22,7 @@
         <RouterLink
           :to="tool.path"
           class="group flex flex-col h-full bg-surface border border-border rounded-xl p-5 no-underline
-                 hover:border-text-muted transition-colors"
+                 hover:border-text-muted transition-colors shadow-sheet"
         >
           <Icon :name="tool.icon" size="1.65rem" class="text-text-secondary mb-3" />
           <h2 class="text-base font-semibold text-text-primary m-0 mb-1">{{ tool.title }}</h2>
@@ -36,18 +36,18 @@
     </ul>
 
     <!-- Beta notice -->
-    <div class="bg-warning-bg border border-warning/30 rounded-xl px-4 py-3 text-xs text-warning flex gap-2">
-      <Icon name="alert" size="1.1em" class="mt-px shrink-0" />
-      <p class="m-0">
-        <strong>Beta:</strong> these tools are actively being developed. Results are generated
-        algorithmically — always verify dimensions before cutting.
+    <div class="flex items-start gap-2.5 px-4 py-3 bg-surface border border-border rounded-xl shadow-sheet">
+      <Icon name="alert" size="1.05em" class="mt-px shrink-0 text-warning" />
+      <p class="m-0 text-xs leading-normal text-text-secondary">
+        <strong class="font-semibold text-text-primary">Beta:</strong> these tools are actively being
+        developed. Results are generated algorithmically — always verify dimensions before cutting.
         <a href="https://althoffwoodshop.com/pages/contact" target="_blank" rel="noopener"
-           class="inline-block py-2 underline underline-offset-2 hover:opacity-80">Send feedback</a>
+           class="inline-block py-1 text-text-primary underline underline-offset-2 hover:opacity-75">Send feedback</a>
       </p>
     </div>
 
     <!-- Quick tips -->
-    <section class="bg-surface border border-border rounded-xl p-5">
+    <section class="bg-surface border border-border rounded-xl p-5 shadow-sheet">
       <h2 class="text-base font-semibold text-text-primary m-0 mb-3">Quick tips</h2>
       <ul class="space-y-2 text-xs text-text-secondary list-none p-0 m-0">
         <li v-for="(tip, i) in tips" :key="i" class="flex items-start gap-2">

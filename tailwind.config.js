@@ -45,6 +45,12 @@ export default {
       fontFamily: {
         sans: ['Assistant', 'system-ui', 'sans-serif'],
       },
+      boxShadow: {
+        // Tinted in the header's slate rather than neutral black — black
+        // shadow on a warm ground reads as dirt.
+        sheet: '0 1px 2px rgba(36, 40, 51, 0.04), 0 1px 1px rgba(36, 40, 51, 0.03)',
+        lifted: '0 6px 16px -4px rgba(36, 40, 51, 0.18), 0 2px 6px -2px rgba(36, 40, 51, 0.10)',
+      },
       fontSize: {
         xs:   ['0.75rem',  { lineHeight: '1rem' }],
         sm:   ['0.875rem', { lineHeight: '1.25rem' }],

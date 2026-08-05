@@ -1,5 +1,5 @@
 <template>
-  <section class="bg-surface border border-border rounded-lg overflow-hidden">
+  <section class="bg-surface border border-border rounded-lg overflow-hidden shadow-sheet">
     <!-- Section header -->
     <div class="px-5 py-3 border-b border-border bg-surface-alt flex items-center justify-between gap-3">
       <h2 class="font-semibold text-text-primary m-0">Stock boards</h2>

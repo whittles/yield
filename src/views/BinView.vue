@@ -28,7 +28,7 @@
     </div>
 
     <!-- ── Input card ──────────────────────────────────────────────── -->
-    <div class="bg-surface border border-border rounded-lg p-5 no-print space-y-5">
+    <div class="bg-surface border border-border rounded-lg p-5 no-print space-y-5 shadow-sheet">
 
       <!-- Dimension mode toggle -->
       <div class="flex items-center gap-3">
@@ -150,7 +150,7 @@
       </div>
 
       <!-- Summary -->
-      <div class="bg-surface border border-border rounded-lg p-5">
+      <div class="bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h2 class="text-base font-semibold text-text-primary mb-3">Box Summary</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
           <div class="bg-bg border border-border rounded p-3">
@@ -178,7 +178,7 @@
       </div>
 
       <!-- Cut list table -->
-      <div class="bg-surface border border-border rounded-lg p-5">
+      <div class="bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h2 class="text-base font-semibold text-text-primary mb-3">Cut List</h2>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
@@ -262,7 +262,7 @@
       </div>
 
       <!-- Strip Cut Layout -->
-      <div v-if="stripPlan && stripPlan.length" class="bg-surface border border-border rounded-lg p-5">
+      <div v-if="stripPlan && stripPlan.length" class="bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h2 class="text-base font-semibold text-text-primary mb-1">Strip Cut Layout</h2>
         <p class="text-xs text-text-muted mb-4">
           How to cut this efficiently at the table saw — rip strips first, then crosscut each strip.
@@ -319,7 +319,7 @@
       </div>
 
       <!-- Strip-based sheet layout SVG — visualises the actual cut sequence -->
-      <div v-if="stripPlan && stripPlan.length" class="bg-surface border border-border rounded-lg p-5">
+      <div v-if="stripPlan && stripPlan.length" class="bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h2 class="text-base font-semibold text-text-primary mb-1">Sheet Layout</h2>
         <p class="text-xs text-text-muted mb-4">Strip-based layout — matches your actual cut sequence. Each row = one rip pass.</p>
 
@@ -374,7 +374,7 @@
       </div>
 
       <!-- Assembly notes -->
-      <div class="bg-surface border border-border rounded-lg p-5">
+      <div class="bg-surface border border-border rounded-lg p-5 shadow-sheet">
         <h2 class="text-base font-semibold text-text-primary mb-3">Assembly Notes</h2>
 
         <!-- Key dimensions callout -->
@@ -401,7 +401,7 @@
       <button
         v-if="result"
         @click="printSheet"
-        class="no-print fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent hover:bg-indigo-600 text-white font-semibold px-5 py-3 rounded-full shadow-lg transition-all text-sm"
+        class="no-print fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-accent hover:bg-indigo-600 text-white font-semibold px-5 py-3 rounded-full shadow-lifted transition-all text-sm"
         aria-label="Print bin sheet"
       >
         <Icon name="printer" size="1.15em" />

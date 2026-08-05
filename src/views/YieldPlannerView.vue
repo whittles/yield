@@ -61,7 +61,7 @@
         :disabled="!canCalculate"
         class="w-full sm:w-auto min-h-[48px] px-8 py-3 bg-accent text-white font-semibold text-base rounded
                hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed
-               transition-colors shadow-sm"
+               transition-colors shadow-sheet"
       >
         Calculate Cut Plan
       </button>
@@ -272,7 +272,7 @@
         @click="printResults"
         class="no-print fixed bottom-6 right-6 z-50 flex items-center gap-2
                bg-accent hover:bg-accent-hover active:bg-accent-hover
-               text-white font-semibold min-h-[48px] px-5 rounded-full shadow-lg
+               text-white font-semibold min-h-[48px] px-5 rounded-full shadow-lifted
                transition-colors text-sm"
       >
         <Icon name="printer" size="1.15em" />

@@ -1,14 +1,14 @@
 <template>
   <div>
     <dl class="grid grid-cols-2 sm:grid-cols-3 gap-3 m-0">
-      <div class="bg-surface border border-border rounded-lg px-4 py-3">
+      <div class="bg-surface border border-border rounded-lg px-4 py-3 shadow-sheet">
         <dt class="text-xs text-text-muted uppercase tracking-wide mb-1">Parts placed</dt>
         <dd class="m-0 text-2xl font-bold text-text-primary leading-none">
           {{ summary.placedParts }}<span class="text-sm font-normal text-text-muted"> / {{ summary.totalParts }}</span>
         </dd>
       </div>
 
-      <div class="bg-surface border border-border rounded-lg px-4 py-3">
+      <div class="bg-surface border border-border rounded-lg px-4 py-3 shadow-sheet">
         <dt class="text-xs text-text-muted uppercase tracking-wide mb-1">Boards used</dt>
         <dd class="m-0 text-2xl font-bold text-text-primary leading-none">
           {{ summary.stockUsed }}<span v-if="summary.stockUnused > 0" class="text-sm font-normal text-text-muted"> of {{ summary.stockUsed + summary.stockUnused }}</span>
@@ -17,7 +17,7 @@
 
       <!-- Yield and waste are 100 − x of each other; showing both as headline
            tiles spent half the row on one fact. Waste is now the sub-line. -->
-      <div class="bg-surface border border-border rounded-lg px-4 py-3 col-span-2 sm:col-span-1">
+      <div class="bg-surface border border-border rounded-lg px-4 py-3 col-span-2 sm:col-span-1 shadow-sheet">
         <dt class="text-xs text-text-muted uppercase tracking-wide mb-1">Yield</dt>
         <dd class="m-0 flex items-baseline gap-2">
           <span class="text-2xl font-bold leading-none" :class="yieldTone.text">{{ yieldPct }}%</span>
@@ -34,7 +34,7 @@
     </div>
 
     <!-- What you keep, not just what you lose. -->
-    <div v-if="offcuts.length" class="mt-3 bg-surface border border-border rounded-lg px-4 py-3">
+    <div v-if="offcuts.length" class="mt-3 bg-surface border border-border rounded-lg px-4 py-3 shadow-sheet">
       <h3 class="text-xs text-text-muted uppercase tracking-wide m-0 mb-1.5">Usable offcuts</h3>
       <ul class="list-none p-0 m-0 flex flex-wrap gap-x-5 gap-y-1">
         <li v-for="(o, i) in offcuts" :key="i" class="text-sm">

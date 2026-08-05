@@ -64,8 +64,13 @@ textarea {
   .no-print { display: none !important; }
   .print-only { display: block !important; }
 
-  /* Reset page for shop use */
-  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  /* Reset page for shop use. Paper has its own depth — a printed drop shadow
+     is toner spent on nothing. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    box-shadow: none !important;
+  }
 
   body {
     background: white !important;
