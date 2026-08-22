@@ -409,6 +409,13 @@ export const useProjectStore = defineStore('project', () => {
       trimPctStr: '10',
       // Tapered staves
       staveHeightStr: '6',
+      // Round cut lengths and rip widths up onto a fraction grid. '0' is exact.
+      // 1/16 by default: fine enough that a tapered stack keeps a distinct
+      // length per course, coarse enough to read off a tape.
+      snapDenom: '16',
+      // Stock the user already has, rather than what we would tell them to rip.
+      useStockWidth: false,
+      stockWidthStr: '1',
     }
   }
 

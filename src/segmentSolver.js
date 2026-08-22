@@ -6,6 +6,14 @@
  * joints stagger. This module does the geometry for one ring, for a whole stack,
  * and for the tapered-stave alternative.
  *
+ * Exact geometry lands cut lengths on numbers like 2.1436", which no one sets on
+ * a sled, and it wants a different rip width for every course, which no one
+ * bothers to do. So the shop-facing path rounds the two dimensions a turner
+ * actually sets — the cut length and the rip width — UP onto a 1/8, 1/16 or
+ * 1/32 grid, and takes one rip width for the whole stack. `snapRing` carries the
+ * argument for why up is the only safe direction and why the miter must not be
+ * touched. Exact output is still available and unchanged.
+ *
  * IMPORTANT: this file must stay free of `@/` imports. The alias only resolves
  * inside Vite, so a solver that uses it cannot be loaded by node and therefore
  * cannot be checked outside the browser. Everything here returns raw numbers;
@@ -19,6 +27,25 @@
  *   finished, 1/8" kerf, nested: kerfAlong 0.1294", board 24.6378"
  *                                (27.102" with 10% trim; same-face 37.943")
  *   staveBevel(n, 90) === 180/n exactly;  staveBevel(n, 0) === 0 exactly
+ *
+ *   snapped to 1/16   outer 2.1875" (2 3/16)  strip 1.0000"  turnsTo 8.0000"
+ *                     maxRound 8.1639"  extraOD 0.1639"
+ *   miter is NEVER snapped, at any grid: 15.000° at every denominator.
+ *
+ * ── Acceptance values, stack (n = 12, base 4", 60° wall, 3/4" rings, 6" tall)
+ *   exact       rip 1.3289" (the widest course, unrounded)
+ *   1/16        rip 1.4375" (1 7/16), stripNeeded 1.4146", 7 stop settings
+ *               cut lengths 1.5625 1.8125 2.0000 2.2500 2.5000 2.7500 2.9375
+ *   1/16 note   ring 6 drives the rip width, NOT the widest ring 7 — snapping
+ *               ring 6's length up costs it 0.1004" of strip against ring 7's
+ *               0.0174". This is the whole reason `calcStack` measures strips
+ *               only after lengths are rounded.
+ *   n=24 @ 1/8  natural step 0.1140" < snap step 0.1250" → courses 1 and 2
+ *               merge onto one length. Reported, not silently absorbed.
+ *   90° wall    every course identical BY DESIGN, so mergedCourses is empty —
+ *               rounding did not do that and must not be blamed for it.
+ *   stockWidth 1"    → rings flagged short (bore cannot reach the wall asked)
+ *   stockWidth 1.5"  → nothing short, surplus goes to the bore
  * ───────────────────────────────────────────────────────────────────────────
  */
 
@@ -139,6 +166,129 @@ export function ringGeometry(input) {
   }
 }
 
+/** Snap grids offered to the user. 0 means exact — no rounding at all. */
+export const SNAP_DENOMS = [0, 8, 16, 32]
+
+/**
+ * Round UP to the next 1/denom. `denom` of 0 (or anything not positive and
+ * finite) passes the value through untouched.
+ *
+ * Up, never to-nearest, and that direction is the whole safety argument — see
+ * `snapRing`. The epsilon stops a value already sitting on the grid from
+ * jumping a full step: 2.0 at 1/16 must stay 2.0, not become 2 1/16.
+ */
+export function snapUp(v, denom) {
+  if (!denom || !Number.isFinite(denom) || denom <= 0) return v
+  if (!Number.isFinite(v)) return v
+  return Math.ceil(v * denom - 1e-9) / denom
+}
+
+/**
+ * Re-cut a ring's geometry to numbers a person can actually set on a saw.
+ *
+ * Two things get fixed here, and they are the two things a turner controls:
+ * the LENGTH the sled stop is set to, and the WIDTH the fence is set to. Both
+ * round up. Nothing else moves — in particular the miter does not, because the
+ * miter is what makes the ring close.
+ *
+ * Why rounding cannot break the ring: n identical trapezoids mitered 180/n at
+ * both ends close into a regular polygon at ANY edge length. Closure is the
+ * angle's job. Edge length only decides which diameter you land on. So the
+ * risk of rounding is never a gappy glue-up, only a different size.
+ *
+ * Why rounding UP is safe, whereas to-nearest is not. The two radii carry
+ * opposite requirements:
+ *
+ *   aOut is a MINIMUM — the outer flats must reach OD/2 or the ring cannot be
+ *                       turned fully round.
+ *   aIn  is a MAXIMUM — the inner corners must clear ID/2 or the bore cannot
+ *                       be cut round.
+ *
+ * Rounding the length up only raises aOut. Rounding the strip width up only
+ * lowers aIn. Both move away from their limit, so a snapped ring is always
+ * still buildable, with more wood to remove rather than less. Rounding to
+ * nearest would push some courses under the required diameter, and stock that
+ * finishes undersize cannot be fixed at the lathe.
+ *
+ * In 'finished' mode the target never moves: you still turn to the diameter you
+ * asked for, the snap is margin. In 'blank' mode the nominal circle is the
+ * blank itself, so a bigger blank does finish bigger — reported, not hidden.
+ *
+ * @param {object} geo  a `ringGeometry` result
+ * @param {object} [opts]
+ * @param {number} [opts.snapDenom] round lengths up to 1/denom; 0 = exact
+ * @param {number} [opts.ripWidth]  force the strip width (one fence setting for
+ *                                  a whole stack, or the stock the user owns)
+ */
+export function snapRing(geo, { snapDenom = 0, ripWidth = 0 } = {}) {
+  if (!geo || geo.error) return geo
+
+  const half = (geo.span / 2) * RAD
+  const t = Math.tan(half)
+
+  // What exact geometry asked for, kept so the view can show asked against got.
+  const asked = {
+    outerEdge: geo.outerEdge,
+    innerEdge: geo.innerEdge,
+    stripWidth: geo.stripWidth,
+    aOut: geo.aOut,
+    aIn: geo.aIn,
+    blankDia: geo.aOut * 2,
+    cornerDia: geo.outerCorner * 2,
+  }
+
+  const outerEdge = snapUp(geo.outerEdge, snapDenom)
+  const aOut = outerEdge / (2 * t)
+
+  // How wide this course needs the strip once its length has been rounded up.
+  // Rounding the length up pushes the outer flats out without moving the bore,
+  // so the strip has to grow by exactly that much.
+  const stripNeed = aOut - geo.aIn
+  const stripWidth = ripWidth > 0 ? ripWidth : snapUp(stripNeed, snapDenom)
+  const aIn = aOut - stripWidth
+
+  if (aIn <= 0) {
+    return {
+      ...geo,
+      error:
+        `A ${fmtNum(stripWidth)}" strip is too wide for a ${fmtNum(geo.OD)}" ring in ` +
+        `${geo.n} segments — the segments would meet in the middle. Rip narrower stock.`,
+    }
+  }
+
+  const innerEdge = 2 * aIn * t
+  const outerCorner = aOut / Math.cos(half)
+  const innerCorner = aIn / Math.cos(half)
+
+  return {
+    ...geo,
+    snapDenom,
+    snapped: true,
+    asked,
+    aOut,
+    aIn,
+    outerEdge,
+    innerEdge,
+    stripWidth,
+    outerCorner,
+    innerCorner,
+    turnsTo: geo.mode === MODE_BLANK ? 2 * aOut : geo.OD,
+    // The honest limits of the blank that actually gets glued up: the largest
+    // round outside it can give, and the smallest round bore it can take.
+    maxRound: 2 * aOut,
+    minBore: 2 * innerCorner,
+    // Extra material the rounding added, as diameter, which is how a turner
+    // reads a caliper.
+    extraOD: 2 * (aOut - asked.aOut),
+    extraBore: 2 * (asked.aIn - aIn),
+    // A strip NARROWER than the course needs — only reachable by supplying
+    // stock by hand — leaves the inner corners proud of the bore, so the wall
+    // finishes thinner than asked at n points. Buildable, but not as drawn.
+    stockShort: aIn > asked.aIn + 1e-9,
+    stripNeed,
+  }
+}
+
 /**
  * Ring geometry plus the stock it takes.
  *
@@ -150,12 +300,28 @@ export function ringGeometry(input) {
  * @param {number} [input.ringHeight] height of the ring = thickness of the stock
  * @param {number} [input.kerf]       saw kerf, lost per crosscut
  * @param {number} [input.trimPct]    extra board length for trim/snipe, as a percent
+ * @param {number} [input.snapDenom]  round cut length and rip width up to 1/denom
+ * @param {number} [input.ripWidth]   force the strip width instead of deriving it
  */
 export function calcRing(input) {
-  const geo = ringGeometry(input)
-  if (geo.error) return geo
+  const geo0 = ringGeometry(input)
+  if (geo0.error) return geo0
 
-  const { ringHeight = 0, kerf = 0, trimPct = 0, cutMethod = 'nested' } = input
+  const {
+    ringHeight = 0,
+    kerf = 0,
+    trimPct = 0,
+    cutMethod = 'nested',
+    snapDenom = 0,
+    ripWidth = 0,
+  } = input
+
+  // One fence setting is the physical reality even when nothing is rounded, so
+  // a forced rip width goes through the same path as a snapped one.
+  const geo = snapDenom > 0 || ripWidth > 0
+    ? snapRing(geo0, { snapDenom, ripWidth })
+    : geo0
+  if (geo.error) return geo
 
   const half = (geo.span / 2) * RAD
 
@@ -183,6 +349,7 @@ export function calcRing(input) {
 
   return {
     ...geo,
+    snapDenom,
     ringHeight,
     kerf,
     kerfAlong,
@@ -193,6 +360,8 @@ export function calcRing(input) {
     boardLengthNested: nested * (1 + trimPct / 100),
     boardLengthSameFace: sameFace * (1 + trimPct / 100),
     boardFeet,
+    // Strip length the rounding cost this course, across all n segments.
+    extraStrip: geo.asked ? (geo.outerEdge - geo.asked.outerEdge) * geo.n : 0,
   }
 }
 
@@ -230,6 +399,8 @@ export function calcStack(input) {
     kerf = 0,
     trimPct = 0,
     cutMethod = 'nested',
+    snapDenom = 0,
+    stockWidth = 0,
   } = input
 
   if (!(ringHeight > 0)) {
@@ -261,49 +432,120 @@ export function calcStack(input) {
   const angleMargin = ringHeight * flarePerInch // total, split across both faces
 
   const ringCount = Math.ceil(wallHeight / ringHeight)
-  const rings = []
-  const errors = []
 
+  // Every course is a different diameter, so exact geometry wants a different
+  // rip width for each one. Nobody rips twenty widths: the fence gets set once
+  // and the whole bowl comes off one strip. That makes the rip width a
+  // stack-wide decision, and a stack-wide decision cannot be made until every
+  // course has been sized — hence two passes.
+  const ringSpecs = []
   for (let i = 0; i < ringCount; i++) {
     const midHeight = baseOffset + (i + 0.5) * ringHeight
     const finishOD = baseOD + 2 * midHeight * flarePerInch
     // Extra stock so the ring can be turned to the slope at both its edges.
     const blankOD = finishOD + angleMargin
-
-    const ring = calcRing({
-      n,
-      OD: blankOD,
-      // The bore must reach the ring's bottom edge, which is angleMargin
-      // narrower than its top. Half of it leaves the inside proud.
-      wall: wall + angleMargin,
-      mode,
-      gapDeg,
-      marginIn,
-      marginOut,
-      ringHeight,
-      kerf,
-      trimPct,
-      cutMethod,
+    ringSpecs.push({
+      index: i + 1,
+      midHeight,
+      finishOD,
+      blankOD,
+      input: {
+        n,
+        OD: blankOD,
+        // The bore must reach the ring's bottom edge, which is angleMargin
+        // narrower than its top. Half of it leaves the inside proud.
+        wall: wall + angleMargin,
+        mode,
+        gapDeg,
+        marginIn,
+        marginOut,
+        ringHeight,
+        kerf,
+        trimPct,
+        cutMethod,
+        snapDenom,
+      },
     })
+  }
+
+  // ── Pass 1: the widest strip any course needs, AFTER its length is rounded.
+  // Order matters — rounding a length up pushes the outer flats out, which
+  // widens the strip. Measuring the strips first would under-size the rip.
+  let stripNeeded = 0
+  for (const spec of ringSpecs) {
+    const g = ringGeometry(spec.input)
+    if (g.error) continue
+    const s = snapRing(g, { snapDenom })
+    if (s.error) continue
+    stripNeeded = Math.max(stripNeeded, s.stripNeed)
+  }
+
+  // Stock the user actually owns wins over what we would have chosen, even when
+  // it is too narrow — being told the 1" board won't reach is the useful answer.
+  const ripWidth = stockWidth > 0 ? stockWidth : snapUp(stripNeeded, snapDenom)
+
+  // ── Pass 2: build every course against that one rip width.
+  const rings = []
+  const errors = []
+  for (const spec of ringSpecs) {
+    const ring = calcRing({ ...spec.input, ripWidth })
 
     if (ring.error) {
-      errors.push(`Ring ${i + 1}: ${ring.error}`)
-      rings.push({ index: i + 1, error: ring.error, finishOD, blankOD, midHeight })
+      errors.push(`Ring ${spec.index}: ${ring.error}`)
+      rings.push({
+        index: spec.index,
+        error: ring.error,
+        finishOD: spec.finishOD,
+        blankOD: spec.blankOD,
+        midHeight: spec.midHeight,
+      })
       continue
     }
 
     rings.push({
       ...ring,
-      index: i + 1,
-      midHeight,
-      finishOD,
-      blankOD,
+      index: spec.index,
+      midHeight: spec.midHeight,
+      finishOD: spec.finishOD,
+      blankOD: spec.blankOD,
       // Every other course rotates half a segment so the joints stagger.
-      rotateBy: i % 2 === 1 ? 180 / n : 0,
+      rotateBy: spec.index % 2 === 0 ? 180 / n : 0,
     })
   }
 
   const good = rings.filter((r) => !r.error)
+
+  // Rounding merges two courses whenever the snap step is coarser than the
+  // taper's own step. The blank then steps instead of tapering. It is still
+  // turnable — every course was rounded UP, so the material is there — but more
+  // of it ends up as shavings, and the user should hear that from us rather
+  // than notice it at the lathe.
+  const exactEdge = (r) => r.asked?.outerEdge ?? r.outerEdge
+
+  const byLength = new Map()
+  for (const r of good) {
+    const key = r.outerEdge.toFixed(4)
+    if (!byLength.has(key)) byLength.set(key, [])
+    byLength.get(key).push(r)
+  }
+
+  const mergedCourses = [...byLength.values()]
+    .filter((g) => g.length > 1)
+    // A straight-sided bowl has identical courses by design, and rounding did
+    // not do that to it. Reporting those as merged would send someone looking
+    // for a problem they don't have, so only groups whose EXACT lengths
+    // actually differed count as something the rounding caused.
+    .filter((g) => {
+      const exact = g.map(exactEdge)
+      return Math.max(...exact) - Math.min(...exact) > 1e-9
+    })
+    .map((g) => g.map((r) => r.index))
+
+  const naturalStep = good.length > 1 ? Math.abs(exactEdge(good[1]) - exactEdge(good[0])) : 0
+  const snapStep = snapDenom > 0 ? 1 / snapDenom : 0
+
+  // Courses the supplied stock cannot bore out to the wall thickness asked for.
+  const shortRings = good.filter((r) => r.stockShort).map((r) => r.index)
   const base = solidBase
     ? { diameter: baseOD, thickness: ringHeight, boardFeet: (Math.PI * (baseOD / 2) ** 2 * ringHeight) / 144 }
     : null
@@ -321,13 +563,31 @@ export function calcStack(input) {
     angleMargin,
     gapDeg,
     span: 360 / n - gapDeg,
+    snapDenom,
+    stockWidth,
+    // Rounding diagnostics the view turns into plain-language warnings.
+    mergedCourses,
+    naturalStep,
+    snapStep,
+    shortRings,
     totals: {
       ringCount: good.length,
       segments: good.length * n,
       boardLength: good.reduce((s, r) => s + r.boardLength, 0),
       boardFeet: good.reduce((s, r) => s + r.boardFeet, 0) + (base ? base.boardFeet : 0),
-      // Rip everything to the widest strip and one setup does the whole bowl.
-      widestStrip: good.reduce((s, r) => Math.max(s, r.stripWidth), 0),
+      // One fence setting for the whole bowl. `stripNeeded` is what the widest
+      // course actually requires; `ripWidth` is that rounded up, or the stock
+      // the user said they have.
+      ripWidth,
+      stripNeeded,
+      // Kept under its old name: every consumer means "the one rip width".
+      widestStrip: ripWidth,
+      // What the rounding cost, so the trade is visible rather than asserted.
+      extraStrip: good.reduce((s, r) => s + (r.extraStrip ?? 0), 0),
+      maxExtraOD: good.reduce((s, r) => Math.max(s, r.extraOD ?? 0), 0),
+      maxExtraBore: good.reduce((s, r) => Math.max(s, r.extraBore ?? 0), 0),
+      // Distinct sled stop settings — the number of times you touch the stop.
+      stopSettings: byLength.size,
       boardLengthSameFace: good.reduce((s, r) => s + r.boardLengthSameFace, 0),
       boardLengthNested: good.reduce((s, r) => s + r.boardLengthNested, 0),
     },
@@ -372,7 +632,10 @@ export function staveBevel(n, alphaDeg) {
  * @param {string} [input.mode]     diameter convention
  */
 export function calcStave(input) {
-  const { n, baseOD, wallAngle, height, wall = 0, mode = MODE_FINISHED, kerf = 0, trimPct = 0 } = input
+  const {
+    n, baseOD, wallAngle, height, wall = 0, mode = MODE_FINISHED,
+    kerf = 0, trimPct = 0, snapDenom = 0, stockWidth = 0,
+  } = input
 
   if (!Number.isFinite(n) || n < 3) {
     return { error: 'A stave vessel needs at least 3 staves.' }
@@ -399,20 +662,42 @@ export function calcStave(input) {
   const aBase = mode === MODE_BLANK ? rBase * Math.cos(half) : rBase
   const aTop = mode === MODE_BLANK ? rTop * Math.cos(half) : rTop
 
-  const widthBase = 2 * aBase * Math.tan(half)
-  const widthTop = 2 * aTop * Math.tan(half)
-  // Length along the slope, which is what you cut — not the vertical height.
-  const staveLength = vertical ? height : height / Math.sin(a)
+  const t = Math.tan(half)
+  const asked = {
+    widthBase: 2 * aBase * t,
+    widthTop: 2 * aTop * t,
+    // Length along the slope, which is what you cut — not the vertical height.
+    staveLength: vertical ? height : height / Math.sin(a),
+    baseOD,
+    topOD,
+  }
+
+  // Same rule as a ring: the layout dimensions round UP, so a snapped stave is
+  // always big enough to turn down to the vessel that was asked for. Here the
+  // two end widths are what get marked on the board, so both of them round,
+  // along with the length.
+  const widthBase = snapUp(asked.widthBase, snapDenom)
+  const widthTop = snapUp(asked.widthTop, snapDenom)
+  const staveLength = snapUp(asked.staveLength, snapDenom)
+
+  // Back out the vessel those rounded widths actually produce.
+  const diaFor = (w) => {
+    const aFlat = w / (2 * t)
+    return mode === MODE_BLANK ? (2 * aFlat) / Math.cos(half) : 2 * aFlat
+  }
 
   const boardLength = n * (staveLength + kerf) * (1 + trimPct / 100)
+  const widest = Math.max(widthTop, widthBase)
 
   return {
     error: null,
     n,
     wallAngle,
     height,
-    baseOD,
-    topOD,
+    snapDenom,
+    asked: snapDenom > 0 ? asked : null,
+    baseOD: diaFor(widthBase),
+    topOD: diaFor(widthTop),
     bevel: staveBevel(n, wallAngle),
     // Taper per edge, so it can be laid out with a straightedge.
     taperPerEdge: (widthTop - widthBase) / 2,
@@ -420,7 +705,15 @@ export function calcStave(input) {
     widthTop,
     staveLength,
     boardLength,
-    boardFeet: (Math.max(widthTop, widthBase) * boardLength * wall) / 144,
+    // Rounding both ends onto the same grid line flattens the taper into a
+    // cylinder. Cheap to detect and badly wrong to ship silently.
+    taperLost: widthTop === widthBase && asked.widthTop !== asked.widthBase,
+    // A stave is marked out and sawn to its taper, so stock only has to be wide
+    // enough for the wider end — there is nothing to turn away here.
+    stockWidth,
+    stockShort: stockWidth > 0 && stockWidth < widest - 1e-9,
+    stockNeeded: widest,
+    boardFeet: (widest * boardLength * wall) / 144,
   }
 }
 
