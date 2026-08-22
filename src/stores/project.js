@@ -200,6 +200,9 @@ export const useProjectStore = defineStore('project', () => {
     if (isPlainObject(data.binSettings)) {
       binSettings.value = { ...binSettings.value, ...data.binSettings }
     }
+    if (isPlainObject(data.segSettings)) {
+      segSettings.value = { ...segSettings.value, ...data.segSettings }
+    }
     if (isPlainObject(data.crosscutSettings)) {
       const lengths = data.crosscutSettings.blankLengths
       crosscutSettings.value = {
@@ -212,6 +215,7 @@ export const useProjectStore = defineStore('project', () => {
     resawResults.value = null
     resawError.value   = null
     binResults.value   = null
+    segResults.value   = null
   }
 
   // ─── Persistence (localStorage) ────────────────────────────────────────────
@@ -228,6 +232,7 @@ export const useProjectStore = defineStore('project', () => {
       crosscutSettings: crosscutSettings.value,
       resawSkus: resawSkus.value,
       binSettings: binSettings.value,
+      segSettings: segSettings.value,
     }
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
@@ -307,6 +312,8 @@ export const useProjectStore = defineStore('project', () => {
     resawSkus.value = [...defaultSkus]
     binSettings.value = defaultBinSettings()
     binResults.value = null
+    segSettings.value = defaultSegSettings()
+    segResults.value = null
 
     results.value = null
     resultsStale.value = false
@@ -376,10 +383,42 @@ export const useProjectStore = defineStore('project', () => {
   const binSettings = ref(defaultBinSettings())
   const binResults = ref(null)
 
+  // ─── Segment Planner ───────────────────────────────────────────────────────
+  // Segmented turning: a stack of mitered rings. Same deal as the Box Planner —
+  // state lives here so it inherits persistence, Export, and Reset.
+  function defaultSegSettings() {
+    return {
+      mode: 'stack',            // 'stack' | 'ring' | 'stave'
+      diameterMode: 'finished', // 'finished' | 'blank' — see segmentSolver.js
+      segments: 12,
+      // Bowl stack
+      baseODStr: '4',
+      wallAngleStr: '60',
+      wallStr: '3/4',
+      ringHeightStr: '3/4',
+      totalHeightStr: '6',
+      baseStyle: 'solid',
+      // Single ring
+      ringODStr: '8',
+      // Open / gapped rings
+      gapDegStr: '0',
+      marginInStr: '0',
+      marginOutStr: '0',
+      // Stock allowances
+      kerfStr: '1/8',
+      trimPctStr: '10',
+      // Tapered staves
+      staveHeightStr: '6',
+    }
+  }
+
+  const segSettings = ref(defaultSegSettings())
+  const segResults = ref(null)
+
   // Watch all reactive state (deep). Must come after every ref above is
   // declared — a watch registered earlier reads them in the temporal dead zone.
   watch(
-    [projectName, settings, stock, parts, resawStock, resawSettings, crosscutSettings, resawSkus, binSettings],
+    [projectName, settings, stock, parts, resawStock, resawSettings, crosscutSettings, resawSkus, binSettings, segSettings],
     debouncedSave,
     { deep: true },
   )
@@ -483,5 +522,7 @@ export const useProjectStore = defineStore('project', () => {
     addResawSku, removeResawSku, calculateResaw,
     // Box Planner
     binSettings, binResults,
+    // Segment Planner
+    segSettings, segResults,
   }
 })

@@ -12,6 +12,7 @@ const router = createRouter({
     { path: '/yield', component: () => import('@/views/YieldPlannerView.vue'), meta: { title: 'Yield Planner' } },
     { path: '/resaw', component: () => import('@/views/ResawView.vue'),        meta: { title: 'Resaw Planner' } },
     { path: '/bin',   component: () => import('@/views/BinView.vue'),          meta: { title: 'Box Planner' } },
+    { path: '/segment', component: () => import('@/views/SegmentView.vue'),    meta: { title: 'Segment Planner' } },
     { path: '/:pathMatch(.*)*', redirect: '/home' },
   ],
 })

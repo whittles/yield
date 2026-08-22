@@ -93,6 +93,12 @@ const tools = [
     title: 'Box Planner',
     blurb: 'Open-top storage bin with a dado bottom. Enter inner or outer dimensions and a quantity — get a full cut list and the minimum sheet you can cut it from.',
   },
+  {
+    path: '/segment',
+    icon: 'ring',
+    title: 'Segment Planner',
+    blurb: 'Segmented bowls and vessels. Set a base diameter, wall angle and ring height — get the miter, cut length and rip width for every ring, board feet for the whole stack, and a segment template you print at full scale.',
+  },
 ]
 
 const tips = [

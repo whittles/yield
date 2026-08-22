@@ -90,6 +90,16 @@ textarea {
     page-break-inside: avoid;
   }
 
+  /* The full-scale template is sized in real inches so it prints 1:1. The rule
+     above would quietly scale it to fit the content box, and a 1:1 template
+     that isn't 1:1 is worse than no template at all — someone cuts to it. The
+     component sets --fs-w/--fs-h inline, in inches. */
+  .fullscale svg {
+    max-width: none !important;
+    width: var(--fs-w) !important;
+    height: var(--fs-h) !important;
+  }
+
   /* Keep instruction steps together */
   .print-step { page-break-inside: avoid; }
 
