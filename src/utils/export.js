@@ -15,6 +15,7 @@ export function exportProject(state) {
     crosscutSettings: state.crosscutSettings,
     resawSkus: state.resawSkus,
     binSettings: state.binSettings,
+    segSettings: state.segSettings,
   }, null, 2);
 
   const slug = String(state.projectName || '')

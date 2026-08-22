@@ -113,6 +113,7 @@ const tabs = [
   { key: 'yield', path: '/yield', label: 'Yield Planner' },
   { key: 'resaw', path: '/resaw', label: 'Resaw Planner' },
   { key: 'bin',   path: '/bin',   label: 'Box Planner' },
+  { key: 'segment', path: '/segment', label: 'Segment Planner' },
 ]
 
 // Derive active tab from the URL so it survives refresh and deep links.
