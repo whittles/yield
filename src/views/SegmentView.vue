@@ -20,6 +20,12 @@
       <div style="font-size:9pt; color:#555;">
         Beta: this plan is generated algorithmically. Check every dimension against your stock before cutting.
       </div>
+      <!-- A printed sheet outlives the screen it came from, so it has to say
+           which convention produced its numbers. -->
+      <div v-if="result" style="font-size:9pt; color:#555; margin-top:2pt;">
+        {{ snapping ? `Lengths rounded up to the nearest ${snapLabel}` : 'Exact geometry, unrounded' }}<template
+          v-if="ripWidthIn"> · one strip ripped to {{ fmt(ripWidthIn) }}"</template> · miter exact
+      </div>
     </div>
 
     <!-- ── Page header ─────────────────────────────────────────────── -->
@@ -64,6 +70,19 @@
             ? 'The size after turning. Segments are cut oversize so the ring cleans up fully round.'
             : 'The corners of the glued-up blank. Turning round loses the corners, so it finishes undersize.' }}
         </span>
+      </div>
+
+      <!-- Rounding grid -->
+      <div class="flex flex-wrap items-center gap-3 pt-1 border-t border-border">
+        <span class="text-sm text-text-muted pt-3">Round to:</span>
+        <div class="flex rounded overflow-hidden border border-border text-sm mt-3">
+          <button
+            v-for="s in SNAP_CHOICES" :key="s.key"
+            @click="snapDenom = s.key"
+            :class="['px-4 min-h-[44px] transition-colors', snapDenom === s.key ? 'bg-accent text-white' : 'bg-bg text-text-muted hover:text-text-primary']"
+          >{{ s.label }}</button>
+        </div>
+        <span class="text-xs text-text-muted mt-3 max-w-md">{{ snapHint }}</span>
       </div>
 
       <!-- Segments -->
@@ -169,6 +188,36 @@
         </span>
       </div>
 
+      <!-- Stock on hand -->
+      <div class="flex flex-wrap items-center gap-3 pt-1 border-t border-border">
+        <span class="text-sm text-text-muted pt-3">Stock:</span>
+        <div class="flex rounded overflow-hidden border border-border text-sm mt-3">
+          <button
+            @click="useStockWidth = false"
+            :class="['px-4 min-h-[44px] transition-colors', !useStockWidth ? 'bg-accent text-white' : 'bg-bg text-text-muted hover:text-text-primary']"
+          >Rip to fit</button>
+          <button
+            @click="useStockWidth = true"
+            :class="['px-4 min-h-[44px] transition-colors', useStockWidth ? 'bg-accent text-white' : 'bg-bg text-text-muted hover:text-text-primary']"
+          >I already have</button>
+        </div>
+        <div v-if="useStockWidth" class="mt-3 flex items-baseline gap-2">
+          <div class="w-20">
+            <label for="seg-stockw" class="sr-only">Stock width</label>
+            <input type="text" id="seg-stockw" v-model="stockWidthStr" v-bind="fieldAttrs('Stock width')" placeholder="1" />
+          </div>
+          <span class="text-xs text-text-muted">
+            " wide × <span class="font-mono">{{ fmt(stockThicknessIn) }}"</span> thick
+            <template v-if="mode !== 'stave'">(from ring height)</template>
+          </span>
+        </div>
+        <span v-else class="text-xs text-text-muted mt-3 max-w-md">
+          {{ mode === 'stave'
+            ? 'Stock has to reach the wide end of a stave — nothing to turn away here.'
+            : 'One rip width for the whole build, taken from the course that needs the most.' }}
+        </span>
+      </div>
+
       <!-- Open / gapped rings + allowances -->
       <details v-if="mode !== 'stave'" class="border-t border-border pt-4">
         <summary class="text-sm text-text-primary cursor-pointer min-h-[44px] flex items-center select-none">
@@ -260,11 +309,20 @@
         </ul>
       </div>
 
+      <!-- What the rounding and the stock did. Prints: it changes the result. -->
+      <div v-for="a in advisories" :key="a.key"
+        class="bg-warning-bg border border-warning/30 rounded-lg px-4 py-3 print-no-break">
+        <p class="text-sm font-semibold text-warning">{{ a.title }}</p>
+        <ul class="mt-2 space-y-1 text-sm text-text-secondary list-disc list-inside">
+          <li v-for="(line, i) in a.lines" :key="i">{{ line }}</li>
+        </ul>
+      </div>
+
       <!-- ── Ring / stack drawings ─────────────────────────────────── -->
       <section v-if="result.viewMode !== 'stave' && refRing" class="bg-surface border border-border rounded-lg overflow-hidden shadow-sheet print-no-break">
         <div class="px-5 py-3 border-b border-border bg-surface-alt">
           <h2 class="text-base font-semibold text-text-primary">
-            {{ result.viewMode === 'stack' ? `Ring ${refRing.index} — widest course` : 'Ring plan' }}
+            {{ result.viewMode === 'stack' ? `Ring ${refRing.index} — largest course` : 'Ring plan' }}
           </h2>
         </div>
         <div class="p-5 grid gap-6 sm:grid-cols-2">
@@ -355,7 +413,8 @@
           <p class="text-xs text-text-muted mt-0.5">
             Every course, drawn to one shared scale so the taper is real —
             ring {{ gallery[0].index }} against ring {{ gallery[gallery.length - 1].index }}.
-            Print the sheet for these at full size.
+            All of them come off one <span class="font-mono">{{ fmt(result.totals.ripWidth) }}"</span>
+            strip; only the length changes. Print the sheet for these at full size.
           </p>
         </div>
         <ul class="p-5 flex flex-wrap gap-x-5 gap-y-4 items-end">
@@ -371,7 +430,7 @@
               Ring {{ g.index }}
             </div>
             <div class="font-mono text-xs font-semibold text-text-primary">
-              {{ fmt(g.outerEdge) }}" × {{ fmt(g.stripWidth) }}"
+              {{ fmt(g.outerEdge) }}"
             </div>
           </li>
         </ul>
@@ -383,9 +442,17 @@
           <h2 class="text-base font-semibold text-text-primary">Ring cut list</h2>
           <p class="text-xs text-text-muted mt-0.5">
             {{ result.n }} segments per ring · miter
-            <span class="font-mono font-semibold">{{ fmtDeg(refRing?.miter) }}°</span> each end · rip strips to the width shown
+            <span class="font-mono font-semibold">{{ fmtDeg(refRing?.miter) }}°</span> each end ·
+            one strip, ripped to
+            <span class="font-mono font-semibold">{{ fmt(result.totals.ripWidth) }}"</span>
           </p>
-          <p class="text-xs text-text-muted mt-1">
+          <p v-if="snapping" class="text-xs text-text-muted mt-1">
+            Every length is a round {{ snapLabel }}, so the stop can be set off a tape.
+            The miter is not rounded and never should be — that angle is the whole reason
+            the ring closes, and {{ result.totals.stopSettings }} stop
+            {{ result.totals.stopSettings === 1 ? 'setting' : 'settings' }} covers the bowl.
+          </p>
+          <p v-else class="text-xs text-text-muted mt-1">
             These come off a tangent, so most land between fractions and are shown as decimals.
             Set the stop from the printed template rather than chasing the last thousandth on a rule.
           </p>
@@ -398,10 +465,10 @@
             <tr class="bg-surface-alt text-xs uppercase tracking-wide text-text-muted">
               <th scope="col" class="text-left px-3 py-2 print-tick-col">Done</th>
               <th scope="col" class="text-left px-3 py-2">Ring</th>
-              <th scope="col" class="text-right px-3 py-2">Blank OD</th>
+              <!-- Cut length leads: it is the only per-ring number you set. -->
               <th scope="col" class="text-right px-3 py-2">Cut length</th>
-              <th scope="col" class="text-right px-3 py-2">Inner edge</th>
-              <th scope="col" class="text-right px-3 py-2">Strip width</th>
+              <th scope="col" class="text-right px-3 py-2">Blank OD</th>
+              <th v-if="snapping" scope="col" class="text-right px-3 py-2">Turn away</th>
               <th scope="col" class="text-right px-3 py-2">Board</th>
             </tr>
           </thead>
@@ -413,10 +480,11 @@
                 <span class="font-semibold text-text-primary">{{ ring.index }}</span>
                 <span v-if="ring.rotateBy" class="text-xs text-text-muted ml-1">· offset</span>
               </td>
-              <td class="px-3 py-2 text-right font-mono">{{ fmt(ring.OD) }}"</td>
               <td class="px-3 py-2 text-right font-mono font-semibold text-text-primary print-dimension">{{ fmt(ring.outerEdge) }}"</td>
-              <td class="px-3 py-2 text-right font-mono">{{ fmt(ring.innerEdge) }}"</td>
-              <td class="px-3 py-2 text-right font-mono font-semibold text-text-primary print-dimension">{{ fmt(ring.stripWidth) }}"</td>
+              <td class="px-3 py-2 text-right font-mono">{{ fmt(ring.maxRound ?? ring.OD) }}"</td>
+              <td v-if="snapping" class="px-3 py-2 text-right font-mono text-text-secondary">
+                {{ ring.extraOD > 0.0005 ? `${fmt(ring.extraOD)}"` : '—' }}
+              </td>
               <td class="px-3 py-2 text-right font-mono">{{ fmt(ring.boardLength) }}"</td>
             </tr>
           </tbody>
@@ -424,10 +492,9 @@
             <tr class="bg-surface-alt border-t border-border font-semibold">
               <td class="px-3 py-2"></td>
               <td class="px-3 py-2">{{ result.totals.ringCount }} rings</td>
-              <td class="px-3 py-2"></td>
               <td class="px-3 py-2 text-right font-mono">{{ result.totals.segments }} cuts</td>
               <td class="px-3 py-2"></td>
-              <td class="px-3 py-2"></td>
+              <td v-if="snapping" class="px-3 py-2"></td>
               <td class="px-3 py-2 text-right font-mono">{{ fmt(result.totals.boardLength) }}"</td>
             </tr>
           </tfoot>
@@ -441,8 +508,11 @@
               <span class="font-mono font-semibold text-lg text-text-primary print-dimension">{{ fmt(ring.outerEdge) }}"</span>
             </div>
             <dl class="mt-1 grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-text-secondary">
-              <div class="flex justify-between"><dt>Strip width</dt><dd class="font-mono font-semibold">{{ fmt(ring.stripWidth) }}"</dd></div>
-              <div class="flex justify-between"><dt>Blank OD</dt><dd class="font-mono">{{ fmt(ring.OD) }}"</dd></div>
+              <div class="flex justify-between"><dt>Blank OD</dt><dd class="font-mono">{{ fmt(ring.maxRound ?? ring.OD) }}"</dd></div>
+              <div v-if="snapping" class="flex justify-between">
+                <dt>Turn away</dt>
+                <dd class="font-mono">{{ ring.extraOD > 0.0005 ? `${fmt(ring.extraOD)}"` : '—' }}</dd>
+              </div>
               <div class="flex justify-between"><dt>Inner edge</dt><dd class="font-mono">{{ fmt(ring.innerEdge) }}"</dd></div>
               <div class="flex justify-between"><dt>Board</dt><dd class="font-mono">{{ fmt(ring.boardLength) }}"</dd></div>
             </dl>
@@ -645,7 +715,7 @@
             :style="{ '--fs-w': `${t.w}in`, '--fs-h': `${t.h}in` }"
           >
             <div style="font-size:8pt; color:#555; margin-bottom:2pt;">
-              {{ t.label }} · cut {{ t.count }} · miter {{ t.miter }}°
+              {{ t.label }} · cut {{ t.count }} @ {{ fmt(t.length) }}" · miter {{ t.miter }}°
             </div>
             <div v-if="t.tooWide" style="font-size:8pt; color:#92400e; margin-bottom:2pt;">
               {{ fmt(t.w) }}" wide — wider than the {{ USABLE_PAGE_IN }}" of usable page.
@@ -690,7 +760,7 @@ import Icon from '@/components/Icon.vue'
 import { ref, computed, watch, useId } from 'vue'
 import { parseFraction, validateDimension, formatInches } from '@/utils/fractions'
 import {
-  calcRing, calcStack, calcStave, ringOutlines, segmentOutline,
+  calcRing, calcStack, calcStave, ringOutlines, segmentOutline, snapUp,
 } from '@/segmentSolver'
 import { useProjectStore } from '@/stores/project'
 
@@ -705,6 +775,14 @@ const MODES = [
   { key: 'stack', label: 'Bowl stack', hint: 'A stack of mitered rings — the usual segmented bowl' },
   { key: 'ring',  label: 'Single ring', hint: 'One ring on its own, for a feature course' },
   { key: 'stave', label: 'Tapered staves', hint: 'Full-height staves instead of courses' },
+]
+
+// Stored as strings because they are button keys bound straight to the store.
+const SNAP_CHOICES = [
+  { key: '0',  label: 'Exact' },
+  { key: '32', label: '1/32"' },
+  { key: '16', label: '1/16"' },
+  { key: '8',  label: '1/8"' },
 ]
 
 // ── Inputs, bound onto the store so they persist and export ──────────
@@ -731,6 +809,9 @@ const marginOutStr    = bound('marginOutStr')
 const kerfStr         = bound('kerfStr')
 const trimPctStr      = bound('trimPctStr')
 const staveHeightStr  = bound('staveHeightStr')
+const snapDenom       = bound('snapDenom')
+const useStockWidth   = bound('useStockWidth')
+const stockWidthStr   = bound('stockWidthStr')
 
 const solveError = ref('')
 const liveMessage = ref('')
@@ -743,11 +824,54 @@ const today = new Date().toLocaleDateString('en-US', {
 const fmt = formatInches
 const fmtDeg = (v) => (Number.isFinite(v) ? v.toFixed(2).replace(/\.?0+$/, '') : '?')
 
+// ── Rounding ─────────────────────────────────────────────────────────
+const snapDenomNum = computed(() => Number(snapDenom.value) || 0)
+const snapping = computed(() => snapDenomNum.value > 0)
+const snapLabel = computed(
+  () => SNAP_CHOICES.find((s) => s.key === String(snapDenom.value))?.label ?? 'Exact',
+)
+
+/** How far one grid step moves the DIAMETER.
+ *
+ * Cut length feeds diameter through 1/tan(180/n), so the same 1/8" step is
+ * 0.30" of OD at 8 segments and 0.95" at 24. That amplification is the only
+ * real cost of rounding, so it gets quoted live against the segment count the
+ * user has actually typed rather than left to be discovered at the lathe.
+ */
+const odPerStep = computed(() => {
+  const n = Number(segments.value)
+  if (!snapping.value || !Number.isInteger(n) || n < 3) return 0
+  return 1 / snapDenomNum.value / Math.tan(((180 / n) * Math.PI) / 180)
+})
+
+const snapHint = computed(() => {
+  if (!snapping.value) {
+    return 'Exact geometry, to the thousandth. Right to the last decimal, but nobody sets a sled stop to 2.1436".'
+  }
+  return `Cut lengths and the rip width round up to the nearest ${snapLabel.value}. At ` +
+    `${segments.value} segments that puts up to ${fmt(odPerStep.value)}" on the blank diameter — ` +
+    'wood you turn away, never wood you come up short of.'
+})
+
+// ── Stock on hand ────────────────────────────────────────────────────
+// 0 means "we choose", which is what the solvers read as "derive the width".
+const stockWidthIn = computed(() => (useStockWidth.value ? parseFraction(stockWidthStr.value) : 0))
+
+// Thickness is never a separate question: for a ring it IS the ring height, and
+// for a stave it is the wall. Asking twice would give the same number two
+// sources of truth.
+const stockThicknessIn = computed(() =>
+  parseFraction(mode.value === 'stave' ? wallStr.value : ringHeightStr.value),
+)
+
 // ── Validation ───────────────────────────────────────────────────────
 // Which fields are live depends on the mode; validating hidden fields would
 // block the button over a number the user cannot see.
 const activeFields = computed(() => {
-  const shared = [{ ref: wallStr, label: 'Wall thickness' }]
+  const shared = [
+    { ref: wallStr, label: 'Wall thickness' },
+    ...(useStockWidth.value ? [{ ref: stockWidthStr, label: 'Stock width' }] : []),
+  ]
   const allowances = [
     { ref: gapDegStr,    label: 'Open gap',        allowZero: true },
     { ref: marginInStr,  label: 'Inner margin',    allowZero: true },
@@ -825,7 +949,13 @@ const result = computed(() => store.segResults ?? null)
 
 // Switching what you're building invalidates the plan on screen. Showing the
 // old one is worse than showing none, because it still looks authoritative.
-watch(mode, () => { store.segResults = null; solveError.value = '' })
+// The rounding grid and the stock toggle belong here for the same reason: both
+// rewrite every number in the plan, so a stale sheet under a changed toggle
+// reads as a sheet computed that way.
+watch([mode, snapDenom, useStockWidth], () => {
+  store.segResults = null
+  solveError.value = ''
+})
 
 function calculate() {
   solveError.value = ''
@@ -841,12 +971,14 @@ function calculate() {
     marginOut: parseFraction(marginOutStr.value),
     kerf: parseFraction(kerfStr.value),
     trimPct: parseFraction(trimPctStr.value),
+    snapDenom: snapDenomNum.value,
   }
   try {
     let out
     if (mode.value === 'stack') {
       out = calcStack({
         ...shared,
+        stockWidth: stockWidthIn.value,
         baseOD: parseFraction(baseODStr.value),
         wallAngle: parseFraction(wallAngleStr.value),
         wall: parseFraction(wallStr.value),
@@ -857,6 +989,9 @@ function calculate() {
     } else if (mode.value === 'ring') {
       out = calcRing({
         ...shared,
+        // A lone ring has only one strip width to begin with, so supplied stock
+        // simply becomes that width.
+        ripWidth: stockWidthIn.value,
         OD: parseFraction(ringODStr.value),
         wall: parseFraction(wallStr.value),
         ringHeight: parseFraction(ringHeightStr.value),
@@ -864,6 +999,7 @@ function calculate() {
     } else {
       out = calcStave({
         ...shared,
+        stockWidth: stockWidthIn.value,
         baseOD: parseFraction(baseODStr.value),
         wallAngle: parseFraction(wallAngleStr.value),
         height: parseFraction(staveHeightStr.value),
@@ -893,13 +1029,18 @@ function printSheet() { window.print() }
 // ── Derived views of the result ──────────────────────────────────────
 const buildableRings = computed(() => (result.value?.rings ?? []).filter((r) => !r.error))
 
-/** The ring the drawings and template describe: the widest course, which is the
- *  one most likely to run out of stock width. */
+/** The ring the drawings and template describe.
+ *
+ *  This used to pick the widest STRIP, on the reasoning that it was the course
+ *  most likely to run out of stock width. Every course now comes off one strip
+ *  of the same width, so that test picks whichever ring happens to be first —
+ *  the smallest. Longest cut length is the meaningful "biggest ring" now, and
+ *  it is also still the one that most nearly runs out of board. */
 const refRing = computed(() => {
   if (!result.value) return null
   if (result.value.viewMode === 'ring') return result.value
   if (result.value.viewMode === 'stack') {
-    return buildableRings.value.reduce((a, b) => (!a || b.stripWidth > a.stripWidth ? b : a), null)
+    return buildableRings.value.reduce((a, b) => (!a || b.outerEdge > a.outerEdge ? b : a), null)
   }
   return null
 })
@@ -911,8 +1052,9 @@ const summaryTiles = computed(() => {
     return [
       { label: 'Rings', value: String(r.totals.ringCount) },
       { label: 'Segments', value: String(r.totals.segments) },
+      // The number that used to be twenty numbers.
+      { label: 'Rip to', value: `${fmt(r.totals.ripWidth)}"` },
       { label: 'Board feet', value: r.totals.boardFeet.toFixed(2) },
-      { label: 'Widest strip', value: `${fmt(r.totals.widestStrip)}"` },
     ]
   }
   if (r.viewMode === 'ring') {
@@ -920,7 +1062,7 @@ const summaryTiles = computed(() => {
       { label: 'Segments', value: String(r.n) },
       { label: 'Miter', value: `${fmtDeg(r.miter)}°` },
       { label: 'Cut length', value: `${fmt(r.outerEdge)}"` },
-      { label: 'Strip width', value: `${fmt(r.stripWidth)}"` },
+      { label: 'Rip to', value: `${fmt(r.stripWidth)}"` },
     ]
   }
   return [
@@ -931,18 +1073,120 @@ const summaryTiles = computed(() => {
   ]
 })
 
+/** Things the rounding or the supplied stock did that the user needs told.
+ *
+ * All of these are advisories, not errors: a merged course still glues up and a
+ * narrow board still makes a ring. What they change is the finished result, and
+ * a plan that quietly changes the finished result is the one thing this sheet
+ * must not do. */
+const advisories = computed(() => {
+  const r = result.value
+  if (!r) return []
+  const out = []
+
+  const courseList = (idx) => {
+    if (idx.length === 1) return `Course ${idx[0]}`
+    if (idx.length === 2) return `Courses ${idx[0]} and ${idx[1]}`
+    return `Courses ${idx.slice(0, -1).join(', ')} and ${idx[idx.length - 1]}`
+  }
+
+  if (r.viewMode === 'stack' && r.mergedCourses?.length) {
+    out.push({
+      key: 'merged',
+      title: `Rounding to ${snapLabel.value} merges courses`,
+      lines: [
+        ...r.mergedCourses.map(
+          (g) => `${courseList(g)} land on the same ${fmt(
+            buildableRings.value.find((x) => x.index === g[0])?.outerEdge,
+          )}" cut length.`,
+        ),
+        `The grid step (${fmt(r.snapStep)}") is coarser than the taper's own step ` +
+          `(${fmt(r.naturalStep)}"), so the blank steps instead of tapering.`,
+        'Nothing is undersize — every course rounded up — but more wood ends up as ' +
+          'shavings. A finer grid keeps each course its own size.',
+      ],
+    })
+  }
+
+  if (r.viewMode === 'stack' && r.shortRings?.length) {
+    out.push({
+      key: 'short',
+      title: `${fmt(r.totals.ripWidth)}" stock is narrower than ${
+        r.shortRings.length === 1 ? 'one course' : `${r.shortRings.length} courses`
+      } need`,
+      lines: [
+        `${courseList(r.shortRings)} need ${fmt(r.totals.stripNeeded)}" of width to bore out to ` +
+          'the wall thickness you asked for.',
+        `At ${fmt(r.totals.ripWidth)}" the inner corners stay proud of the bore, so the wall ` +
+          `finishes thinner than asked at ${r.n} points around each of those rings.`,
+        `Rip ${fmt(snapUp(r.totals.stripNeeded, snapDenomNum.value))}" or wider, or use more ` +
+          'segments — more segments put the corners closer to the circle.',
+      ],
+    })
+  }
+
+  if (r.viewMode === 'ring' && r.stockShort) {
+    out.push({
+      key: 'short-ring',
+      title: `${fmt(r.stripWidth)}" stock is narrower than this ring needs`,
+      lines: [
+        `The ring needs ${fmt(r.stripNeed)}" of width to bore out to a ${fmt(r.ID)}" inside.`,
+        `At ${fmt(r.stripWidth)}" the smallest round bore you can cut is ${fmt(r.minBore)}".`,
+      ],
+    })
+  }
+
+  if (r.viewMode === 'stave' && r.stockShort) {
+    out.push({
+      key: 'short-stave',
+      title: `${fmt(r.stockWidth)}" stock is narrower than a stave`,
+      lines: [
+        `The wide end of each stave is ${fmt(r.stockNeeded)}" across.`,
+        'A stave is sawn to its taper, not turned to it, so the board has to be that wide.',
+      ],
+    })
+  }
+
+  if (r.viewMode === 'stave' && r.taperLost) {
+    out.push({
+      key: 'taper',
+      title: `Rounding to ${snapLabel.value} flattened the taper`,
+      lines: [
+        'Both ends of the stave landed on the same width, so this would come out a ' +
+          'cylinder rather than the flare you described.',
+        'Use a finer grid, or a taller vessel where the two ends are further apart.',
+      ],
+    })
+  }
+
+  return out
+})
+
 const ringRows = computed(() => {
   const r = result.value
   if (!r || r.viewMode !== 'ring') return []
   const rows = [
     { label: 'Miter, each end', value: `${fmtDeg(r.miter)}°` },
     { label: 'Cut length (outer edge)', value: `${fmt(r.outerEdge)}"` },
+  ]
+  // Asked against got, side by side. The point of rounding is that you set the
+  // rounded number, so the exact one is context, not the instruction.
+  if (r.asked && Math.abs(r.asked.outerEdge - r.outerEdge) > 0.0005) {
+    rows.push({ label: 'Exact length would be', value: `${fmt(r.asked.outerEdge)}"` })
+  }
+  rows.push(
     { label: 'Inner edge', value: `${fmt(r.innerEdge)}"` },
     { label: 'Strip width', value: `${fmt(r.stripWidth)}"` },
     { label: 'Blank corner diameter', value: `${fmt(r.outerCorner * 2)}"` },
     { label: 'Turns to', value: `${fmt(r.turnsTo)}"` },
     { label: 'Bores to', value: `${fmt(r.boresTo)}"` },
-  ]
+  )
+  if (Number.isFinite(r.maxRound) && r.maxRound - r.turnsTo > 0.0005) {
+    rows.push({ label: 'Largest round OD the blank gives', value: `${fmt(r.maxRound)}"` })
+  }
+  if (Number.isFinite(r.minBore) && r.boresTo - r.minBore > 0.0005) {
+    rows.push({ label: 'Smallest round bore it allows', value: `${fmt(r.minBore)}"` })
+  }
   if (r.mode === 'blank' && r.turnsTo < r.OD) {
     rows.push({ label: 'Lost to turning', value: `${fmt(r.OD - r.turnsTo)}"` })
   }
@@ -952,42 +1196,86 @@ const ringRows = computed(() => {
 const staveRows = computed(() => {
   const r = result.value
   if (!r || r.viewMode !== 'stave') return []
-  return [
+  const rows = [
     { label: 'Edge bevel, each edge', value: `${fmtDeg(r.bevel)}°` },
     { label: 'Stave length (along the slope)', value: `${fmt(r.staveLength)}"` },
     { label: 'Width at the base', value: `${fmt(r.widthBase)}"` },
     { label: 'Width at the top', value: `${fmt(r.widthTop)}"` },
     { label: 'Taper, each edge', value: `${fmt(r.taperPerEdge)}"` },
+    { label: 'Base diameter', value: `${fmt(r.baseOD)}"` },
     { label: 'Top diameter', value: `${fmt(r.topOD)}"` },
   ]
+  // Rounding the two end widths up moves the vessel it produces, so say which
+  // vessel you actually get before someone measures theirs against the input.
+  if (
+    r.asked &&
+    (Math.abs(r.asked.baseOD - r.baseOD) > 0.0005 || Math.abs(r.asked.topOD - r.topOD) > 0.0005)
+  ) {
+    rows.push({
+      label: 'Asked for',
+      value: `${fmt(r.asked.baseOD)}" base, ${fmt(r.asked.topOD)}" top`,
+    })
+  }
+  return rows
 })
 
 const stockRows = computed(() => {
   const r = result.value
   if (!r) return []
   if (r.viewMode === 'stack') {
+    const t = r.totals
     const rows = [
-      { label: 'Rip strips to', value: `${fmt(r.totals.widestStrip)}"` },
+      {
+        label: r.stockWidth > 0 ? 'Your stock, ripped to' : 'Rip strips to',
+        value: `${fmt(t.ripWidth)}"`,
+      },
       { label: 'Stock thickness', value: `${fmt(r.ringHeight)}"` },
-      { label: 'Total strip length', value: `${fmt(r.totals.boardLength)}"` },
-      { label: 'Board feet (kerf and trim in)', value: r.totals.boardFeet.toFixed(2) },
     ]
-    if (r.base) {
-      rows.splice(3, 0, { label: 'Solid base disc', value: `${fmt(r.base.diameter)}" × ${fmt(r.base.thickness)}"` })
+    // Only worth a row when it differs from what you'll actually set the fence
+    // to — otherwise it is the same number twice.
+    if (Math.abs(t.stripNeeded - t.ripWidth) > 0.0005) {
+      rows.push({ label: 'Widest course needs', value: `${fmt(t.stripNeeded)}"` })
     }
+    if (t.maxExtraOD > 0.0005) {
+      rows.push({ label: 'Most to turn off any course', value: `${fmt(t.maxExtraOD)}" on the OD` })
+    }
+    if (t.maxExtraBore > 0.0005) {
+      rows.push({ label: 'Most to bore out any course', value: `${fmt(t.maxExtraBore)}" on the ID` })
+    }
+    rows.push({ label: 'Total strip length', value: `${fmt(t.boardLength)}"` })
+    if (t.extraStrip > 0.0005) {
+      rows.push({
+        label: 'Of that, cost of rounding',
+        value: `${fmt(t.extraStrip)}" (${((t.extraStrip / t.boardLength) * 100).toFixed(1)}%)`,
+      })
+    }
+    if (r.base) {
+      rows.push({ label: 'Solid base disc', value: `${fmt(r.base.diameter)}" × ${fmt(r.base.thickness)}"` })
+    }
+    rows.push({ label: 'Board feet (kerf and trim in)', value: r.totals.boardFeet.toFixed(2) })
     return rows
   }
   if (r.viewMode === 'ring') {
-    return [
-      { label: 'Rip strip to', value: `${fmt(r.stripWidth)}"` },
+    const rows = [
+      { label: r.stockShort ? 'Your stock' : 'Rip strip to', value: `${fmt(r.stripWidth)}"` },
       { label: 'Stock thickness', value: `${fmt(r.ringHeight)}"` },
+    ]
+    if (r.extraOD > 0.0005) {
+      rows.push({ label: 'Extra to turn off', value: `${fmt(r.extraOD)}" on the OD` })
+    }
+    if (r.extraBore > 0.0005) {
+      rows.push({ label: 'Extra to bore out', value: `${fmt(r.extraBore)}" on the ID` })
+    }
+    rows.push(
       { label: 'Strip length needed', value: `${fmt(r.boardLength)}"` },
       { label: 'Board feet', value: r.boardFeet.toFixed(3) },
-    ]
+    )
+    return rows
   }
   return [
     { label: 'Stock length needed', value: `${fmt(r.boardLength)}"` },
-    { label: 'Stock width (at least)', value: `${fmt(r.widthTop)}"` },
+    { label: 'Stock width (at least)', value: `${fmt(r.stockNeeded ?? r.widthTop)}"` },
+    { label: 'Stock thickness', value: `${fmt(stockThicknessIn.value)}"` },
     { label: 'Board feet', value: r.boardFeet.toFixed(3) },
   ]
 })
@@ -1003,13 +1291,22 @@ const assemblyNotes = computed(() => {
       'Dry-fit the whole barrel and check the last joint before any glue goes on.',
     ]
   }
+  const ripTo = r.viewMode === 'stack' ? r.totals.ripWidth : r.stripWidth
   const notes = [
-    `Rip strips to ${fmt(r.viewMode === 'stack' ? r.totals.widestStrip : r.stripWidth)}" out of stock ${fmt(r.ringHeight)}" thick.`,
+    `Rip everything to one width — ${fmt(ripTo)}" — out of stock ${fmt(r.ringHeight)}" thick. ` +
+      'The fence gets set once for the whole build.',
     `Set the sled to ${fmtDeg(refRing.value?.miter ?? 0)}° and cut alternating, flipping the strip between cuts.`,
     'Flip the strip between every cut so the segments nest — that is what the board length below assumes, and it saves real stock.',
     'Dry-fit each ring on a flat surface before glue — a ring that will not close needs the sled adjusted, not more clamp pressure.',
     'Sand both faces of every glued ring flat before stacking. Errors here compound up the stack.',
   ]
+  if (snapping.value) {
+    notes.splice(2, 0,
+      `Every cut length is a round ${snapLabel.value}, so set the stop off a tape. The miter is ` +
+      'not rounded and must not be: the angle is what closes the ring, the length only decides ' +
+      'which diameter you land on.',
+    )
+  }
   if (r.viewMode === 'stack') {
     notes.push(`Rotate every other course by ${fmtDeg(180 / r.n)}° so the joints stagger like brickwork.`)
     if (r.base) notes.push(`Glue up the ${fmt(r.base.diameter)}" base disc and screw the faceplate to it.`)
@@ -1235,6 +1532,7 @@ const templates = computed(() => {
       label: ring.index ? `Ring ${ring.index}` : 'Segment',
       count: ring.n,
       miter: fmtDeg(ring.miter),
+      length: ring.outerEdge,
       w, h, points,
       tooWide: w > USABLE_PAGE_IN,
     }
@@ -1244,10 +1542,22 @@ const templates = computed(() => {
 const templateCaption = computed(() => {
   const r = result.value
   if (!r) return ''
+  const strip = ripWidthIn.value ? ` All from one ${fmt(ripWidthIn.value)}" strip.` : ''
   if (r.viewMode === 'stack') {
-    return `One template per course, bottom to top. Spray-glue it to the strip end or use it to set the sled stop.`
+    return 'One template per course, bottom to top. Spray-glue it to the strip end or use it ' +
+      `to set the sled stop.${strip}`
   }
-  return `Cut ${r.n} of these, mitered ${fmtDeg(r.miter)}° at both ends.`
+  return `Cut ${r.n} of these, mitered ${fmtDeg(r.miter)}° at both ends.${strip}`
+})
+
+/** The one rip width, whichever mode produced it. Null for staves, which are
+ *  sawn to a taper rather than cut off a constant-width strip. */
+const ripWidthIn = computed(() => {
+  const r = result.value
+  if (!r) return null
+  if (r.viewMode === 'stack') return r.totals.ripWidth
+  if (r.viewMode === 'ring') return r.stripWidth
+  return null
 })
 
 function round(v) {
